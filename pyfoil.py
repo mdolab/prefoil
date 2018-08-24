@@ -1,5 +1,5 @@
 """
-pyFoil
+pyfoil
 --------
 
 Contains a class for creating, modifying and exporting airfoils.
