@@ -29,6 +29,25 @@ def _reorder(coords):
 def _genNACACoords(name):
     pass
 
+
+def _writePlot3D(filename,x,y):
+    if '.' not in filename:
+        filename = filename + '.fmt'
+    f = open(filename, 'w')
+    f.write('1\n')
+    f.write('%d %d %d\n'%(len(x), 2, 1))
+    for iDim in range(3):
+        for j in range(2):
+            for i in range(len(x)):
+                if iDim == 0:
+                    f.write('%g\n'%x[i])
+                elif iDim == 1:
+                    f.write('%g\n'%y[i])
+                else:
+                    f.write('%g\n'%(float(j)))
+    f.close()
+
+
 class Airfoil(object):
     """
     Create an instance of an airfoil. There are two ways of instantiating 
