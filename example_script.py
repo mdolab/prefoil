@@ -12,7 +12,7 @@ Here we read an airfoil coordinate file from a database, perform geometric
 cleanup, and then sample it with a particular distribution.
 '''
 filename = 'naca0012.dat'
-airfoil = Airfoil(filename=filename,derotate=True,normalize=True)
+airfoil = Airfoil(filename=filename,cleanup=True)
 
 airfoil.smooth(method='Laplacian')
 
@@ -47,7 +47,7 @@ Here we sample the airfoil with two separate distributions for the upper and
 lower surfaces. We also thicken the trailing edge, and specify npts_TE during
 sampling. These points are then saved to a plot3d file for use with pyHyp.
 '''
-airfoil = Airfoil(X=X,derotate=True,normalize=True)
+airfoil = Airfoil(X=X,cleanup=True)
 airfoil.thickenTE(thickness=0.01)
 upper_dict = {'distribution' : 'conical',
              'coeff' : 1,
@@ -70,7 +70,7 @@ data = ti.readSliceFile('fc_000_slices.dat')
 x = data['Zone 1']['x']
 y = data['Zone 1']['y']
 
-airfoil = Airfoil(x=x,y=y, reorder=True, cleanup_TE=True)
+airfoil = Airfoil(x=x,y=y, reorder=True)
 
 max_camber, camber_loc = airfoil.getMaxCamber()
 max_thickness, thickness_loc = airfoil.getMaxThickness()
