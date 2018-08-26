@@ -37,11 +37,27 @@ class Error(Exception):
         Exception.__init__()
 
 
-def _getDefaultSampling():
-    pass
 
 def _readCoordFile(filename):
-    pass
+    """ Load the airfoil file"""
+    f = open(filename, 'r')
+    line  = f.readline() # Read (and ignore) the first line
+    r = []
+    try:
+        r.append([float(s) for s in line.split()])
+    except:
+        r = []
+
+    while True:
+        line = f.readline()
+        if not line:
+            break # end of file
+        if line.isspace():
+            break # blank line
+        r.append([float(s) for s in line.split()])
+
+    X = np.array(r)
+    return X
 
 def _reorder(coords):
     pass
@@ -50,11 +66,14 @@ def _genNACACoords(name):
     pass
 
 def _cleanup_TE(X,tol):
-    pass
+    TE = np.mean(X[[-1,0],:],axis=0)
+    return X, TE
 
 def _writePlot3D(filename,X):
     if '.' not in filename:
         filename = filename + '.fmt'
+    x = X[:,0]
+    y = X[:,1]
     f = open(filename, 'w')
     f.write('1\n')
     f.write('%d %d %d\n'%(len(x), 2, 1))
@@ -111,12 +130,11 @@ class Airfoil(object):
     y : ndarray[N]
         Just y coordinates of the airfoil
     filename : str
-        The filename containing the airfoil coordinates
+        The file name containing the airfoil coordinates
     """
     def __init__(self, **kwargs):
         self.TE = None
         self.LE = None
-        self.s_TE = None
         self.s_LE = None
         self.LE_rad = None
         self.TE_ang = None
@@ -141,20 +159,40 @@ class Airfoil(object):
         else:
             raise Error('You need to provide either points or a filename to initialize.')
 
-        self.X = _cleanup_TE(self.X)
+        self.X, self.TE = _cleanup_TE(self.X,tol=1e-3)
         
         if 'cleanup' in kwargs and kwargs['cleanup']:
             self._cleanup()
         self.recompute()
 
+
     def recompute(self):
         self.spline = Curve(X=self.X,k=self.k,nCtl=self.nCtl)
-    
-
 
 ## Geometry Information
     def getLE(self):
-        pass
+        '''
+        Calculates the leading edge point on the spline, which is defined as the point furthest away from the TE. The spline is assumed to start at the TE. The routine uses a root-finding algorithm to compute the LE.
+
+        Let the TE be at point :math:`x_0, y_0`, then the Euclidean distance between the TE and any point on the airfoil spline is :math:`\ell(s) = \sqrt{\Delta x^2 + \Delta y^2}`, where :math:`\Delta x = x(s)-x_0` and :math:`\Delta y = y(s)-y_0`. We know near the LE, this quantity is concave. Therefore, to find its maximum, we differentiate and use a root-finding algorithm on its derivative. 
+        :math:`\\frac{\mathrm{d}\ell}{\mathrm{d}s} = \\frac{\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}}{\ell}`
+
+        The function dellds computes the quantity :math:`\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}` which is then used by brentq to find its root, with an initial bracket at [0.3, 0.7].
+
+        TODO
+        Use a Newton solver, employing 2nd derivative information and use 0.5 as the initial guess. 
+        '''
+        if self.s_LE is None:
+            def dellds(s,spline,TE):
+                pt = spline.getValue(s)
+                deriv = spline.getDerivative(s)
+                dx = pt[0] - TE[0]
+                dy = pt[1] - TE[1]
+                return dx * deriv[0] + dy * deriv[1]
+
+            self.s_LE = brentq(dellds,0.3,0.7,args=(self.spline,self.TE))
+            self.LE = self.spline.getValue(self.s_LE)
+        return self.s_LE
 
     def getLERadius(self):
         pass
@@ -214,7 +252,8 @@ class Airfoil(object):
         sample_pts = self._getDefaultSampling()
         self.X = _rotateCoords(sample_pts,angle,origin)
         self.recompute()
-        self.twist += angle
+        if self.twist is not None:
+            self.twist += angle
 
     def derotate(self,origin=np.zeros(2)):
         if self.spline is None:
@@ -230,7 +269,8 @@ class Airfoil(object):
         sample_pts = self._getDefaultSampling()
         self.X = _scaleCoords(sample_pts,factor,origin)
         self.recompute()
-        self.chord *= factor
+        if self.chord is not None:
+            self.chord *= factor
 
     def normalize(self,origin=np.zeros(2)):
         if self.spline is None:
@@ -245,7 +285,8 @@ class Airfoil(object):
         sample_pts = self._getDefaultSampling()
         self.X = _translateCoords(sample_pts,delta)
         self.recompute()
-        self.LE += delta
+        if self.LE is not None:
+            self.LE += delta
 
     def center(self):
         if self.spline is None:
@@ -272,12 +313,18 @@ class Airfoil(object):
     def sample(self,*args,**kwargs):
         pass
 
-    def _getDefaultSampling(self):
-        pass
+    def _getDefaultSampling(self,npts = 100):
+        sampling = np.linspace(0,1,npts)
+        return self.spline.getValue(sampling)
 ## Output
     def writeCoords(self, filename,fmt='plot3d'):
         pass
 
 ## Utils
     def plotAirfoil(self):
-        pass
+        import matplotlib.pyplot as plt
+        plt.figure()
+        pts = self._getDefaultSampling(npts=1000)
+        plt.plot(pts[:,0],pts[:,1],'-o')
+        plt.axis('equal')
+        plt.show()
