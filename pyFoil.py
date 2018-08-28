@@ -16,6 +16,8 @@ import warnings
 import numpy as np
 from pyspline.python.pySpline import Surface, Curve, line
 from scipy.optimize import fsolve, brentq
+from numpy.linalg import norm 
+
 
 class Error(Exception):
     """
@@ -137,7 +139,7 @@ class Airfoil(object):
         self.LE = None
         self.s_LE = None
         self.LE_rad = None
-        self.TE_ang = None
+        self.TE_angle = None
         self.twist = None
         self.chord = None
 
@@ -195,10 +197,28 @@ class Airfoil(object):
         return self.s_LE
 
     def getLERadius(self):
-        pass
+        '''
+        Computes the leading edge radius of the airfoil. Note that this is heavily dependent on the initialization points, as well as the spline order/smoothing.
+        '''
+        if self.s_LE is None:
+            self.getLE()
+        first = self.spline.getDerivative(self.s_LE)
+        second = self.spline.getSecondDerivative(self.s_LE)
+        self.LE_rad = norm(first)**3 / norm(first[0]*second[1] - first[1]*second[0])
+        return self.LE_rad
 
     def getTEAngle(self):
-        pass
+        '''
+        Computes the trailing edge angle of the airfoil. We assume here that the spline goes from top to bottom, and that s=0 and s=1 corresponds to the 
+        top and bottom trailing edge points. Whether or not the airfoil is closed is irrelevant. 
+        '''
+        top = self.spline.getDerivative(0)
+        top = top/norm(top)
+        bottom = self.spline.getDerivative(1)
+        bottom = bottom/norm(bottom)
+        print(np.dot(top,bottom))
+        self.TE_angle = np.pi - np.arccos(np.dot(top,bottom))
+        return np.rad2deg(self.TE_angle)
     
     def getTwist(self):
         pass
@@ -323,8 +343,12 @@ class Airfoil(object):
 ## Utils
     def plotAirfoil(self):
         import matplotlib.pyplot as plt
-        plt.figure()
+        fig, ax = plt.subplots()
         pts = self._getDefaultSampling(npts=1000)
-        plt.plot(pts[:,0],pts[:,1],'-o')
+        plt.plot(pts[:,0],pts[:,1],'-')
         plt.axis('equal')
+        # pt = self.LE + np.array([self.LE_rad,0])
+        # circle = plt.Circle(pt, self.LE_rad, color='r',fill=False)
+        # ax.add_artist(circle)
+        # plt.plot(self.LE[0],self.LE[1],'ok')
         plt.show()
