@@ -3,16 +3,16 @@ Sample usage script showing some use cases, and how the API should work.
 '''
 
 
-from pyFoil import Airfoil, reorder
+from pyFoil import Airfoil #, reorder
 import matplotlib.pyplot as plt
-import tecplot_interface as ti # This does not exist yet
+# import tecplot_interface as ti # This does not exist yet
 
 '''
 Here we read an airfoil coordinate file from a database, perform geometric
 cleanup, and then sample it with a particular distribution.
 '''
-filename = 'naca0012.dat'
-airfoil = Airfoil(filename=filename,cleanup=True)
+filename = 'rae2822.dat'
+airfoil = Airfoil(filename=filename,cleanup=False)
 
 airfoil.smooth(method='Laplacian')
 
@@ -21,25 +21,31 @@ sample_dict = {'distribution' : 'conical',
                'npts' : 50}
 x,y = airfoil.sample(sample_dict)
 
-# -------------------------------------------------------------------
+plt.figure(1)
+plt.axis('equal')
+plt.title('Test single distribution, ' + filename.replace('.dat',''))
+plt.plot(x,y, 'o-b')
+plt.show()
+
+# # -------------------------------------------------------------------
 '''
 Here we sample the airfoil with two different distributions, and examine them side
 by side.
 '''
 
-airfoil = Airfoil(x=x,y=y)
-airfoil.derotate()
+# airfoil = Airfoil(x=x,y=y)
+# airfoil.derotate()
 
 sample_dict = {'distribution' : 'conical',
                'coeff' : 1,
                'npts' : 50}
 x,y = airfoil.sample(sample_dict)
-airfoil.plot()
+# airfoil.plotAirfoil()
 sample_dict['coeff'] = 3
 x2,y2 = airfoil.sample(sample_dict)
-airfoil.plot()
-
-plt.show()
+# airfoil.plotAirfoil()
+#
+# plt.show()
 
 #-----------------------------------------
 '''
@@ -47,19 +53,28 @@ Here we sample the airfoil with two separate distributions for the upper and
 lower surfaces. We also thicken the trailing edge, and specify npts_TE during
 sampling. These points are then saved to a plot3d file for use with pyHyp.
 '''
-airfoil = Airfoil(X=X,cleanup=True)
-airfoil.thickenTE(thickness=0.01)
-upper_dict = {'distribution' : 'conical',
+# airfoil = Airfoil(X=X,cleanup=True)
+# airfoil.thickenTE(thickness=0.01)
+upper_dict = {'distribution' : 'parabolic',
              'coeff' : 1,
-             'npts' : 50}
+             'npts' : 20}
 
 lower_dict = {'distribution' : 'polynomial',
              'coeff' : 5,
              'npts' : 70}
 x,y = airfoil.sample(upper=upper_dict, lower=lower_dict, npts_TE = 17)
 
-airfoil.writeCoords('new_coords.dat',fmt='plot3d')
+# airfoil.writeCoords('new_coords.dat',fmt='plot3d')
 
+# Plotting samples #1
+plt.figure(2)
+plt.axis('equal')
+plt.title('Test double distribution, ' + filename.replace('.dat',''))
+plt.plot(x,y, 'o-b')
+plt.show()
+
+airfoil.writeCoords('sampling_doubletest')
+quit()
 #-----------------------------------------
 '''
 Here we read in a slice file from ADflow. There is some guesswork as to the
@@ -79,3 +94,4 @@ c_c = camber_loc/chord
 t_c = thickness_loc/chord
 
 twist = airfoil.getTwist()
+
