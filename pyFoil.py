@@ -15,6 +15,7 @@ import warnings
 import numpy as np
 import pyspline
 from scipy.optimize import fsolve, brentq
+import sampling
 
 
 def _readSliceFile(filename):
@@ -70,6 +71,29 @@ class Airfoil(object):
 
 ## Geometry Information
     def getLE(self):
+        '''
+        Calculates the leading edge point on the spline, which is defined as the point furthest away from the TE. The spline is assumed to start at the TE. The routine uses a root-finding algorithm to compute the LE.
+
+        Let the TE be at point :math:`x_0, y_0`, then the Euclidean distance between the TE and any point on the airfoil spline is :math:`\ell(s) = \sqrt{\Delta x^2 + \Delta y^2}`, where :math:`\Delta x = x(s)-x_0` and :math:`\Delta y = y(s)-y_0`. We know near the LE, this quantity is concave. Therefore, to find its maximum, we differentiate and use a root-finding algorithm on its derivative.
+        :math:`\\frac{\mathrm{d}\ell}{\mathrm{d}s} = \\frac{\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}}{\ell}`
+
+        The function dellds computes the quantity :math:`\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}` which is then used by brentq to find its root, with an initial bracket at [0.3, 0.7].
+        '''
+
+        spline = self.spline
+
+        def dellds(s, spline, TE):
+            pt = spline.getValue(s)
+            deriv = spline.getDerivative(s)
+            dx = pt[0] - TE[0]
+            dy = pt[1] - TE[1]
+            return dx * deriv[0] + dy * deriv[1]
+
+        TE = spline.getValue(0)
+        s_LE = optimize.brentq(dellds, 0.3, 0.7, args=(spline, TE))
+
+        self.s_LE = s_LE
+
         pass
 
     def getLERadius(self):
@@ -142,85 +166,9 @@ class Airfoil(object):
     def _scaleCoords(self):
         pass
 
-## Sampling
-
-'''
-Check cosine spacing, OAS has a parameter which varies from 0 to 1,
-corresponding to linear and cosine sampling. Maybe add that.
-
-If all three are elliptic with specific parameters, we should call that from 
-the other routines rather than having duplicate code.
-'''
-    def _cosSpacing(n, m=np.pi):
-        x = np.linspace(0, m, n)
-        s = np.cos(x)
-        return s / 2 + 0.5
-
-
-    def _ellipticalSpacing(n,  b=1,  m=np.pi):
-        x = np.linspace(0, m, n)
-        s = 1 + b / np.sqrt(np.cos(x)**2 * b**2 + np.sin(x)**2) * np.cos(x)
-        return s * b
-
-
-    def _parabolicSpacing(n, m=np.pi):
-        # angles = np.linspace(0, m, (n + 1) // 2)
-        angles = np.linspace(0, m, n)
-        # x = np.linspace(1, -1, n)
-        s = np.array([])
-        for ang in angles:
-            if ang <= np.pi / 2:
-                s = np.append(s, (-np.tan(ang) + np.sqrt(np.tan(ang)**2 + 4)) / 2)
-            else:
-                s = np.append(s, (-np.tan(ang) - np.sqrt(np.tan(ang)**2 + 4)) / 2)
-
-        # print 's', s, -1 * s[-2::-1]
-        # s = np.append(s, -1 * s[-2::-1])[::-1]
-        return s / 2 + 0.5
-
-
-    def _polynomialSpacing(n, m=np.pi, order=5):
-
-        def func(x):
-            return np.abs(x)**order + np.tan(ang) * x - 1
-        angles = np.linspace(0, m, n)
-
-        s = np.array([])
-        for ang in angles:
-            s = np.append(s, fsolve(func, np.cos(ang))[0])
-
-        return s / 2 + 0.5
-
-
-    def _joinedSpacing(n, spacingFunc, s_LE=0.5, equalPts=False, repeat=False, **kwargs):
-        """
-        function that returns two point distributions joined at s_LE
-
-                            s1                            s2
-        || |  |   |    |     |     |    |   |  | |||| |  |   |    |     |     |    |   |  | ||
-                                                    /\
-                                                    s_LE
-
-        """
-        offset1 = np.pi / (n * s_LE)
-        if repeat:
-            offset2 = 0
-        else:
-            offset2 = np.pi / (n * s_LE)
-
-        if equalPts:
-            ns1 = n * .5
-            ns2 = ns1
-        else:
-            ns1 = n * s_LE
-            ns2 = n * (1 - s_LE)
-
-        s1 = spacingFunc(ns1, m=np.pi - offset1, **kwargs) * s_LE
-        s2 = spacingFunc(ns2, m=np.pi - offset2, **kwargs) * (1 - s_LE) + s_LE
-
-        return np.append(s2, s1)[::-1]
-
     def sample(self,distribution,npts,**kwargs):
+
+        self.point_distribution =
         pass
 
 ## Output
