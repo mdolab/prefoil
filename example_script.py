@@ -21,10 +21,8 @@ sample_dict = {'distribution' : 'conical',
                'npts' : 50}
 x,y = airfoil.sample(sample_dict)
 
-plt.figure(1)
-plt.axis('equal')
-plt.title('Test single distribution, ' + filename.replace('.dat',''))
-plt.plot(x,y, 'o-b')
+fig1 = airfoil.plotAirfoil()
+fig1.suptitle('Test single distribution')
 plt.show()
 
 # # -------------------------------------------------------------------
@@ -67,10 +65,8 @@ x,y = airfoil.sample(upper=upper_dict, lower=lower_dict, npts_TE = 17)
 # airfoil.writeCoords('new_coords.dat',fmt='plot3d')
 
 # Plotting samples #1
-plt.figure(2)
-plt.axis('equal')
-plt.title('Test double distribution, ' + filename.replace('.dat',''))
-plt.plot(x,y, 'o-b')
+fig2 = airfoil.plotAirfoil()
+fig2.suptitle('Test double distribution')
 plt.show()
 
 airfoil.writeCoords('sampling_doubletest')

@@ -18,7 +18,7 @@ from pyspline.python.pySpline import Surface, Curve, line
 from scipy.optimize import fsolve, brentq
 import sampling as smp
 from numpy.linalg import norm
-
+import os
 
 class Error(Exception):
     """
@@ -71,11 +71,9 @@ def _cleanup_TE(X,tol):
     TE = np.mean(X[[-1,0],:],axis=0)
     return X, TE
 
-def _writePlot3D(filename,X):
-    if '.' not in filename:
-        filename = filename + '.fmt'
-    x = X[:,0]
-    y = X[:,1]
+def _writePlot3D(filename,x,y):
+    filename, ext = os.path.splitext(filename)
+    filename += '.fmt'
     f = open(filename, 'w')
     f.write('1\n')
     f.write('%d %d %d\n'%(len(x), 2, 1))
@@ -88,6 +86,17 @@ def _writePlot3D(filename,X):
                     f.write('%g\n'%y[i])
                 else:
                     f.write('%g\n'%(float(j)))
+    f.close()
+
+def _writePlot3D_Marco(filename,x,y):
+    filename, ext = os.path.splitext(filename)
+    filename += '.fmt'
+    f = open(filename, 'w')
+
+    for i in range(0, len(x)):
+        f.write(str(round(x[i], 12)) + "\t\t"
+                + str(round(y[i], 12)) + '\n'
+                )
     f.close()
 
 def _translateCoords(X,dX):
@@ -112,32 +121,18 @@ def _scaleCoords(X, scale, origin):
     scaled_X = shifted_scaled_X + origin
     return scaled_X
 
-def cell_ratio_check(x, y):
-    cell_size = []
-    cell_ratio = []
-    exc = []
+def checkCellRatio(X,ratio_tol=1.2):
+    X_diff = X[1:,:] - X[:-1,:]
+    cell_size = np.sqrt(X_diff[:,0]**2 + X_diff[:,1]**2)
+    crit_cell_size = np.flatnonzero(cell_size<1e-10)
+    for i in crit_cell_size:
+        print("critical I", i)
+    
+    cell_ratio = cell_size[1:]/cell_size[:-1]
+    exc = np.flatnonzero(cell_ratio > ratio_tol)
 
-    for i in range(0, len(x[:-1])):
-        j = i + 1
-        x_step = x[j] - x[i]
-        y_step = y[j] - y[i]
-
-        cell_size.append(np.sqrt(x_step ** 2 + y_step ** 2))
-
-        if cell_size[-1] == 0.0:
-            print("critical I", i)
-
-    for i in range(0, len(cell_size[:-1])):
-        j = i + 1
-        ratio = cell_size[j] / cell_size[i]
-
-        if ratio >= 1.2:
-            exc.append(i)
-
-        cell_ratio.append(ratio)
-
-    if len(exc):
-        print('WARNING: There are ', len(exc), ' elements which exceed '
+    if exc.size > 0:
+        print('WARNING: There are ', exc.size, ' elements which exceed '
                                                'suggested cell ratio: ',
               exc)
 
@@ -182,6 +177,7 @@ class Airfoil(object):
         self.camber = None
         self.top = None
         self.bottom = None
+        self.sampled_X = None
 
         if 'k' in kwargs:
             self.k = kwargs['k']
@@ -191,6 +187,12 @@ class Airfoil(object):
             self.nCtl = kwargs['nCtl']
         else:
             self.nCtl = 20
+        if 'name' in kwargs:
+            self.name = kwargs['name']
+        elif 'filename' in kwargs:
+            self.name = kwargs['filename'].split('.')[0]
+        else:
+            self.name = 'unnamed airfoil'
 
         if 'X' in kwargs:
             self.X = kwargs['X']
@@ -461,19 +463,16 @@ class Airfoil(object):
         coords = self.spline.getValue(sampling)
 
         # Adding last point (1,-0) for pyHyp issues
+        # TODO: Add handling of TE, esp blunt or round
         end_point = np.copy(coords[0])
         end_point[1] = -0.0
         coords = np.concatenate((coords, end_point.reshape(1, -1)), axis=0)
-        x = [i[0] for i in coords]
-        y = [i[1] for i in coords]
-
         if cell_check is True:
-            cell_ratio_check(x, y)
-
-        self.sampled_x = x
-        self.sampled_y = y
-
-        return x, y
+            checkCellRatio(coords)
+        self.sampled_X = coords
+        x = coords[:,0]
+        y = coords[:,1]
+        return x,y
 
     def _getDefaultSampling(self,npts = 100):
         sampling = np.linspace(0,1,npts)
@@ -481,9 +480,9 @@ class Airfoil(object):
 ## Output
     def writeCoords(self, filename,fmt='plot3d'):
 
-        if self.sampled_x:
-            x = self.sampled_x
-            y = self.sampled_y
+        if self.sampled_X is not None:
+            x = self.sampled_X[:,0]
+            y = self.sampled_X[:,1]
         else:
             '''
             We have to discuss which types of printfiles we want to get and how
@@ -493,25 +492,17 @@ class Airfoil(object):
             Error("No coordinates to print, run .sample() first")
 
         if fmt == 'plot3d':
-            f = open(filename + ".dat", 'w')
+            _writePlot3D(filename,x,y)
 
-            for i in range(0, len(x)):
-                f.write(str(round(x[i], 12)) + "\t\t"
-                        + str(round(y[i], 12)) + '\n'
-                        )
-
-            f.close()
-        pass
 
 ## Utils
     def plotAirfoil(self):
         import matplotlib.pyplot as plt
-        fig, ax = plt.subplots()
+        fig = plt.figure()
         pts = self._getDefaultSampling(npts=1000)
         plt.plot(pts[:,0],pts[:,1],'-')
         plt.axis('equal')
-        # pt = self.LE + np.array([self.LE_rad,0])
-        # circle = plt.Circle(pt, self.LE_rad, color='r',fill=False)
-        # ax.add_artist(circle)
-        # plt.plot(self.LE[0],self.LE[1],'ok')
-        plt.show()
+        if self.sampled_X is not None:
+            plt.plot(self.sampled_X[:,0],self.sampled_X[:,1],'o')
+        plt.title(self.name)
+        return fig
