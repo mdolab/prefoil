@@ -142,6 +142,10 @@ class Airfoil(object):
         self.TE_angle = None
         self.twist = None
         self.chord = None
+        self.chord_vec = None
+        self.camber = None
+        self.top = None
+        self.bottom = None
 
         if 'k' in kwargs:
             self.k = kwargs['k']
@@ -207,6 +211,10 @@ class Airfoil(object):
         self.LE_rad = norm(first)**3 / norm(first[0]*second[1] - first[1]*second[0])
         return self.LE_rad
 
+    def getTE(self):
+        self.TE = (self.spline.getValue(0) + self.spline.getValue(1))/2
+        return self.TE
+
     def getTEAngle(self):
         '''
         Computes the trailing edge angle of the airfoil. We assume here that the spline goes from top to bottom, and that s=0 and s=1 corresponds to the 
@@ -220,8 +228,16 @@ class Airfoil(object):
         self.TE_angle = np.pi - np.arccos(np.dot(top,bottom))
         return np.rad2deg(self.TE_angle)
     
+    def _splitAirfoil(self):
+        self.top, self.bottom = self.spline.splitCurve(self.s_LE)
+
     def getTwist(self):
-        pass
+        if self.chord_vec is None:
+            self.getChord()
+        
+        normalized_chord = self.chord_vec / self.chord
+        self.twist = -np.arccos(normalized_chord.dot(np.array([1., 0.]))) * np.sign(normalized_chord[1])
+        return self.twist
     
     def getCamber(self):
         pass
@@ -236,14 +252,33 @@ class Airfoil(object):
         pass
     
     def getChord(self):
-        pass
-    
-    def getChordLine(self):
-        pass
+        if self.LE is None:
+            self.getLE()
+        if self.TE is None:
+            self.getTE()
+        self.chord_vec = self.TE - self.LE
+        self.chord = norm(self.chord_vec)
+        return self.chord
+
+    def getChordVec(self):
+        if self.chord_vec is None:
+            self.getChord()
+        
+        return self.chord_vec
 
     def isReflex(self):
-        pass
-    def isSymmetric(self):
+        '''
+        An airfoil is reflex if the derivative of the camber line at the trailing edge is positive.
+        '''
+        if self.camber is None:
+            self.getCamber()
+        
+        if self.camber.getDerivative(1)[1] > 0:
+            return True
+        else:
+            return False
+
+    def isSymmetric(self, tol=1e-6):
         pass
 
 
