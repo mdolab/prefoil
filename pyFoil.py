@@ -16,7 +16,8 @@ import warnings
 import numpy as np
 from pyspline.python.pySpline import Surface, Curve, line
 from scipy.optimize import fsolve, brentq
-from numpy.linalg import norm 
+import sampling as smp
+from numpy.linalg import norm
 
 
 class Error(Exception):
@@ -37,7 +38,6 @@ class Error(Exception):
         msg += ' '*(78-i) + '|\n' + '+'+'-'*78+'+'+'\n'
         print(msg)
         Exception.__init__()
-
 
 
 def _readCoordFile(filename):
@@ -112,6 +112,42 @@ def _scaleCoords(X, scale, origin):
     scaled_X = shifted_scaled_X + origin
     return scaled_X
 
+def cell_ratio_check(x, y):
+    cell_size = []
+    cell_ratio = []
+    exc = []
+
+    for i in range(0, len(x[:-1])):
+        j = i + 1
+        x_step = x[j] - x[i]
+        y_step = y[j] - y[i]
+
+        cell_size.append(np.sqrt(x_step ** 2 + y_step ** 2))
+
+        if cell_size[-1] == 0.0:
+            print("critical I", i)
+
+    for i in range(0, len(cell_size[:-1])):
+        j = i + 1
+        ratio = cell_size[j] / cell_size[i]
+
+        if ratio >= 1.2:
+            exc.append(i)
+
+        cell_ratio.append(ratio)
+
+    if len(exc):
+        print('WARNING: There are ', len(exc), ' elements which exceed '
+                                               'suggested cell ratio: ',
+              exc)
+
+    max_cell_ratio = np.max(cell_ratio, 0)
+    avg_cell_ratio = np.average(cell_ratio, 0)
+    print('Max cell ratio: ', max_cell_ratio)
+    print('Average cell ratio', avg_cell_ratio)
+
+    return cell_ratio, max_cell_ratio, avg_cell_ratio, exc
+
 
 class Airfoil(object):
     """
@@ -179,8 +215,7 @@ class Airfoil(object):
     def getLE(self):
         '''
         Calculates the leading edge point on the spline, which is defined as the point furthest away from the TE. The spline is assumed to start at the TE. The routine uses a root-finding algorithm to compute the LE.
-
-        Let the TE be at point :math:`x_0, y_0`, then the Euclidean distance between the TE and any point on the airfoil spline is :math:`\ell(s) = \sqrt{\Delta x^2 + \Delta y^2}`, where :math:`\Delta x = x(s)-x_0` and :math:`\Delta y = y(s)-y_0`. We know near the LE, this quantity is concave. Therefore, to find its maximum, we differentiate and use a root-finding algorithm on its derivative. 
+        Let the TE be at point :math:`x_0, y_0`, then the Euclidean distance between the TE and any point on the airfoil spline is :math:`\ell(s) = \sqrt{\Delta x^2 + \Delta y^2}`, where :math:`\Delta x = x(s)-x_0` and :math:`\Delta y = y(s)-y_0`. We know near the LE, this quantity is concave. Therefore, to find its maximum, we differentiate and use a root-finding algorithm on its derivative.
         :math:`\\frac{\mathrm{d}\ell}{\mathrm{d}s} = \\frac{\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}}{\ell}`
 
         The function dellds computes the quantity :math:`\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}` which is then used by brentq to find its root, with an initial bracket at [0.3, 0.7].
@@ -199,6 +234,7 @@ class Airfoil(object):
             self.s_LE = brentq(dellds,0.3,0.7,args=(self.spline,self.TE))
             self.LE = self.spline.getValue(self.s_LE)
         return self.s_LE
+
 
     def getLERadius(self):
         '''
@@ -364,15 +400,107 @@ class Airfoil(object):
     def roundTE(self):
         pass
 
-## Sampling
-    def sample(self,*args,**kwargs):
+    def _removeTEPts(self):
         pass
+
+    def _translateCoords(self):
+        pass
+    def _rotateCoords(self):
+        pass
+    def _scaleCoords(self):
+        pass
+
+## Sampling
+    def sample(self, upper, lower=None, npts_TE=None, cell_check=True):
+        '''
+        This function defines the point sampling along airfoil surface.
+        An example dictionary is reported below:
+
+        >>> sample_dict = {'distribution' : 'conical',
+               'coeff' : 1,
+               'npts' : 50,
+               'bad_edge': False,}
+
+        The point distribution currently implemented are:
+            - *Cosine*:
+            - *Conical*:
+            - *Parabolic*:
+            - *Polynomial*:
+
+        :param upper: dictionary
+                Upper surface sampling dictionary
+        :param lower: dictionary
+                Lower surface sampling dictionary
+        :param npts_TE: float
+                Number of points along the **blunt** trailing edge
+        :return: Coordinates array, anticlockwise, from trailing edge
+        '''
+
+        if lower is None:
+            lower = upper
+        if not self.s_LE:
+            s_LE = self.getLE()
+        else:
+            s_LE = self.s_LE
+        bad_edge_upr = False
+        bad_edge_lwr = False
+        if 'bad_edge' in upper:
+            bad_edge_upr = upper['bad_edge']
+        if 'bad_edge' in lower:
+            bad_edge_lwr = lower['bad_edge']
+
+        upper_distr = getattr(smp, upper['distribution'])
+        lower_distr = getattr(smp, lower['distribution'])
+
+        sampling = smp.joinedSpacing(upper['npts'],upper_distr,
+                                 upper['coeff'],lower['npts'],
+                                 lower_distr,lower['coeff'],
+                                 s_LE=s_LE,bad_edge_upr=bad_edge_upr,
+                                 bad_edge_lwr=bad_edge_lwr)
+
+        coords = self.spline.getValue(sampling)
+
+        # Adding last point (1,-0) for pyHyp issues
+        end_point = np.copy(coords[0])
+        end_point[1] = -0.0
+        coords = np.concatenate((coords, end_point.reshape(1, -1)), axis=0)
+        x = [i[0] for i in coords]
+        y = [i[1] for i in coords]
+
+        if cell_check is True:
+            cell_ratio_check(x, y)
+
+        self.sampled_x = x
+        self.sampled_y = y
+
+        return x, y
 
     def _getDefaultSampling(self,npts = 100):
         sampling = np.linspace(0,1,npts)
         return self.spline.getValue(sampling)
 ## Output
     def writeCoords(self, filename,fmt='plot3d'):
+
+        if self.sampled_x:
+            x = self.sampled_x
+            y = self.sampled_y
+        else:
+            '''
+            We have to discuss which types of printfiles we want to get and how
+            to handle them (does this class print the last "sampled" x,y or do 
+            we want more options?)
+            '''
+            Error("No coordinates to print, run .sample() first")
+
+        if fmt == 'plot3d':
+            f = open(filename + ".dat", 'w')
+
+            for i in range(0, len(x)):
+                f.write(str(round(x[i], 12)) + "\t\t"
+                        + str(round(y[i], 12)) + '\n'
+                        )
+
+            f.close()
         pass
 
 ## Utils
