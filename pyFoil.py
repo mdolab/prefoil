@@ -164,6 +164,8 @@ class Airfoil(object):
         Just y coordinates of the airfoil
     filename : str
         The file name containing the airfoil coordinates
+    name : str
+        The name of the airfoil. Default will be the filename, if one is supplied.
     """
     def __init__(self, **kwargs):
         self.TE = None
@@ -267,6 +269,8 @@ class Airfoil(object):
         return np.rad2deg(self.TE_angle)
     
     def _splitAirfoil(self):
+        if self.s_LE is None:
+            self.getLE()
         self.top, self.bottom = self.spline.splitCurve(self.s_LE)
 
     def getTwist(self):
@@ -489,7 +493,7 @@ class Airfoil(object):
             to handle them (does this class print the last "sampled" x,y or do 
             we want more options?)
             '''
-            Error("No coordinates to print, run .sample() first")
+            raise Error("No coordinates to print, run .sample() first")
 
         if fmt == 'plot3d':
             _writePlot3D(filename,x,y)

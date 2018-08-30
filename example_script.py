@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 Here we read an airfoil coordinate file from a database, perform geometric
 cleanup, and then sample it with a particular distribution.
 '''
-filename = 'rae2822.dat'
+filename = './tests/rae2822.dat'
 airfoil = Airfoil(filename=filename,cleanup=False)
 
 airfoil.smooth(method='Laplacian')
@@ -38,12 +38,13 @@ sample_dict = {'distribution' : 'conical',
                'coeff' : 1,
                'npts' : 50}
 x,y = airfoil.sample(sample_dict)
-# airfoil.plotAirfoil()
+fig2 = airfoil.plotAirfoil()
+fig2.suptitle('coeff = 1')
 sample_dict['coeff'] = 3
 x2,y2 = airfoil.sample(sample_dict)
-# airfoil.plotAirfoil()
-#
-# plt.show()
+fig3 = airfoil.plotAirfoil()
+fig3.suptitle('coeff = 3')
+plt.show()
 
 #-----------------------------------------
 '''
@@ -65,8 +66,8 @@ x,y = airfoil.sample(upper=upper_dict, lower=lower_dict, npts_TE = 17)
 # airfoil.writeCoords('new_coords.dat',fmt='plot3d')
 
 # Plotting samples #1
-fig2 = airfoil.plotAirfoil()
-fig2.suptitle('Test double distribution')
+fig4 = airfoil.plotAirfoil()
+fig4.suptitle('Test double distribution')
 plt.show()
 
 airfoil.writeCoords('sampling_doubletest')
@@ -77,7 +78,7 @@ Here we read in a slice file from ADflow. There is some guesswork as to the
 API for ti, but the idea is there. We retrieve geometric information from the airfoil,
 cleanup the trailing edge, then compute geometric properties needed for postprocessing.
 '''
-data = ti.readSliceFile('fc_000_slices.dat')
+data = ti.readSliceFile('./tests/fc_000_slices.dat')
 x = data['Zone 1']['x']
 y = data['Zone 1']['y']
 
