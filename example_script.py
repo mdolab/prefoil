@@ -70,7 +70,7 @@ fig4 = airfoil.plotAirfoil()
 fig4.suptitle('Test double distribution')
 plt.show()
 
-airfoil.writeCoords('sampling_doubletest')
+# airfoil.writeCoords('sampling_doubletest')
 quit()
 #-----------------------------------------
 '''
