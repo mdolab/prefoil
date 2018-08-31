@@ -479,8 +479,7 @@ class Airfoil(object):
         self.sampled_X = coords
         x = coords[:,0]
         y = coords[:,1]
-        print(len(x))
-        print(points_init)
+
         # To be updated later on if new point add/remove operations are included
         # len(x)-1 because of the last point added for "closure"
         if single_distr is True and len(x)-1 != points_init:
