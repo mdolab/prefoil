@@ -19,6 +19,8 @@ from scipy.optimize import fsolve, brentq
 import sampling as smp
 from numpy.linalg import norm
 import os
+import pygeo
+import matplotlib.pyplot as plt
 
 class Error(Exception):
     """
@@ -61,7 +63,30 @@ def _readCoordFile(filename):
     X = np.array(r)
     return X
 
+def _cleanup_pts(X):
+    '''
+    For now this just removes points which are too close together. In the future we may need to add further
+    functionalities. This is just a generic cleanup tool which is called as part of preprocessing.
+    DO NOT USE THIS, IT CURRENTLY DOES NOT WORK
+    '''
+    uniquePts, link = pygeo.geo_utils.pointReduce(X, nodeTol=1e-12)
+    nUnique = len(uniquePts)
+
+    # Create the mask for the unique data:
+    mask = np.zeros(nUnique, 'intc')
+    for i in range(len(link)):
+        mask[link[i]] = i
+
+    # De-duplicate the data
+    data = X[mask, :]
+    return data
+
+
 def _reorder(coords):
+    '''
+    This function serves two purposes. First, it makes sure the points are oriented in counter-clockwise
+    direction. Second, it makes sure the points start at the TE. 
+    '''
     pass
 
 def _genNACACoords(name):
@@ -148,7 +173,10 @@ class Airfoil(object):
     """
     Create an instance of an airfoil. There are two ways of instantiating 
     this object: by passing in a set of points, or by reading in a coordinate
-    file. 
+    file. The points need not start at the TE nor go ccw around the airfoil,
+    but they must be ordered such that they form a continuous airfoil surface.
+    If they are not (due to MPI or otherwise), use the order() function within
+    tecplotFileParser.
 
     Parameters
     ----------
@@ -180,6 +208,7 @@ class Airfoil(object):
         self.top = None
         self.bottom = None
         self.sampled_X = None
+        self.camber_pts = None
 
         if 'k' in kwargs:
             self.k = kwargs['k']
@@ -199,11 +228,13 @@ class Airfoil(object):
         if 'X' in kwargs:
             self.X = kwargs['X']
         elif 'x' in kwargs and 'y' in kwargs:
-            self.X = np.hstack((kwargs['x'],kwargs['y']))
+            self.X = np.stack((kwargs['x'],kwargs['y']),axis=1)
         elif 'filename' in kwargs:
             self.X = _readCoordFile(kwargs['filename'])
         else:
             raise Error('You need to provide either points or a filename to initialize.')
+
+        #self.X = _cleanup_pts(self.X)
 
         self.X, self.TE = _cleanup_TE(self.X,tol=1e-3)
         
@@ -237,7 +268,7 @@ class Airfoil(object):
 
             self.s_LE = brentq(dellds,0.3,0.7,args=(self.spline,self.TE))
             self.LE = self.spline.getValue(self.s_LE)
-        return self.s_LE
+        return self.LE
 
 
     def getLERadius(self):
@@ -278,19 +309,61 @@ class Airfoil(object):
             self.getChord()
         
         normalized_chord = self.chord_vec / self.chord
-        self.twist = -np.arccos(normalized_chord.dot(np.array([1., 0.]))) * np.sign(normalized_chord[1])
+        self.twist = np.arccos(normalized_chord.dot(np.array([1., 0.]))) * np.sign(normalized_chord[1])
         return self.twist
     
-    def getCamber(self):
-        pass
+    def _getCTDistribution(self):
+        '''
+        Return the coordinates of the camber points, as well as the thicknesses (this is with british
+        convention).
+        '''
+        self._splitAirfoil()
+        if self.twist is None:
+            self.getTwist()
+        if self.chord is None:
+            self.getChord
+        num_chord_pts = 40
+        
+        # Compute the chord
+        chord_pts = np.vstack([self.LE,self.TE])
+        chord = line(chord_pts)
+
+        cos_sampling = np.linspace(0,1,num_chord_pts+1,endpoint=False)[1:]
+        chord_pts = chord.getValue(cos_sampling)
+        camber_pts = np.zeros((num_chord_pts,2))
+        thickness_pts = np.zeros((num_chord_pts,2))
+        for j in range(chord_pts.shape[0]):
+            direction = np.array([np.cos(np.pi/2 - self.twist), np.sin(np.pi/2 - self.twist)])
+            direction = direction/norm(direction)
+            top = chord_pts[j,:] + 0.5*self.chord * direction
+            bottom = chord_pts[j,:] - 0.5*self.chord * direction
+            temp = np.vstack((top,bottom))
+            normal = line(temp)
+            s_top,t_top,D = self.top.projectCurve(normal,nIter=5000,eps=1e-16)
+            s_bottom,t_bottom,D = self.bottom.projectCurve(normal,nIter=5000,eps=1e-16)
+            intersect_top = self.top.getValue(s_top)
+            intersect_bottom = self.bottom.getValue(s_bottom)
+
+            plt.plot(temp[:,0],temp[:,1],'-og')
+            plt.plot(intersect_top[0],intersect_top[1],'or')
+            plt.plot(intersect_bottom[0],intersect_bottom[1],'ob')
+
+            camber_pts[j,:] = (intersect_top + intersect_bottom)/2
+            thickness_pts[j,:] = (intersect_top - intersect_bottom)/2
+        plt.plot(camber_pts[:,0],camber_pts[:,1],'ok')
+
+        self.camber_pts = np.vstack((self.TE,camber_pts,self.LE)) # Add TE and LE to the camber points.
+        self.thickness_pts = np.vstack((self.TE,thickness_pts,self.LE))
     
     def getMaxCamber(self):
         pass
     
-    def getThickness(self):
-        pass
 
-    def getMaxThickness(self):
+    def getMaxThickness(self,method):
+        '''
+        method : str
+            Can be one of 'british', 'american', or 'projected'
+        '''
         pass
     
     def getChord(self):
@@ -305,12 +378,12 @@ class Airfoil(object):
     def getChordVec(self):
         if self.chord_vec is None:
             self.getChord()
-        
         return self.chord_vec
 
     def isReflex(self):
         '''
         An airfoil is reflex if the derivative of the camber line at the trailing edge is positive.
+        #TODO this has not been tested
         '''
         if self.camber is None:
             self.getCamber()
@@ -332,15 +405,22 @@ class Airfoil(object):
             self.recompute()
             origin = np.zeros(2)
             sample_pts = self._getDefaultSampling()
+            self.getLE()
+            self.getTwist()
+            self.getChord()
+            '''
+            Order of operation here is important, even though all three operations are linear, because
+            we rotate about the origin for simplicity.
+            '''
+            if center:
+                delta = -1.0*self.LE
+                sample_pts = _translateCoords(sample_pts,delta)
             if derotate:
-                angle = -1.0*self.getTwist()
+                angle = -1.0*self.twist
                 sample_pts = _rotateCoords(sample_pts,angle,origin)
             if normalize:
-                factor = 1.0/self.getChord()
+                factor = 1.0/self.chord
                 sample_pts = _scaleCoords(sample_pts,factor,origin)
-            if center:
-                delta = -1.0*self.getLE()
-                sample_pts = _translateCoords(sample_pts,delta)
             
             self.X = sample_pts
             self.recompute()
@@ -390,7 +470,7 @@ class Airfoil(object):
             self.recompute()
         if self.LE is None:
             self.getChord()
-        elif self.LE == np.zeros(2):
+        elif np.all(self.LE == np.zeros(2)):
             return
         self.translate(-1.0*self.LE)
 
@@ -407,13 +487,6 @@ class Airfoil(object):
         pass
 
     def _removeTEPts(self):
-        pass
-
-    def _translateCoords(self):
-        pass
-    def _rotateCoords(self):
-        pass
-    def _scaleCoords(self):
         pass
 
 ## Sampling
@@ -444,10 +517,8 @@ class Airfoil(object):
 
         if lower is None:
             lower = upper
-        if not self.s_LE:
-            s_LE = self.getLE()
-        else:
-            s_LE = self.s_LE
+        if self.s_LE is None:
+            self.getLE()
         bad_edge_upr = False
         bad_edge_lwr = False
         if 'bad_edge' in upper:
@@ -461,7 +532,7 @@ class Airfoil(object):
         sampling = smp.joinedSpacing(upper['npts'],upper_distr,
                                  upper['coeff'],lower['npts'],
                                  lower_distr,lower['coeff'],
-                                 s_LE=s_LE,bad_edge_upr=bad_edge_upr,
+                                 s_LE=self.s_LE,bad_edge_upr=bad_edge_upr,
                                  bad_edge_lwr=bad_edge_lwr)
 
         coords = self.spline.getValue(sampling)
@@ -500,6 +571,7 @@ class Airfoil(object):
 
 
 ## Utils
+# maybe remove and put into a separate location?
     def plotAirfoil(self):
         import matplotlib.pyplot as plt
         fig = plt.figure()
@@ -508,5 +580,7 @@ class Airfoil(object):
         plt.axis('equal')
         if self.sampled_X is not None:
             plt.plot(self.sampled_X[:,0],self.sampled_X[:,1],'o')
+        if self.camber_pts is not None:
+            plt.plot(self.camber_pts[:,0],self.camber_pts[:,1],'-o')
         plt.title(self.name)
         return fig

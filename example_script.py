@@ -6,6 +6,7 @@ Sample usage script showing some use cases, and how the API should work.
 from pyFoil import Airfoil #, reorder
 import matplotlib.pyplot as plt
 # import tecplot_interface as ti # This does not exist yet
+# from postprocessing.pytecplot.tecplotFileParser import TecplotParser
 
 '''
 Here we read an airfoil coordinate file from a database, perform geometric
@@ -13,8 +14,6 @@ cleanup, and then sample it with a particular distribution.
 '''
 filename = './tests/rae2822.dat'
 airfoil = Airfoil(filename=filename,cleanup=False)
-
-airfoil.smooth(method='Laplacian')
 
 sample_dict = {'distribution' : 'conical',
                'coeff' : 1,
@@ -65,25 +64,48 @@ x,y = airfoil.sample(upper=upper_dict, lower=lower_dict, npts_TE = 17)
 
 # airfoil.writeCoords('new_coords.dat',fmt='plot3d')
 
-# Plotting samples #1
+# Plotting samples
 fig4 = airfoil.plotAirfoil()
 fig4.suptitle('Test double distribution')
 plt.show()
 
 airfoil.writeCoords('sampling_doubletest')
-quit()
-#-----------------------------------------
+exit()
+# -----------------------------------------
 '''
 Here we read in a slice file from ADflow. There is some guesswork as to the
 API for ti, but the idea is there. We retrieve geometric information from the airfoil,
 cleanup the trailing edge, then compute geometric properties needed for postprocessing.
 '''
-data = ti.readSliceFile('./tests/fc_000_slices.dat')
-x = data['Zone 1']['x']
-y = data['Zone 1']['y']
+filename = 'tests/fc0_013_slices.dat'
 
-airfoil = Airfoil(x=x,y=y, reorder=True)
+# sectionName, sectionData, sectionConn = ti.readTecplotFEdata(filename)
 
+# data = sectionData[1]
+# conn = sectionConn[1]
+# coords = ti.convert(data,conn)
+
+# x = coords[:,0]
+# y = coords[:,2]
+
+tpp = TecplotParser(filename, debug=False)
+# For plotting and indexing retrieve the variable names and zones
+zoneNames = tpp.getZoneNames()
+data = tpp.getData()
+x = data[zoneNames[1]]['CoordinateX']
+y = data[zoneNames[1]]['CoordinateZ']
+plt.figure()
+plt.plot(x,y,'-o')
+plt.show()
+
+## THIS APPROACH IS VERY BAD. NEED BETTER WAY TO DO GEOMETRY CLEANUP
+airfoil = Airfoil(x=x,y=y, cleanup=True)
+fig = airfoil.plotAirfoil()
+airfoil.derotate()
+airfoil.center()
+airfoil.normalize()
+fig2 = airfoil.plotAirfoil()
+plt.show()
 max_camber, camber_loc = airfoil.getMaxCamber()
 max_thickness, thickness_loc = airfoil.getMaxThickness()
 chord = airfoil.getChord()
@@ -91,4 +113,3 @@ c_c = camber_loc/chord
 t_c = thickness_loc/chord
 
 twist = airfoil.getTwist()
-
