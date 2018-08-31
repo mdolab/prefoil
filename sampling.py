@@ -3,7 +3,7 @@ from scipy import optimize
 
 
 def cosine(n, m=np.pi, **kwargs):
-    s = ellipticalSpacing(n, m, b=1)
+    s = conical(n, m, coeff=1)
     return s
 
 
