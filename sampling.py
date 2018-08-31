@@ -8,7 +8,6 @@ def cosine(n, m=np.pi, **kwargs):
 
 
 def conical(n, m=np.pi, coeff=1, bad_edge=False):
-    x = np.linspace(0, m, n)
     '''
     Here I make a sneaky hack to remove the second and second to last points
     of the ndarray. This is necessary to avoid bad mesh elements at small
@@ -18,7 +17,10 @@ def conical(n, m=np.pi, coeff=1, bad_edge=False):
     b=coeff
 
     if bad_edge is True:
+        x = np.linspace(0, m, n + 2)
         x = np.delete(np.delete(x, 1), -2)
+    else:
+        x = np.linspace(0, m, n)
     if b >= 1:
         s = (1 + 1 / np.sqrt(np.cos(x)**2 + np.sin(x)**2 / b**2) * np.cos(x))*0.5
     else:

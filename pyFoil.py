@@ -472,7 +472,7 @@ class Airfoil(object):
         # Adding last point (1,-0) for pyHyp issues
         # TODO: Add handling of TE, esp blunt or round
         end_point = np.copy(coords[0])
-        end_point[1] = -0.0
+        end_point[1] = -end_point[1]
         coords = np.concatenate((coords, end_point.reshape(1, -1)), axis=0)
         if cell_check is True:
             checkCellRatio(coords)
