@@ -382,9 +382,9 @@ class Airfoil(object):
         An example dictionary is reported below:
 
         >>> sample_dict = {'distribution' : 'conical',
-               'coeff' : 1,
-               'npts' : 50,
-               'bad_edge': False,}
+                'coeff' : 1,
+                'npts' : 50,
+                'bad_edge': False,}
 
         The point distribution currently implemented are:
             - *Cosine*:
@@ -402,6 +402,8 @@ class Airfoil(object):
         '''
 
         if lower is None:
+            upper['npts'] = upper['npts']/2
+            print(upper['npts'])
             lower = upper
         if not self.s_LE:
             s_LE = self.getLE()
