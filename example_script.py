@@ -69,9 +69,10 @@ fig4 = airfoil.plotAirfoil()
 fig4.suptitle('Test double distribution')
 plt.show()
 
-airfoil.writeCoords('sampling_doubletest')
+#airfoil.writeCoords('sampling_doubletest')
 exit()
-# -----------------------------------------
+
+#-----------------------------------------
 '''
 Here we read in a slice file from ADflow. There is some guesswork as to the
 API for ti, but the idea is there. We retrieve geometric information from the airfoil,

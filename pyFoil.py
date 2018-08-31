@@ -97,7 +97,6 @@ def _cleanup_TE(X,tol):
     return X, TE
 
 def _writePlot3D(filename,x,y):
-    filename, ext = os.path.splitext(filename)
     filename += '.fmt'
     f = open(filename, 'w')
     f.write('1\n')
@@ -113,9 +112,8 @@ def _writePlot3D(filename,x,y):
                     f.write('%g\n'%(float(j)))
     f.close()
 
-def _writePlot3D_Marco(filename,x,y):
-    filename, ext = os.path.splitext(filename)
-    filename += '.fmt'
+def _writeDat(filename,x,y):
+    filename += '.dat'
     f = open(filename, 'w')
 
     for i in range(0, len(x)):
@@ -496,9 +494,9 @@ class Airfoil(object):
         An example dictionary is reported below:
 
         >>> sample_dict = {'distribution' : 'conical',
-               'coeff' : 1,
-               'npts' : 50,
-               'bad_edge': False,}
+        >>>        'coeff' : 1,
+        >>>        'npts' : 50,
+        >>>        'bad_edge': False}
 
         The point distribution currently implemented are:
             - *Cosine*:
@@ -514,11 +512,17 @@ class Airfoil(object):
                 Number of points along the **blunt** trailing edge
         :return: Coordinates array, anticlockwise, from trailing edge
         '''
-
+        single_distr = False
+        points_init = upper['npts']
         if lower is None:
+            single_distr = True
+            upper['npts'] = upper['npts']//2
             lower = upper
+        else:
+            points_init_lwr = len(lower['npts'])
         if self.s_LE is None:
             self.getLE()
+
         bad_edge_upr = False
         bad_edge_lwr = False
         if 'bad_edge' in upper:
@@ -540,14 +544,20 @@ class Airfoil(object):
         # Adding last point (1,-0) for pyHyp issues
         # TODO: Add handling of TE, esp blunt or round
         end_point = np.copy(coords[0])
-        end_point[1] = -0.0
+        end_point[1] = -end_point[1]
         coords = np.concatenate((coords, end_point.reshape(1, -1)), axis=0)
         if cell_check is True:
             checkCellRatio(coords)
         self.sampled_X = coords
         x = coords[:,0]
         y = coords[:,1]
-        return x,y
+
+        # To be updated later on if new point add/remove operations are included
+        # len(x)-1 because of the last point added for "closure"
+        if single_distr is True and len(x)-1 != points_init:
+            print('WARNING: The number of sampling points has been changed \n'
+                    '\t\tCurrent points number: %i' % (len(x)))
+        return x, y
 
     def _getDefaultSampling(self,npts = 100):
         sampling = np.linspace(0,1,npts)
@@ -567,8 +577,9 @@ class Airfoil(object):
             raise Error("No coordinates to print, run .sample() first")
 
         if fmt == 'plot3d':
-            _writePlot3D(filename,x,y)
-
+            _writePlot3D(filename, x, y)
+        if fmt == 'dat':
+            _writeDat(filename, x, y)
 
 ## Utils
 # maybe remove and put into a separate location?
@@ -579,8 +590,9 @@ class Airfoil(object):
         plt.plot(pts[:,0],pts[:,1],'-')
         plt.axis('equal')
         if self.sampled_X is not None:
-            plt.plot(self.sampled_X[:,0],self.sampled_X[:,1],'o')
+            plt.plot(self.sampled_X[:,0],self.sampled_X[:,1],'-o')
         if self.camber_pts is not None:
             plt.plot(self.camber_pts[:,0],self.camber_pts[:,1],'-o')
+
         plt.title(self.name)
         return fig
