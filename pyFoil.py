@@ -234,7 +234,7 @@ class Airfoil(object):
 
         #self.X = _cleanup_pts(self.X)
 
-        self.X_new, self.TE = _cleanup_TE(self.X,tol=1e-3)
+        self.X, self.TE = _cleanup_TE(self.X,tol=1e-3)
         if 'cleanup' in kwargs and kwargs['cleanup']:
             self._cleanup()
         self.recompute()
