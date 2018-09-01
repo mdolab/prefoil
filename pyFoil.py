@@ -234,15 +234,13 @@ class Airfoil(object):
 
         #self.X = _cleanup_pts(self.X)
 
-        self.X, self.TE = _cleanup_TE(self.X,tol=1e-3)
-        
+        self.X_new, self.TE = _cleanup_TE(self.X,tol=1e-3)
         if 'cleanup' in kwargs and kwargs['cleanup']:
             self._cleanup()
         self.recompute()
 
-
     def recompute(self):
-        self.spline = Curve(X=self.X,k=self.k,nCtl=self.nCtl)
+        self.spline = Curve(X=self.X,k=self.k) #nCtl=self.nCtl
 
 ## Geometry Information
     def getLE(self):
@@ -581,8 +579,11 @@ class Airfoil(object):
 
         if fmt == 'plot3d':
             _writePlot3D(filename, x, y)
-        if fmt == 'dat':
+        elif fmt == 'dat':
             _writeDat(filename, x, y)
+        else:
+            print(fmt)
+            raise Warning('Output file not supported')
 
 ## Utils
 # maybe remove and put into a separate location?
