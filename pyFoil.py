@@ -235,14 +235,12 @@ class Airfoil(object):
         #self.X = _cleanup_pts(self.X)
 
         self.X, self.TE = _cleanup_TE(self.X,tol=1e-3)
-        
         if 'cleanup' in kwargs and kwargs['cleanup']:
             self._cleanup()
         self.recompute()
 
-
     def recompute(self):
-        self.spline = Curve(X=self.X,k=self.k,nCtl=self.nCtl)
+        self.spline = Curve(X=self.X,k=self.k) #nCtl=self.nCtl
 
 ## Geometry Information
     def getLE(self):
@@ -310,7 +308,7 @@ class Airfoil(object):
         self.twist = np.arccos(normalized_chord.dot(np.array([1., 0.]))) * np.sign(normalized_chord[1])
         return self.twist
     
-    def _getCTDistribution(self):
+    def getCTDistribution(self):
         '''
         Return the coordinates of the camber points, as well as the thicknesses (this is with british
         convention).
@@ -320,13 +318,13 @@ class Airfoil(object):
             self.getTwist()
         if self.chord is None:
             self.getChord
-        num_chord_pts = 40
+        num_chord_pts = 100
         
         # Compute the chord
         chord_pts = np.vstack([self.LE,self.TE])
         chord = line(chord_pts)
 
-        cos_sampling = np.linspace(0,1,num_chord_pts+1,endpoint=False)[1:]
+        cos_sampling = np.linspace(0,1,num_chord_pts,endpoint=False)  # [1:] +1
         chord_pts = chord.getValue(cos_sampling)
         camber_pts = np.zeros((num_chord_pts,2))
         thickness_pts = np.zeros((num_chord_pts,2))
@@ -342,17 +340,20 @@ class Airfoil(object):
             intersect_top = self.top.getValue(s_top)
             intersect_bottom = self.bottom.getValue(s_bottom)
 
-            plt.plot(temp[:,0],temp[:,1],'-og')
-            plt.plot(intersect_top[0],intersect_top[1],'or')
-            plt.plot(intersect_bottom[0],intersect_bottom[1],'ob')
+            # plt.plot(temp[:,0],temp[:,1],'-og')
+            # plt.plot(intersect_top[0],intersect_top[1],'or')
+            # plt.plot(intersect_bottom[0],intersect_bottom[1],'ob')
 
             camber_pts[j,:] = (intersect_top + intersect_bottom)/2
-            thickness_pts[j,:] = (intersect_top - intersect_bottom)/2
-        plt.plot(camber_pts[:,0],camber_pts[:,1],'ok')
+            thickness_pts[j,0] = (intersect_top[0] + intersect_bottom[0])/2
+            thickness_pts[j,1]= (intersect_top[1] - intersect_bottom[1]) / 2
+        # plt.plot(camber_pts[:,0],camber_pts[:,1],'ok')
 
-        self.camber_pts = np.vstack((self.TE,camber_pts,self.LE)) # Add TE and LE to the camber points.
-        self.thickness_pts = np.vstack((self.TE,thickness_pts,self.LE))
-    
+        self.camber_pts = np.vstack((self.LE,camber_pts,self.TE)) # Add TE and LE to the camber points.
+        self.thickness_pts = np.vstack((self.LE,thickness_pts,self.TE))
+
+        return self.camber_pts, self.thickness_pts
+
     def getMaxCamber(self):
         pass
     
@@ -578,8 +579,11 @@ class Airfoil(object):
 
         if fmt == 'plot3d':
             _writePlot3D(filename, x, y)
-        if fmt == 'dat':
+        elif fmt == 'dat':
             _writeDat(filename, x, y)
+        else:
+            print(fmt)
+            raise Warning('Output file not supported')
 
 ## Utils
 # maybe remove and put into a separate location?
