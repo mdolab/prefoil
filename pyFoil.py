@@ -28,7 +28,7 @@ class Error(Exception):
     was a explicitly raised exception.
     """
     def __init__(self, message):
-        msg = '\n+' + '-'*78 + '+' + '\n' + '| pySpline Error: '
+        msg = '\n+' + '-'*78 + '+' + '\n' + '| pyFoil Error: '
         i = 17
         for word in message.split():
             if len(word) + i + 1 > 78: # Finish line and start new one
@@ -196,6 +196,7 @@ class Airfoil(object):
     def __init__(self, **kwargs):
         self.TE = None
         self.LE = None
+        self.TE_thickness = None
         self.s_LE = None
         self.LE_rad = None
         self.TE_angle = None
@@ -215,7 +216,7 @@ class Airfoil(object):
         if 'nCtl' in kwargs:
             self.nCtl = kwargs['nCtl']
         else:
-            self.nCtl = 20
+            self.nCtl = None
         if 'name' in kwargs:
             self.name = kwargs['name']
         elif 'filename' in kwargs:
@@ -240,7 +241,10 @@ class Airfoil(object):
         self.recompute()
 
     def recompute(self):
-        self.spline = Curve(X=self.X,k=self.k) #nCtl=self.nCtl
+        if self.nCtl is None:
+            self.spline = Curve(X=self.X,k=self.k)
+        else:
+            self.spline = Curve(X=self.X,k=self.k,nCtl=self.nCtl)
 
 ## Geometry Information
     def getLE(self):
@@ -282,6 +286,12 @@ class Airfoil(object):
         self.TE = (self.spline.getValue(0) + self.spline.getValue(1))/2
         return self.TE
 
+    def getTEThickness(self):
+        top = self.spline.getValue(0)
+        bottom = self.spline.getValue(1)
+        self.TE_thickness = np.array([top[0] + bottom[0], top[1] - bottom[1]])/2
+        return self.TE_thickness
+
     def getTEAngle(self):
         '''
         Computes the trailing edge angle of the airfoil. We assume here that the spline goes from top to bottom, and that s=0 and s=1 corresponds to the 
@@ -291,7 +301,7 @@ class Airfoil(object):
         top = top/norm(top)
         bottom = self.spline.getDerivative(1)
         bottom = bottom/norm(bottom)
-        print(np.dot(top,bottom))
+        # print(np.dot(top,bottom))
         self.TE_angle = np.pi - np.arccos(np.dot(top,bottom))
         return np.rad2deg(self.TE_angle)
     
@@ -324,7 +334,9 @@ class Airfoil(object):
         chord_pts = np.vstack([self.LE,self.TE])
         chord = line(chord_pts)
 
-        cos_sampling = np.linspace(0,1,num_chord_pts,endpoint=False)  # [1:] +1
+        cos_sampling = np.linspace(0,1,num_chord_pts+1,endpoint=False)[1:]
+        #cos_sampling = smp.conical(num_chord_pts+2,coeff=1)[1:-1]
+
         chord_pts = chord.getValue(cos_sampling)
         camber_pts = np.zeros((num_chord_pts,2))
         thickness_pts = np.zeros((num_chord_pts,2))
@@ -346,11 +358,12 @@ class Airfoil(object):
 
             camber_pts[j,:] = (intersect_top + intersect_bottom)/2
             thickness_pts[j,0] = (intersect_top[0] + intersect_bottom[0])/2
-            thickness_pts[j,1]= (intersect_top[1] - intersect_bottom[1]) / 2
+            thickness_pts[j,1] = (intersect_top[1] - intersect_bottom[1])/2
         # plt.plot(camber_pts[:,0],camber_pts[:,1],'ok')
 
         self.camber_pts = np.vstack((self.LE,camber_pts,self.TE)) # Add TE and LE to the camber points.
-        self.thickness_pts = np.vstack((self.LE,thickness_pts,self.TE))
+        self.getTEThickness()
+        self.thickness_pts = np.vstack((np.array((self.LE[0],0)),thickness_pts,self.TE_thickness))
 
         return self.camber_pts, self.thickness_pts
 
@@ -519,8 +532,6 @@ class Airfoil(object):
             single_distr = True
             upper['npts'] = upper['npts']//2
             lower = upper
-        else:
-            points_init_lwr = len(lower['npts'])
         if self.s_LE is None:
             self.getLE()
 
@@ -544,10 +555,10 @@ class Airfoil(object):
 
         # Adding last point (1,-0) for pyHyp issues
         # TODO: Add handling of TE, esp blunt or round
-        end_point = np.copy(coords[0])
+        end_point = np.copy(coords[0,:])
         if end_point[1] == 0.0:
             end_point[1] = -0.0
-        coords = np.concatenate((coords, end_point.reshape(1, -1)), axis=0)
+        coords = np.vstack((coords, end_point)) 
         if cell_check is True:
             checkCellRatio(coords)
         self.sampled_X = coords
@@ -555,14 +566,14 @@ class Airfoil(object):
         y = coords[:,1]
 
         # To be updated later on if new point add/remove operations are included
-        # len(x)-1 because of the last point added for "closure"
-        if single_distr is True and len(x)-1 != points_init:
+        # x.size-1 because of the last point added for "closure"
+        if single_distr is True and x.size-1 != points_init:
             print('WARNING: The number of sampling points has been changed \n'
-                    '\t\tCurrent points number: %i' % (len(x)))
+                    '\t\tCurrent points number: %i' % (x.size))
         return x, y
 
-    def _getDefaultSampling(self,npts = 100):
-        sampling = np.linspace(0,1,npts)
+    def _getDefaultSampling(self,npts = 1000):
+        sampling = smp.cosine(npts,coeff=2)
         return self.spline.getValue(sampling)
 ## Output
     def writeCoords(self, filename,fmt='plot3d'):
@@ -583,8 +594,7 @@ class Airfoil(object):
         elif fmt == 'dat':
             _writeDat(filename, x, y)
         else:
-            print(fmt)
-            raise Warning('Output file not supported')
+            raise Error(fmt + ' is not a supported output format!')
 
 ## Utils
 # maybe remove and put into a separate location?
@@ -592,12 +602,15 @@ class Airfoil(object):
         import matplotlib.pyplot as plt
         fig = plt.figure()
         pts = self._getDefaultSampling(npts=1000)
-        plt.plot(pts[:,0],pts[:,1],'-')
+        plt.plot(pts[:,0],pts[:,1],'-r')
         plt.axis('equal')
         if self.sampled_X is not None:
-            plt.plot(self.sampled_X[:,0],self.sampled_X[:,1],'-o')
+           plt.plot(self.sampled_X[:,0],self.sampled_X[:,1],'o')
+        
         if self.camber_pts is not None:
-            plt.plot(self.camber_pts[:,0],self.camber_pts[:,1],'-o')
-
-        plt.title(self.name)
+            fig2 = plt.figure()
+            plt.plot(self.camber_pts[:,0],self.camber_pts[:,1],'-og',label='camber')
+            plt.plot(self.thickness_pts[:,0],self.thickness_pts[:,1],'-ob',label='thickness')
+            plt.legend(loc='best')
+            plt.title(self.name)
         return fig
