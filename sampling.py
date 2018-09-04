@@ -2,6 +2,11 @@ import numpy as np
 from scipy import optimize
 
 
+def linear(n, m=np.pi, **kwargs):
+    s = conical(n, m, coeff=0)
+    return s
+
+
 def cosine(n, m=np.pi, **kwargs):
     s = conical(n, m, coeff=1)
     return s
