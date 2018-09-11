@@ -8,8 +8,6 @@ Contains a class for creating, modifying and exporting airfoils.
 Questions:
 - Modes?!? Should we provide any functionality for that?
 - Do we want twist in deg or rad?
-
-
 """
 from __future__ import print_function
 from __future__ import division
@@ -93,6 +91,9 @@ def _reorder(coords):
 def _genNACACoords(name):
     pass
 
+def _cleanup_TE(X,tol):
+    TE = np.mean(X[[-1,0],:],axis=0)
+    return X, TE
 
 def _writePlot3D(filename,x,y):
     filename += '.fmt'
@@ -148,7 +149,6 @@ def checkCellRatio(X,ratio_tol=1.2):
     crit_cell_size = np.flatnonzero(cell_size<1e-10)
     for i in crit_cell_size:
         print("critical I", i)
-
     cell_ratio = cell_size[1:]/cell_size[:-1]
     exc = np.flatnonzero(cell_ratio > ratio_tol)
 
@@ -190,6 +190,11 @@ class Airfoil(object):
     name : str
         The name of the airfoil.
 
+    def recompute(self):
+        if self.nCtl is None:
+            self.spline = Curve(X=self.X,k=self.k)
+        else:
+            self.spline = Curve(X=self.X,k=self.k,nCtl=self.nCtl)
 
     Examples
     --------
