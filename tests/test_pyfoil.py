@@ -37,29 +37,27 @@ class TestSampling(unittest.TestCase):
 
     def test_defaults(self):
 
-        self.foil.sample(100)
+        self.foil.getSampledPts(100, nTEPts=10)
         # self.foil.plot()
 
     def test_custom_dist_sample(self):
-        self.foil.sample(100, spacingFunc=np.linspace)
+        self.foil.getSampledPts(100, spacingFunc=np.linspace)
 
     def test_pass_args_to_dist(self):
         # here
         func_args = {
             'coeff': 2
         }
-        self.foil.sample(100, spacingFunc=sampling.conical, func_args=func_args)
+        self.foil.getSampledPts(100, spacingFunc=sampling.conical, func_args=func_args)
         # self.foil.plot()
-
-    # def
 
 
 if __name__ == '__main__':
-    # unittest.main()
-    X = pyFoil._readCoordFile('testAirfoil.dat')
-    foil = pyFoil.Airfoil(X)
+    unittest.main()
+    # X = pyFoil._readCoordFile('testAirfoil.dat')
+    # foil = pyFoil.Airfoil(X)
     # foil.rotate(45)
-    foil.sample()
-    foil.plot()
-    foil.derotate()
-    print(foil.TE, foil.LE)
+    # foil.sample()
+    # foil.plot()
+    # foil.derotate()
+    # print(foil.TE, foil.LE)

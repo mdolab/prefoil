@@ -196,25 +196,32 @@ class Airfoil(object):
     The general sequence of operations for using pyfoil is as follows::
       >>> from pygeo import *
     """
-    def __init__(self, coords, spline_order=3): #, **kwargs):
+    def __init__(self,coords, spline_order=3, normalize=False): #, **kwargs):
 
+        self.spline_order = spline_order
         # for arg in kwargs.keys():
         #     setattr(self, arg, kwargs[arg])
 
-
         ## initialize geometric information
-        self.spline = pySpline.Curve(X=coords,k=spline_order)
+        self.recompute(coords)
+
+        if normalize:
+            self.normalize()
+
+    def recompute(self, coords):
+        self.spline = pySpline.Curve(X=coords,k=self.spline_order)
 
         self.TE = self.getTE()
         self.LE, self.s_LE  = self.getLE()
         self.chord = self.getChord()
         self.twist =  self.getTwist()
 
+
 ## Geometry Information
 
     def getTE(self):
-        self.TE = (self.spline.getValue(0) + self.spline.getValue(1))/2
-        return self.TE
+        TE = (self.spline.getValue(0) + self.spline.getValue(1))/2
+        return TE
 
     def getLE(self):
         '''
@@ -272,18 +279,15 @@ class Airfoil(object):
 
         first = self.spline.getDerivative(self.s_LE)
         second = self.spline.getSecondDerivative(self.s_LE)
-        self.LE_rad = np.linalg.norm(first)**3 / np.linalg.norm(first[0]*second[1] - first[1]*second[0])
-        return self.LE_rad
+        LE_rad = np.linalg.norm(first)**3 / np.linalg.norm(first[0]*second[1] - first[1]*second[0])
+        return LE_rad
 
     def getCTDistribution(self):
         '''
         Return the coordinates of the camber points, as well as the thicknesses (this is with british convention).
         '''
         self._splitAirfoil()
-        if self.twist is None:
-            self.getTwist()
-        if self.chord is None:
-            self.getChord
+
         num_chord_pts = 100
 
         # Compute the chord
@@ -333,7 +337,7 @@ class Airfoil(object):
         bottom = self.spline.getDerivative(1)
         bottom = bottom/np.linalg.norm(bottom)
         # print(np.dot(top,bottom))
-        self.TE_angle = np.pi - np.arccos(np.dot(top,bottom))
+        TE_angle = np.pi - np.arccos(np.dot(top,bottom))
         return np.rad2deg(self.TE_angle)
 
   ##TODO write
@@ -371,27 +375,26 @@ class Airfoil(object):
 ## Geometry Modification
 
     def rotate(self,angle,origin=np.zeros(2)):
-        new_coords = _rotateCoords(self.spline.X,angle*np.pi/180,origin)
+        new_coords = _rotateCoords(self.spline.X,np.deg2rad(angle),origin)
 
         # reset initialize with the new set of coordinates
         self.__init__(new_coords, spline_order=self.spline.k)
+        # self.update(new_coords, spline_order=self.spline.k)
 
     def derotate(self,origin=np.zeros(2)):
         self.rotate(-1.0*self.twist,origin=origin)
 
 
     def scale(self,factor,origin=np.zeros(2)):
-        sample_pts = self._getDefaultSampling()
-        self.X = _scaleCoords(sample_pts,factor,origin)
-        self.recompute()
-        if self.chord is not None:
-            self.chord *= factor
+        new_coords = _scaleCoords(self.spline.X,factor,origin)
+        self.__init__(new_coords, spline_order=self.spline.k)
 
-    def normalize(self,origin=np.zeros(2)):
+        # if self.chord is not None:
+        #     self.chord *= factor
+
+    def normalizeChord(self,origin=np.zeros(2)):
         if self.spline is None:
             self.recompute()
-        if self.chord is None:
-            self.getChord()
         elif self.chord == 1:
             return
         self.scale(1.0/self.chord,origin=origin)
@@ -413,23 +416,19 @@ class Airfoil(object):
         self.translate(-1.0*self.LE)
 
     def splitAirfoil(self):
-        if self.s_LE is None:
-            self.getLE()
+        # if self.s_LE is None:
+            # self.getLE()
         top, bottom = self.spline.splitCurve(self.s_LE)
         return top, bottom
 
-    def _cleanup(self,derotate=True, normalize=True, center=True):
+    def normalizeAirfoil(self, derotate=True, normalize=True, center=True):
         if derotate or normalize or center:
-            self.recompute()
             origin = np.zeros(2)
-            sample_pts = self._getDefaultSampling()
-            self.getLE()
-            self.getTwist()
-            self.getChord()
-            '''
-            Order of operation here is important, even though all three operations are linear, because
-            we rotate about the origin for simplicity.
-            '''
+            sample_pts = self.spline.X
+
+
+            # Order of operation here is important, even though all three operations are linear, because
+            # we rotate about the origin for simplicity.
             if center:
                 delta = -1.0*self.LE
                 sample_pts = _translateCoords(sample_pts,delta)
@@ -440,14 +439,8 @@ class Airfoil(object):
                 factor = 1.0/self.chord
                 sample_pts = _scaleCoords(sample_pts,factor,origin)
 
-            self.X = sample_pts
-            self.recompute()
 
-
-
-
-    def smooth(self,method):
-        pass
+            self.recompute(sample_pts)
 
     def thickenTE(self):
         pass
@@ -462,7 +455,7 @@ class Airfoil(object):
         pass
 
 ## Sampling
-    def sample(self, nPts, spacingFunc=sampling.polynomial, func_args={}):
+    def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args={}, nTEPts=0):
         '''
         This function defines the point sampling along airfoil surface.
         An example dictionary is reported below:
@@ -489,7 +482,11 @@ class Airfoil(object):
         s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args)
         coords = self.spline.getValue(s)
 
-        self.__init__(coords, spline_order=self.spline.k)
+        if nTEPts:
+            coords_TE = np.zeros((nTEPts, coords.shape[1]))
+            for idim in range(coords.shape[1]):
+                coords_TE[:, idim] = np.linspace(self.spline.getValue(1)[idim], self.spline.getValue(0)[idim], nTEPts)
+            coords = np.vstack((coords,coords_TE))
 
 
         ##TODO
@@ -504,11 +501,12 @@ class Airfoil(object):
         # if single_distr is True and x.size-1 != points_init:
         #     print('WARNING: The number of sampling points has been changed \n'
         #             '\t\tCurrent points number: %i' % (x.size))
+
         return coords
 
 
 ## Output
-    def writeCoords(self, filename, fmt='plot3d'):
+    def writeCoords(self, coords,  filename, fmt='plot3d'):
         '''
         We have to discuss which types of printfiles we want to get and how
         to handle them (does this class print the last "sampled" x,y or do
@@ -516,9 +514,9 @@ class Airfoil(object):
         '''
 
         if fmt == 'plot3d':
-            _writePlot3D(filename, self.sampled_X[:,0], self.sampled_X[:,1])
+            _writePlot3D(filename, coords[:,0], coords[:,1])
         elif fmt == 'dat':
-            _writeDat(filename, x, y)
+            _writeDat(filename, coords[:,0], coords[:,1])
         else:
             raise Error(fmt + ' is not a supported output format!')
 
@@ -532,7 +530,6 @@ class Airfoil(object):
         plt.axis('equal')
         # if self.sampled_X is not None:
         plt.plot(self.spline.X[:,0],self.spline.X[:,1],'o')
-        plt.show()
 
 
         ##TODO
