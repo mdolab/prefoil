@@ -64,7 +64,7 @@ def polynomial(start, end, n, m=np.pi, order=5):
     return (s / 2 + 0.5) * (end - start) + start
 
 
-def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
+def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5, closedCurve=True):
     """
     function that returns two point distributions joined at s_LE
 
@@ -79,7 +79,10 @@ def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
     s1 = spacingFunc(0., s_LE, int(n * s_LE) + 1, **func_args)
     s2 = spacingFunc(s_LE, 1., int(n - n * s_LE) + 1, **func_args)
 
+    if not closedCurve:
+        s2 = s2[:-1]
+
     # combine the two distributions
-    s = np.append(s1[1:], s2[1:])
+    s = np.append(s1[:], s2[1:])
 
     return s

@@ -28,36 +28,39 @@ class TestBasic(unittest.TestCase):
     def test_twist(self):
         self.assertEqual(self.foil.getTwist(), 0)
 
+    def test_findPt(self):
+        self.assertAlmostEqual(self.foil.findPt(0.8)[0][0], 0.8)
 
 class TestSampling(unittest.TestCase):
-
+    # for now these just test if it runs without error, not if the output is right
     def setUp(self):
         X = pyFoil._readCoordFile('rae2822.dat')
         self.foil = pyFoil.Airfoil(X)
 
     def test_defaults(self):
-
         self.foil.getSampledPts(100, nTEPts=10)
-        # self.foil.plot()
 
     def test_custom_dist_sample(self):
         self.foil.getSampledPts(100, spacingFunc=np.linspace)
 
     def test_pass_args_to_dist(self):
-        # here
         func_args = {
             'coeff': 2
         }
         self.foil.getSampledPts(100, spacingFunc=sampling.conical, func_args=func_args)
-        # self.foil.plot()
+
+class TestGeoModification(unittest.TestCase):
+
+    def setUp(self):
+        X = pyFoil._readCoordFile('rae2822.dat')
+        self.foil = pyFoil.Airfoil(X)
+
+    def test_round_TE(self):
+        oldTE = self.foil.TE
+        self.foil.roundTE(k=4)
+        # the reason for the 4 decimal is because it doesn't exactly place the new TE point at the midpoint of the previous blunt foil
+        np.testing.assert_array_almost_equal(oldTE, self.foil.spline.X[0], decimal=4)
 
 
 if __name__ == '__main__':
     unittest.main()
-    # X = pyFoil._readCoordFile('testAirfoil.dat')
-    # foil = pyFoil.Airfoil(X)
-    # foil.rotate(45)
-    # foil.sample()
-    # foil.plot()
-    # foil.derotate()
-    # print(foil.TE, foil.LE)

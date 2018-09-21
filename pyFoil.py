@@ -15,7 +15,7 @@ from __future__ import division
 import warnings
 import numpy as np
 import pyspline as pySpline
-from scipy.optimize import fsolve, brentq
+from scipy.optimize import fsolve, brentq, newton
 from pyfoil import sampling
 import os
 import pygeo
@@ -190,11 +190,6 @@ class Airfoil(object):
     name : str
         The name of the airfoil.
 
-    def recompute(self):
-        if self.nCtl is None:
-            self.spline = Curve(X=self.X,k=self.k)
-        else:
-            self.spline = Curve(X=self.X,k=self.k,nCtl=self.nCtl)
 
     Examples
     --------
@@ -220,6 +215,7 @@ class Airfoil(object):
         self.LE, self.s_LE  = self.getLE()
         self.chord = self.getChord()
         self.twist =  self.getTwist()
+        self.closedCurve = (self.spline.getValue(0) == self.spline.getValue(1)).all()
 
 
 ## Geometry Information
@@ -266,7 +262,22 @@ class Airfoil(object):
         """alias for returning the points that make the airfoil spline"""
         return self.spline.X
 
+    def findPt(self, position, axis=0, s_0=0):
+        """ finds that point at the intersection of the plane defined by the axis and the postion
+            and the airfoil curve """
+
+        def  err(s):
+            return self.spline(s)[axis] - position
+
+        def  err_deriv(s):
+            return self.spline.getDerivative(s)[axis]
+
+        s_x = newton(err, s_0, fprime=err_deriv)
+
+        return self.spline.getValue(s_x), s_x
+
   ##TODO write tests
+
 
     def getTEThickness(self):
         top = self.spline.getValue(0)
@@ -453,11 +464,92 @@ class Airfoil(object):
     def sharpenTE(self):
         pass
 
-    def roundTE(self):
-        pass
+    def roundTE(self, xCut=0.98, k=4, nPts = 20 ):
+        """ this method creates a smooth round trailing edge **from a blunt one** using a spline
 
-    def _removeTEPts(self):
-        pass
+        Parameters
+        ----------
+        xCut : float
+            x location of the cut **as a percentage of the chord**
+        K: int (3 or 4)
+            order of the spline used to make the rounded trailing edge of the airfoil.
+        nPts : int
+            Number of trailing edge points to add to the airfoil spline
+
+        """
+        # convert the xCut loctation from a percentage to an abs value
+        xCut = self.LE[0] + xCut*( self.TE[0] - self.LE[0])
+        dx = (self.TE[0] - xCut)
+
+        # create the knot vector for the spline
+        t = [0]*k + [0.5] + [1]*k
+
+        # create the vector of control points for the spline
+        coeff = np.zeros((k+1,2))
+
+        for ii in [0, -1]:
+            coeff[ii], s = self.findPt(xCut, s_0=np.abs(ii))
+            # coeff[-1], s_lower  = self.findPt(xCut, s_0=1)
+            dX_ds = self.spline.getDerivative(s)
+            dy_dx = dX_ds[0]**-1 * dX_ds[1]
+
+            # the indexing here is a bit confusing.ii = 0 -> coeff[1] and ii = -1 -> coef[-2]
+            coeff[3*ii + 1] = np.array([self.TE[0], coeff[ii,1] + dy_dx*dx])
+
+        if k == 4:
+            coeff[2] = self.TE
+
+        ## make the TE curve
+        te_curve = pySpline.Curve(t=t,k=k,coef=coeff)
+
+        ## sample the curve
+        pts = self.spline.getValue(np.linspace(0, 1, 300))
+
+
+        # ----- combine the TE curve with the spline curve -----
+        upper_curve, lower_curve = te_curve.splitCurve(0.5)
+        upper_pts = upper_curve.getValue(np.linspace(0, 1, nPts))
+        lower_pts = lower_curve.getValue(np.linspace(0, 1, nPts))
+        # remove the replaced pts
+        mask = []
+        for ii in range(self.spline.X.shape[0]):
+            if xCut > self.spline.X[ii,0]:
+                mask.append(ii)
+
+        coords = np.vstack((upper_pts[::-1], self.spline.X[mask], lower_pts[::-1]))
+
+        # ---- recompute with new TE ---
+        self.recompute(coords)
+
+
+    def removeTE(self, tol=0.3, xtol=0.9):
+        """  """
+        coords = self.getPts()
+        chord_vec = (self.TE - self.LE)
+        unit_chord_vec = chord_vec/np.linalg.norm(chord_vec)
+
+
+        airfoil_mask = []
+        TE_mask = []
+        for ii in range(coords.shape[0] - 1): # loop over each element
+
+
+
+            if coords[ii, 0] >= (self.LE + chord_vec*xtol)[0]:
+                delta = coords[ii + 1] - coords[ii]
+                unit_delta = delta/np.linalg.norm(delta)
+
+                if np.abs(np.dot(unit_chord_vec, unit_delta)) < tol:
+                    TE_mask += [ii, ii+1]
+                else:
+                    airfoil_mask += [ii, ii+1]
+            else:
+                airfoil_mask += [ii, ii+1]
+
+        # list(set()) removes the duplicate pts
+        self.recompute(coords[list(set(airfoil_mask))])
+
+        return coords[list(set(TE_mask))]
 
 ## Sampling
     def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args={}, nTEPts=0):
@@ -484,14 +576,14 @@ class Airfoil(object):
                 Number of points along the **blunt** trailing edge
         :return: Coordinates array, anticlockwise, from trailing edge
         '''
-        s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args)
+        s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args, closedCurve=self.closedCurve)
         coords = self.spline.getValue(s)
 
         if nTEPts:
-            coords_TE = np.zeros((nTEPts, coords.shape[1]))
+            coords_TE = np.zeros((nTEPts+2, coords.shape[1]))
             for idim in range(coords.shape[1]):
-                coords_TE[:, idim] = np.linspace(self.spline.getValue(1)[idim], self.spline.getValue(0)[idim], nTEPts)
-            coords = np.vstack((coords,coords_TE))
+                coords_TE[:, idim] = np.linspace(self.spline.getValue(1)[idim], self.spline.getValue(0)[idim], nTEPts+2)
+            coords = np.vstack((coords,coords_TE[1:-1]))
 
 
         ##TODO
