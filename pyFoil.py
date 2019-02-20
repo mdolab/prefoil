@@ -15,7 +15,7 @@ from __future__ import division
 import warnings
 import numpy as np
 import pyspline as pySpline
-from scipy.optimize import fsolve, brentq, newton
+from scipy.optimize import fsolve, brentq, newton, bisect
 from pyfoil import sampling
 import os
 import pygeo
@@ -80,14 +80,6 @@ def _cleanup_pts(X):
     data = X[mask, :]
     return data
 
-
-def _reorder(coords):
-    '''
-    This function serves two purposes. First, it makes sure the points are oriented in counter-clockwise
-    direction. Second, it makes sure the points start at the TE.
-    '''
-    pass
-
 def _genNACACoords(name):
     pass
 
@@ -96,7 +88,7 @@ def _cleanup_TE(X,tol):
     return X, TE
 
 def _writePlot3D(filename,x,y):
-    filename += '.fmt'
+    filename += '.xyz'
     f = open(filename, 'w')
     f.write('1\n')
     f.write('%d %d %d\n'%(len(x), 2, 1))
@@ -196,20 +188,21 @@ class Airfoil(object):
     The general sequence of operations for using pyfoil is as follows::
       >>> from pygeo import *
     """
-    def __init__(self,coords, spline_order=3, normalize=False): #, **kwargs):
+    def __init__(self, coords, spline_order=3, normalize=False): #, **kwargs):
 
         self.spline_order = spline_order
         # for arg in kwargs.keys():
         #     setattr(self, arg, kwargs[arg])
 
-        ## initialize geometric information
+        # Initialize geometric information
         self.recompute(coords)
 
         if normalize:
-            self.normalize()
+            self.normalizeChord()
 
     def recompute(self, coords):
-        self.spline = pySpline.Curve(X=coords,k=self.spline_order)
+        self.spline = pySpline.Curve(X=coords, k=self.spline_order)
+        self.reorder()
 
         self.TE = self.getTE()
         self.LE, self.s_LE  = self.getLE()
@@ -217,6 +210,31 @@ class Airfoil(object):
         self.twist =  self.getTwist()
         self.closedCurve = (self.spline.getValue(0) == self.spline.getValue(1)).all()
 
+    def reorder(self):
+        '''
+        This function serves two purposes. First, it makes sure the points are oriented in counter-clockwise
+        direction. Second, it makes sure the points start at the TE.
+        '''
+
+        # Check to make sure spline ends at TE (For now assume this is True)
+
+        # Make sure oriented in counter-clockwise direction.
+        coords = self.spline.X
+        N = coords.shape[0]
+
+        orientation = 0
+        for i in range(1, N-1):
+            v = coords[i+1] - coords[i]
+            r = coords[i+1] - coords[i-1]
+            s = (coords[i,0]*r[0] + coords[i,1]*r[1]) / np.linalg.norm(r)
+            n = coords[i] - r*s
+            if np.linalg.norm(n) != 0:
+                n = n / np.linalg.norm(n)
+            orientation += n[0]*v[1] - n[1]*v[0]
+
+        if orientation < 0:
+            # Flipping orientation to counter-clockwise
+            self.recompute(self.spline.X[::-1,:])
 
 ## Geometry Information
 
@@ -385,10 +403,9 @@ class Airfoil(object):
         # test camber and thickness dist
         pass
 
-
-
-
-## Geometry Modification
+# ==============================================================================
+# Geometry Modification
+# ==============================================================================
 
     def rotate(self,angle,origin=np.zeros(2)):
         new_coords = _rotateCoords(self.spline.X,np.deg2rad(angle),origin)
@@ -404,9 +421,6 @@ class Airfoil(object):
     def scale(self,factor,origin=np.zeros(2)):
         new_coords = _scaleCoords(self.spline.X,factor,origin)
         self.__init__(new_coords, spline_order=self.spline.k)
-
-        # if self.chord is not None:
-        #     self.chord *= factor
 
     def normalizeChord(self,origin=np.zeros(2)):
         if self.spline is None:
@@ -458,8 +472,24 @@ class Airfoil(object):
 
             self.recompute(sample_pts)
 
-    def thickenTE(self):
-        pass
+    def makeBluntTE(self, start=0.01, end=None):
+        """
+        This cuts the upper surface at s=start and the lower surface at s=end
+        and creates a blunt trailing edge between the two cut points. If end
+        is not provided, then the cut is made on the upper surface and projected
+        down to the lower surface along the y-axis.
+        """
+        if end is None:
+            xstart = self.spline.getValue(start)
+            # Make the trailing edge parallel with y-axis
+            def findEnd(s):
+                xend = self.spline.getValue(s)
+                return xend[0] - xstart[0]
+            end = bisect(findEnd, 0.9, 1.0)
+
+        newCurve = self.spline.windowCurve(start, end)
+        coords = newCurve.getValue(self.spline.gpts)
+        self.recompute(coords)
 
     def sharpenTE(self):
         pass
@@ -552,7 +582,8 @@ class Airfoil(object):
         return coords[list(set(TE_mask))]
 
 ## Sampling
-    def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args={}, nTEPts=0):
+    def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args={},
+        nTEPts=0, closeCurve=False):
         '''
         This function defines the point sampling along airfoil surface.
         An example dictionary is reported below:
@@ -585,6 +616,8 @@ class Airfoil(object):
                 coords_TE[:, idim] = np.linspace(self.spline.getValue(1)[idim], self.spline.getValue(0)[idim], nTEPts+2)
             coords = np.vstack((coords,coords_TE[1:-1]))
 
+        if closeCurve:
+            coords = np.vstack((coords, coords[0]))
 
         ##TODO
             # - reintagrate cell check
@@ -636,4 +669,5 @@ class Airfoil(object):
         #     plt.plot(self.thickness_pts[:,0],self.thickness_pts[:,1],'-ob',label='thickness')
         #     plt.legend(loc='best')
         #     plt.title(self.name)
-        return fig
+        # return fig
+        plt.show()

@@ -79,8 +79,8 @@ def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5, closedCurve
     s1 = spacingFunc(0., s_LE, int(n * s_LE) + 1, **func_args)
     s2 = spacingFunc(s_LE, 1., int(n - n * s_LE) + 1, **func_args)
 
-    if not closedCurve:
-        s2 = s2[:-1]
+    # if not closedCurve:
+    #     s2 = s2[:-1]
 
     # combine the two distributions
     s = np.append(s1[:], s2[1:])
