@@ -163,10 +163,15 @@ class Airfoil(object):
 
     Create an instance of an airfoil. There are two ways of instantiating
     this object: by passing in a set of points, or by reading in a coordinate
-    file. The points need not start at the TE nor go ccw around the airfoil,
-    but they must be ordered such that they form a continuous airfoil surface.
-    If they are not (due to MPI or otherwise), use the order() function within
-    tecplotFileParser.
+    file. The points must satisfy the following requirements:
+        - Ordered such that they form a continuous airfoil surface
+        - First and last points correspond to trailing edge
+
+    It is not necessary for the points to be in a counter-clockwise ordering. If
+    they are not ordered counter-clockwise, the order will be reversed so that
+    all functions can be written to expect the spline to begin at the upper
+    surface of the trailing edge and end at the lower surface of the trailing
+    edge.
 
     Parameters
     ----------
@@ -188,11 +193,9 @@ class Airfoil(object):
     The general sequence of operations for using pyfoil is as follows::
       >>> from pygeo import *
     """
-    def __init__(self, coords, spline_order=3, normalize=False): #, **kwargs):
+    def __init__(self, coords, spline_order=3, normalize=False):
 
         self.spline_order = spline_order
-        # for arg in kwargs.keys():
-        #     setattr(self, arg, kwargs[arg])
 
         # Initialize geometric information
         self.recompute(coords)
@@ -583,9 +586,11 @@ class Airfoil(object):
 
 ## Sampling
     def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args={},
-        nTEPts=0, closeCurve=False):
+        nTEPts=0):
         '''
-        This function defines the point sampling along airfoil surface.
+        This function defines the point sampling along airfoil surface. The
+        coordinates are given as a closed curve (i.e. the first and last point
+        are the same, regardless of whether the spline is closed or open).
         An example dictionary is reported below:
 
         >>> sample_dict = {'distribution' : 'conical',
@@ -607,16 +612,18 @@ class Airfoil(object):
                 Number of points along the **blunt** trailing edge
         :return: Coordinates array, anticlockwise, from trailing edge
         '''
-        s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args, closedCurve=self.closedCurve)
+        s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args)
         coords = self.spline.getValue(s)
 
         if nTEPts:
             coords_TE = np.zeros((nTEPts+2, coords.shape[1]))
             for idim in range(coords.shape[1]):
-                coords_TE[:, idim] = np.linspace(self.spline.getValue(1)[idim], self.spline.getValue(0)[idim], nTEPts+2)
+                val1 = self.spline.getValue(1)[idim]
+                val2 = self.spline.getValue(0)[idim]
+                coords_TE[:, idim] = np.linspace(val1, val2, nTEPts+2)
             coords = np.vstack((coords,coords_TE[1:-1]))
 
-        if closeCurve:
+        if not self.closedCurve:
             coords = np.vstack((coords, coords[0]))
 
         ##TODO
@@ -636,19 +643,19 @@ class Airfoil(object):
 
 
 ## Output
-    def writeCoords(self, coords,  filename, fmt='plot3d'):
+    def writeCoords(self, coords, filename, format='plot3d'):
         '''
         We have to discuss which types of printfiles we want to get and how
         to handle them (does this class print the last "sampled" x,y or do
         we want more options?)
         '''
 
-        if fmt == 'plot3d':
+        if format == 'plot3d':
             _writePlot3D(filename, coords[:,0], coords[:,1])
-        elif fmt == 'dat':
+        elif format == 'dat':
             _writeDat(filename, coords[:,0], coords[:,1])
         else:
-            raise Error(fmt + ' is not a supported output format!')
+            raise Error(format + ' is not a supported output format!')
 
 ## Utils
 # maybe remove and put into a separate location?
