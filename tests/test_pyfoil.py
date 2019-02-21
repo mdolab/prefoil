@@ -55,12 +55,23 @@ class TestGeoModification(unittest.TestCase):
         X = pyFoil._readCoordFile('rae2822.dat')
         self.foil = pyFoil.Airfoil(X)
 
-    def test_round_TE(self):
-        oldTE = self.foil.TE
-        self.foil.roundTE(k=4)
-        # the reason for the 4 decimal is because it doesn't exactly place the new TE point at the midpoint of the previous blunt foil
-        np.testing.assert_array_almost_equal(oldTE, self.foil.spline.X[0], decimal=4)
+    def test_reorder(self):
+        Xorig = self.foil.spline.X
+        newfoil = pyFoil.Airfoil(Xorig[::-1,:])
+        Xreordered = newfoil.spline.X
+        np.testing.assert_array_almost_equal(Xorig, Xreordered, decimal=6)
 
+    def test_round_TE(self):
+        self.foil.roundTE(k=4)
+        refTE = np.array([0.990393, 0.0013401])
+        newTE = self.foil.TE
+        np.testing.assert_array_almost_equal(refTE, newTE, decimal=6)
+
+    def test_blunt_TE(self):
+        self.foil.makeBluntTE()
+        refTE = np.array([0.97065494, 0.00352594])
+        newTE = self.foil.TE
+        np.testing.assert_array_almost_equal(refTE, newTE, decimal=8)
 
 if __name__ == '__main__':
     unittest.main()
