@@ -64,13 +64,13 @@ def polynomial(start, end, n, m=np.pi, order=5):
 
     return (s / 2 + 0.5) * (end - start) + start
 
-def bigeometric(start, end, n, a1=0.01, b1=0.01, ra=1.05, rb=1.05):
+def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     """
     This spacing function will create a distribution with a geometric sequence
     from both sides. It will try to find the optimal number of nodes to allocate
     to each sequence such that the middle region of constant spacings matches
-    with the final spacing from each sequence.
-
+    with the final spacing from each sequence. The default settings work well
+    for n~100 (200 on entire airfoil).
 
      a1                           deltac                               b1
     |                             <----->                               |
@@ -129,7 +129,7 @@ def bigeometric(start, end, n, a1=0.01, b1=0.01, ra=1.05, rb=1.05):
     # Find best spacing to get smooth distribution
     # print('Finding optimal bigeometric spacing...')
     left = int(round(n*0.01))
-    right = int(n*0.5)
+    right = int(n*0.49)
     checkleft = findSpacing(left)
     checkright = findSpacing(right)
 
