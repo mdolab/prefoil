@@ -10,7 +10,7 @@ from pyfoil import sampling
 class TestBasic(unittest.TestCase):
 
     def setUp(self):
-        X = pyFoil._readCoordFile('testAirfoil.dat')
+        X = pyFoil.readCoordFile('testAirfoil.dat')
         self.foil = pyFoil.Airfoil(X)
 
     def test_rotate(self):
@@ -34,7 +34,7 @@ class TestBasic(unittest.TestCase):
 class TestSampling(unittest.TestCase):
     # for now these just test if it runs without error, not if the output is right
     def setUp(self):
-        X = pyFoil._readCoordFile('rae2822.dat')
+        X = pyFoil.readCoordFile('rae2822.dat')
         self.foil = pyFoil.Airfoil(X)
 
     def test_defaults(self):
@@ -52,7 +52,7 @@ class TestSampling(unittest.TestCase):
 class TestGeoModification(unittest.TestCase):
 
     def setUp(self):
-        X = pyFoil._readCoordFile('rae2822.dat')
+        X = pyFoil.readCoordFile('rae2822.dat')
         self.foil = pyFoil.Airfoil(X)
 
     def test_reorder(self):

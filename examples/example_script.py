@@ -3,7 +3,8 @@ Sample usage script showing some use cases, and how the API should work.
 '''
 
 
-from pyFoil import Airfoil #, reorder
+from pyfoil.pyFoil import Airfoil, readCoordFile
+from pyfoil import sampling
 import matplotlib.pyplot as plt
 # import tecplot_interface as ti # This does not exist yet
 # from postprocessing.pytecplot.tecplotFileParser import TecplotParser
@@ -12,15 +13,11 @@ import matplotlib.pyplot as plt
 Here we read an airfoil coordinate file from a database, perform geometric
 cleanup, and then sample it with a particular distribution.
 '''
-filename = './tests/rae2822.dat'
-airfoil = Airfoil(filename=filename,cleanup=False)
-
-sample_dict = {'distribution' : 'conical',
-               'coeff' : 1,
-               'npts' : 50}
-x,y = airfoil.sample(sample_dict)
-
-fig1 = airfoil.plotAirfoil()
+filename = '../tests/rae2822.dat'
+coords = readCoordFile(filename)
+airfoil = Airfoil(coords, normalize=False)
+coords = airfoil.getSampledPts(50, spacingFunc=sampling.conical, func_args={'coeff': 1})
+fig1 = airfoil.plot()
 fig1.suptitle('Test single distribution')
 plt.show()
 
@@ -33,15 +30,11 @@ by side.
 # airfoil = Airfoil(x=x,y=y)
 # airfoil.derotate()
 
-sample_dict = {'distribution' : 'conical',
-               'coeff' : 1,
-               'npts' : 50}
-x,y = airfoil.sample(sample_dict)
-fig2 = airfoil.plotAirfoil()
+coords = airfoil.getSampledPts(50, spacingFunc=sampling.conical, func_args={'coeff': 1})
+fig2 = airfoil.plot()
 fig2.suptitle('coeff = 1')
-sample_dict['coeff'] = 3
-x2,y2 = airfoil.sample(sample_dict)
-fig3 = airfoil.plotAirfoil()
+coords2 = airfoil.getSampledPts(50, spacingFunc=sampling.conical, func_args={'coeff': 3})
+fig3 = airfoil.plot()
 fig3.suptitle('coeff = 3')
 plt.show()
 
@@ -53,23 +46,15 @@ sampling. These points are then saved to a plot3d file for use with pyHyp.
 '''
 # airfoil = Airfoil(X=X,cleanup=True)
 # airfoil.thickenTE(thickness=0.01)
-upper_dict = {'distribution' : 'parabolic',
-             'coeff' : 1,
-             'npts' : 20}
 
-lower_dict = {'distribution' : 'polynomial',
-             'coeff' : 5,
-             'npts' : 70}
-x,y = airfoil.sample(upper=upper_dict, lower=lower_dict, npts_TE = 17)
-
-# airfoil.writeCoords('new_coords.dat',fmt='plot3d')
+coords = airfoil.getSampledPts(50, spacingFunc=[sampling.bigeometric, sampling.polynomial], func_args=[{},{'order':8}])
+airfoil.writeCoords(coords=coords,filename='new_coords',format='plot3d')
 
 # Plotting samples
-fig4 = airfoil.plotAirfoil()
+fig4 = airfoil.plot()
 fig4.suptitle('Test double distribution')
 plt.show()
 
-#airfoil.writeCoords('sampling_doubletest')
 exit()
 
 #-----------------------------------------
