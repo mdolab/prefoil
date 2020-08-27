@@ -9,6 +9,7 @@ language: generic
 
 services:
   - docker
+
 env:
   global:
     - REPO_NAME=pyfoil
@@ -34,5 +35,5 @@ install:
   # install this package
   - docker exec -it app /bin/bash -c ". \$HOME/.bashrc && pip install -e ."
 
-  script:
+script:
   - docker exec -it app /bin/bash -c ". \$HOME/.bashrc && testflo -v ."
