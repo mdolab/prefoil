@@ -1,0 +1,18 @@
+os:
+- linux
+
+language: python
+
+python:
+  - "2.7"
+  - "3.7"
+  - "3.8"
+
+install:
+- pip install testflo==1.3.6;
+
+# install this package
+- pip install -e .;
+
+script:
+- testflo -v .;
