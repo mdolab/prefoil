@@ -33,7 +33,7 @@ install:
   # We thrown away the existing repo in Docker, and copy the new one in-place
   - docker exec -it app /bin/bash -c "rm -rf $DOCKER_WORKING_DIR && cp -r $DOCKER_MOUNT_DIR $DOCKER_WORKING_DIR"
   # install this package
-  - docker exec -it app /bin/bash -c ". \$HOME/.bashrc_mdolab && pip install -e ."
+  - docker exec -it app /bin/bash -c ". \$HOME/.bashrc_mdolab && cd $DOCKER_WORKING_DIR && pip install -e ."
 
 script:
-  - docker exec -it app /bin/bash -c ". \$HOME/.bashrc_mdolab && testflo -v ."
+  - docker exec -it app /bin/bash -c ". \$HOME/.bashrc_mdolab && cd $DOCKER_WORKING_DIR && testflo -v ."
