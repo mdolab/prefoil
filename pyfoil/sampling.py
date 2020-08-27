@@ -100,7 +100,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     def findSpacing(na, search=False):
         a_na = a1 * ra**na
         nb = np.log(a_na / b1) / np.log(rb)
-        nb = round(nb)
+        nb = np.round(nb)
         b_nb = b1 * rb**nb
         da = a1*(1 - ra**na) / (1 - ra)
         db = b1*(1 - rb**nb) / (1 - rb)
@@ -128,7 +128,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
 
     # Find best spacing to get smooth distribution
     # print('Finding optimal bigeometric spacing...')
-    left = int(round(n*0.01))
+    left = int(np.round(n*0.01))
     right = int(n*0.49)
     checkleft = findSpacing(left)
     checkright = findSpacing(right)
@@ -158,10 +158,10 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     # plt.show()
 
     # Compute final distribution
-    na = int(round(na))
+    na = int(np.round(na))
     a_na = a1 * ra**na
     nb = np.log(a_na / b1) / np.log(rb)
-    nb = int(round(nb))
+    nb = int(np.round(nb))
     b_nb = b1 * rb**nb
     da = a1*(1 - ra**na) / (1 - ra)
     db = b1*(1 - rb**nb) / (1 - rb)

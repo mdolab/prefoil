@@ -41,7 +41,7 @@ class Error(Exception):
         Exception.__init__()
 
 
-def _readCoordFile(filename, headerlines=0):
+def readCoordFile(filename, headerlines=0):
     """ Load the airfoil file"""
     f = open(filename, 'r')
     line  = f.readline() # Read (and ignore) the first line
@@ -296,9 +296,6 @@ class Airfoil(object):
         s_x = newton(err, s_0, fprime=err_deriv)
 
         return self.spline.getValue(s_x), s_x
-
-  ##TODO write tests
-
 
     def getTEThickness(self):
         top = self.spline.getValue(0)
@@ -676,5 +673,4 @@ class Airfoil(object):
         #     plt.plot(self.thickness_pts[:,0],self.thickness_pts[:,1],'-ob',label='thickness')
         #     plt.legend(loc='best')
         #     plt.title(self.name)
-        # return fig
-        plt.show()
+        return fig
