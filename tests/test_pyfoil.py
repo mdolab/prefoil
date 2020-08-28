@@ -2,15 +2,15 @@ from __future__ import print_function, division, absolute_import
 
 import unittest
 import numpy as np
-
+import os
 from pyfoil.pyFoil import readCoordFile, Airfoil
 from pyfoil import sampling
-
+baseDir = os.path.dirname(os.path.abspath(__file__))
 
 class TestBasic(unittest.TestCase):
 
     def setUp(self):
-        X = readCoordFile('testAirfoil.dat')
+        X = readCoordFile(os.path.join(baseDir, 'testAirfoil.dat'))
         self.foil = Airfoil(X)
 
     def test_rotate(self):
@@ -34,7 +34,7 @@ class TestBasic(unittest.TestCase):
 class TestSampling(unittest.TestCase):
     # for now these just test if it runs without error, not if the output is right
     def setUp(self):
-        X = readCoordFile('rae2822.dat')
+        X = readCoordFile(os.path.join(baseDir, 'rae2822.dat'))
         self.foil = Airfoil(X)
 
     def test_defaults(self):
@@ -52,7 +52,7 @@ class TestSampling(unittest.TestCase):
 class TestGeoModification(unittest.TestCase):
 
     def setUp(self):
-        X = readCoordFile('rae2822.dat')
+        X = readCoordFile(os.path.join(baseDir,'rae2822.dat'))
         self.foil = Airfoil(X)
 
     def test_reorder(self):
