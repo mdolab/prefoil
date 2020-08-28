@@ -3,15 +3,15 @@ from __future__ import print_function, division, absolute_import
 import unittest
 import numpy as np
 
-from pyfoil import pyFoil
+from pyfoil.pyFoil import readCoordFile, Airfoil
 from pyfoil import sampling
 
 
 class TestBasic(unittest.TestCase):
 
     def setUp(self):
-        X = pyFoil.readCoordFile('testAirfoil.dat')
-        self.foil = pyFoil.Airfoil(X)
+        X = readCoordFile('testAirfoil.dat')
+        self.foil = Airfoil(X)
 
     def test_rotate(self):
         self.foil.rotate(45)
@@ -34,8 +34,8 @@ class TestBasic(unittest.TestCase):
 class TestSampling(unittest.TestCase):
     # for now these just test if it runs without error, not if the output is right
     def setUp(self):
-        X = pyFoil.readCoordFile('rae2822.dat')
-        self.foil = pyFoil.Airfoil(X)
+        X = readCoordFile('rae2822.dat')
+        self.foil = Airfoil(X)
 
     def test_defaults(self):
         self.foil.getSampledPts(100, nTEPts=10)
@@ -52,12 +52,12 @@ class TestSampling(unittest.TestCase):
 class TestGeoModification(unittest.TestCase):
 
     def setUp(self):
-        X = pyFoil.readCoordFile('rae2822.dat')
-        self.foil = pyFoil.Airfoil(X)
+        X = readCoordFile('rae2822.dat')
+        self.foil = Airfoil(X)
 
     def test_reorder(self):
         Xorig = self.foil.spline.X
-        newfoil = pyFoil.Airfoil(Xorig[::-1,:])
+        newfoil = Airfoil(Xorig[::-1,:])
         Xreordered = newfoil.spline.X
         np.testing.assert_array_almost_equal(Xorig, Xreordered, decimal=6)
 

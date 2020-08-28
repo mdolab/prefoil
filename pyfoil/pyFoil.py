@@ -19,7 +19,6 @@ from scipy.optimize import fsolve, brentq, newton, bisect
 from pyfoil import sampling
 import os
 import pygeo
-import matplotlib.pyplot as plt
 
 class Error(Exception):
     """
