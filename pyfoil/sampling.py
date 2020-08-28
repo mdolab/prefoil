@@ -147,16 +147,6 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
             bounds=[(left, right)], tol=1e-2, options={'maxiter':1000})
         na = opt.x
 
-    # import matplotlib.pyplot as plt
-    # x = np.linspace(left, right, 100)
-    # y = np.zeros_like(x)
-    # for i in range(len(x)):
-    #     y[i] = findSpacing(x[i])
-    # plt.figure()
-    # plt.plot(x, y)
-    # plt.plot(na, findSpacing(na), 'rx')
-    # plt.show()
-
     # Compute final distribution
     na = int(np.round(na))
     a_na = a1 * ra**na
