@@ -16,9 +16,9 @@ env:
     - DOCKER_WORKING_DIR=/home/mdolabuser/repos/$REPO_NAME
     - DOCKER_MOUNT_DIR=/home/mdolabuser/travis/$REPO_NAME
   jobs:
-    - DOCKER_TAG=py2-latest
-    - DOCKER_TAG=py3-stable
-    - DOCKER_TAG=py3-latest
+    - DOCKER_TAG=u18-gcc-ompi-py2-stable
+    - DOCKER_TAG=u18-gcc-ompi-py3-latest
+    - DOCKER_TAG=u18-gcc-ompi-py3-stable
 
 before_install:
   - docker pull mdolab/public:$DOCKER_TAG
