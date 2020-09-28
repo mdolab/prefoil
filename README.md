@@ -1,7 +1,7 @@
 # pyFoil
 [![Build Status](https://travis-ci.com/mdolab/pyfoil.svg?token=36zwuokfRKs1pbmxMGZX&branch=master)](https://travis-ci.com/mdolab/pyfoil)
 
-This repo contains basic tools for working with airfoils, using pyspline as the backend. You can:
+This repo contains basic tools for working with airfoils, using pySpline as the backend. You can:
 - Initialize with coordinates
 - Modify airfoils
 - Compute geometric parameters
