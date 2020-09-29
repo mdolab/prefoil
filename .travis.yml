@@ -8,9 +8,7 @@ env:
     - DOCKER_REPO=public
 
 install:
-  - if [[ "$TEST_TYPE" == "docker" ]]; then
-      docker exec -it app /bin/bash -c ". $BASHRC && cd $DOCKER_WORKING_DIR && pip install .";
-    fi
+  - docker exec -it app /bin/bash -c ". $BASHRC && cd $DOCKER_WORKING_DIR && pip install .";
 
 
 script:
