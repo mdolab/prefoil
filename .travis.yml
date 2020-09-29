@@ -1,7 +1,7 @@
 import:
-  - mdolab/.github:travis-env.yml
-  - mdolab/.github:travis-before-install.yml
-  - mdolab/.github:travis-script-check.yml
+  - mdolab/.github:travis/jobs-env.yml
+  - mdolab/.github:travis/before-install.yml
+  - mdolab/.github:travis/script.yml
 
 env:
   global:
