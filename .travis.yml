@@ -1,18 +1,19 @@
 import:
-  - mdolab/.github:travis-env.yml
-  - mdolab/.github:travis-before-install.yml
-  - mdolab/.github:travis-script-check.yml
+  - mdolab/.github:travis/jobs-env.yml
+  - mdolab/.github:travis/before-install.yml
+  - mdolab/.github:travis/script.yml
 
 env:
   global:
     - DOCKER_REPO=public
 
 install:
-  - if [[ "$DOCKER_TAG" != "check" ]]; then
+  - if [[ "$TEST_TYPE" == "docker" ]]; then
       docker exec -it app /bin/bash -c ". $BASHRC && cd $DOCKER_WORKING_DIR && pip install .";
     fi
 
+
 script:
-  - if [[ "$DOCKER_TAG" != "check" ]]; then
+  - if [[ "$TEST_TYPE" == "docker" ]]; then
       docker exec -it app /bin/bash -c ". $BASHRC && cd $DOCKER_WORKING_DIR && testflo -v .";
     fi

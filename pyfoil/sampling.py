@@ -1,9 +1,9 @@
-from __future__ import print_function
 import numpy as np
 from scipy import optimize
 
 
 # for linear use linspace
+
 
 def cosine(start, end, n, m=np.pi):
     s = conical(start, end, n, m, coeff=1)
@@ -11,11 +11,11 @@ def cosine(start, end, n, m=np.pi):
 
 
 def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
-    '''
+    """
     Here I make a sneaky hack to remove the second and second to last points
     of the ndarray. This is necessary to avoid bad mesh elements at small
     leading and trailing edges
-    '''
+    """
 
     b = coeff
 
@@ -25,7 +25,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
     else:
         x = np.linspace(m, 0, n)
     if b >= 1:
-        s = (1 + 1 / np.sqrt(np.cos(x)**2 + np.sin(x)**2 / b**2) * np.cos(x)) * 0.5
+        s = (1 + 1 / np.sqrt(np.cos(x) ** 2 + np.sin(x) ** 2 / b ** 2) * np.cos(x)) * 0.5
     else:
         cos = np.cos(x)
         s = ((cos + 1) / 2 - x[::-1] / np.pi) * b + x[::-1] / np.pi
@@ -35,26 +35,26 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
 
 def polynomial(start, end, n, m=np.pi, order=5):
     """
-        similar to cosSacing but instead of a unit circle, a func of the form 1 - x^order is used.
-        This does a better job on not overly clustering points at the edges.
+    similar to cosSacing but instead of a unit circle, a func of the form 1 - x^order is used.
+    This does a better job on not overly clustering points at the edges.
 
-                ---------------|---------------
-              -/            -/ | \-            \-    order 4
-            -/            -/   |   \-            \-
-          -/            -/     |     \-            \-
-        -/            -/       |       \-            \-
-        |           -/         |         \-           |
-        |         -/           | order 1   \-         |
-        |       -/             |             \-       |
-        |     -/               |               \-     |
-        |   -/                 |                 \-   |
-        | -/                   |                   \- |
-        |/                     |                     \|
-        ------------------------------------------------
+            ---------------|---------------
+          -/            -/ | \-            \-    order 4
+        -/            -/   |   \-            \-
+      -/            -/     |     \-            \-
+    -/            -/       |       \-            \-
+    |           -/         |         \-           |
+    |         -/           | order 1   \-         |
+    |       -/             |             \-       |
+    |     -/               |               \-     |
+    |   -/                 |                 \-   |
+    | -/                   |                   \- |
+    |/                     |                     \|
+    ------------------------------------------------
     """
 
     def poly(x):
-        return np.abs(x)**order + np.tan(ang) * x - 1
+        return np.abs(x) ** order + np.tan(ang) * x - 1
 
     angles = np.linspace(m, 0, n)
 
@@ -63,6 +63,7 @@ def polynomial(start, end, n, m=np.pi, order=5):
         s = np.append(s, optimize.fsolve(poly, np.cos(ang))[0])
 
     return (s / 2 + 0.5) * (end - start) + start
+
 
 def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     """
@@ -95,23 +96,23 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
         Geometric ratio from the end.
     """
     s = np.zeros(n)
-    s[n-1] = 1.0
+    s[n - 1] = 1.0
 
     def findSpacing(na, search=False):
-        a_na = a1 * ra**na
+        a_na = a1 * ra ** na
         nb = np.log(a_na / b1) / np.log(rb)
         nb = np.round(nb)
-        b_nb = b1 * rb**nb
-        da = a1*(1 - ra**na) / (1 - ra)
-        db = b1*(1 - rb**nb) / (1 - rb)
+        b_nb = b1 * rb ** nb  # noqa
+        da = a1 * (1 - ra ** na) / (1 - ra)
+        db = b1 * (1 - rb ** nb) / (1 - rb)
 
         s_na = da
         s_nb = 1 - db
         dc = s_nb - s_na
         nc = n - (2 + na + nb)
-        deltac = dc / (nc+1)
+        deltac = dc / (nc + 1)
 
-        score = deltac/a_na - 1
+        score = deltac / a_na - 1
         if search:
             # print(na, nc, nb, a_na, b_nb, deltac)
             return score
@@ -121,59 +122,60 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     # Check to make sure spacing is not too large
     dc = 1.0 - a1 - b1
     nc = n - 4
-    deltac = dc / (nc-1)
+    deltac = dc / (nc - 1)
     if deltac < a1 or deltac < b1:
-        print('Too many nodes. Decrease initial spacing.')
+        print("Too many nodes. Decrease initial spacing.")
         exit()
 
     # Find best spacing to get smooth distribution
     # print('Finding optimal bigeometric spacing...')
-    left = int(np.round(n*0.01))
-    right = int(n*0.49)
+    left = int(np.round(n * 0.01))
+    right = int(n * 0.49)
     checkleft = findSpacing(left)
     checkright = findSpacing(right)
 
     if checkleft < 0 and checkright < 0:
-        print(checkleft, checkright, 'Try decreasing spacings')
+        print(checkleft, checkright, "Try decreasing spacings")
         exit()
     elif checkleft > 0 and checkright < 0:
         # print('Bisection method')
-        na = optimize.bisect(findSpacing, left, right, (True), xtol=1e-4,
-            maxiter=100, disp=False)
+        na = optimize.bisect(findSpacing, left, right, (True), xtol=1e-4, maxiter=100, disp=False)
     elif checkleft > 0 and checkright > 0:
         # print('Minimize method')
         x0 = np.array([float(left)])
-        opt = optimize.minimize(findSpacing, x0, (True), method='tnc',
-            bounds=[(left, right)], tol=1e-2, options={'maxiter':1000})
+        opt = optimize.minimize(
+            findSpacing, x0, (True), method="tnc", bounds=[(left, right)], tol=1e-2, options={"maxiter": 1000}
+        )
         na = opt.x
 
     # Compute final distribution
     na = int(np.round(na))
-    a_na = a1 * ra**na
+    a_na = a1 * ra ** na
     nb = np.log(a_na / b1) / np.log(rb)
     nb = int(np.round(nb))
-    b_nb = b1 * rb**nb
-    da = a1*(1 - ra**na) / (1 - ra)
-    db = b1*(1 - rb**nb) / (1 - rb)
+    b_nb = b1 * rb ** nb  # noqa
+    da = a1 * (1 - ra ** na) / (1 - ra)
+    db = b1 * (1 - rb ** nb) / (1 - rb)
 
     s_na = da
     s_nb = 1 - db
     dc = s_nb - s_na
     nc = n - (2 + na + nb)
-    deltac = dc / (nc+1)
+    deltac = dc / (nc + 1)
     # print('Score:', deltac/a_na, deltac/b_nb)
 
-    for i in range(1, n-1):
+    for i in range(1, n - 1):
         if i <= na:
-            s[i] = s[i-1] + a1*ra**(i-1)
+            s[i] = s[i - 1] + a1 * ra ** (i - 1)
         elif i <= na + nc:
-            s[i] = s[i-1] + deltac
+            s[i] = s[i - 1] + deltac
         else:
             j = n - i - 1
-            s[i] = 1 - b1*(1 - rb**j) / (1 - rb)
+            s[i] = 1 - b1 * (1 - rb ** j) / (1 - rb)
 
     s = s * (end - start) + start
     return s
+
 
 def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
     """
@@ -190,12 +192,12 @@ def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
     elements when returning the point array
     """
     if callable(spacingFunc):
-        spacingFunc = [spacingFunc]*2
+        spacingFunc = [spacingFunc] * 2
     if isinstance(func_args, dict):
-        func_args = [func_args]*2
+        func_args = [func_args] * 2
 
-    s1 = spacingFunc[0](0., s_LE, int(n * s_LE) + 1, **func_args[0])
-    s2 = spacingFunc[1](s_LE, 1., int(n - n * s_LE) + 1, **func_args[1])
+    s1 = spacingFunc[0](0.0, s_LE, int(n * s_LE) + 1, **func_args[0])
+    s2 = spacingFunc[1](s_LE, 1.0, int(n - n * s_LE) + 1, **func_args[1])
 
     # combine the two distributions
     s = np.append(s1[:], s2[1:])
