@@ -8,7 +8,11 @@ env:
     - DOCKER_REPO=public
 
 install:
-  - docker exec -it app /bin/bash -c ". $BASHRC && cd $DOCKER_WORKING_DIR && pip install ."
+  - if [[ "$DOCKER_TAG" != "check" ]]; then
+      docker exec -it app /bin/bash -c ". $BASHRC && cd $DOCKER_WORKING_DIR && pip install .";
+    fi
 
 script:
-  - docker exec -it app /bin/bash -c ". $BASHRC && cd $DOCKER_WORKING_DIR && testflo -v ."
+  - if [[ "$DOCKER_TAG" != "check" ]]; then
+      docker exec -it app /bin/bash -c ". $BASHRC && cd $DOCKER_WORKING_DIR && testflo -v .";
+    fi
