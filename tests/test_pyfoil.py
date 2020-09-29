@@ -5,12 +5,13 @@ import numpy as np
 import os
 from pyfoil.pyFoil import readCoordFile, Airfoil
 from pyfoil import sampling
+
 baseDir = os.path.dirname(os.path.abspath(__file__))
 
-class TestBasic(unittest.TestCase):
 
+class TestBasic(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, 'testAirfoil.dat'))
+        X = readCoordFile(os.path.join(baseDir, "testAirfoil.dat"))
         self.foil = Airfoil(X)
 
     def test_rotate(self):
@@ -31,10 +32,11 @@ class TestBasic(unittest.TestCase):
     def test_findPt(self):
         self.assertAlmostEqual(self.foil.findPt(0.8)[0][0], 0.8)
 
+
 class TestSampling(unittest.TestCase):
     # for now these just test if it runs without error, not if the output is right
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, 'rae2822.dat'))
+        X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
         self.foil = Airfoil(X)
 
     def test_defaults(self):
@@ -44,20 +46,18 @@ class TestSampling(unittest.TestCase):
         self.foil.getSampledPts(100, spacingFunc=np.linspace)
 
     def test_pass_args_to_dist(self):
-        func_args = {
-            'coeff': 2
-        }
+        func_args = {"coeff": 2}
         self.foil.getSampledPts(100, spacingFunc=sampling.conical, func_args=func_args)
 
-class TestGeoModification(unittest.TestCase):
 
+class TestGeoModification(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir,'rae2822.dat'))
+        X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
         self.foil = Airfoil(X)
 
     def test_reorder(self):
         Xorig = self.foil.spline.X
-        newfoil = Airfoil(Xorig[::-1,:])
+        newfoil = Airfoil(Xorig[::-1, :])
         Xreordered = newfoil.spline.X
         np.testing.assert_array_almost_equal(Xorig, Xreordered, decimal=6)
 
@@ -73,5 +73,6 @@ class TestGeoModification(unittest.TestCase):
         newTE = self.foil.TE
         np.testing.assert_array_almost_equal(refTE, newTE, decimal=8)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
