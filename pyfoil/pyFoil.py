@@ -9,15 +9,11 @@ Questions:
 - Modes?!? Should we provide any functionality for that?
 - Do we want twist in deg or rad?
 """
-from __future__ import print_function
-from __future__ import division
 
-import warnings
 import numpy as np
 import pyspline as pySpline
-from scipy.optimize import fsolve, brentq, newton, bisect
+from scipy.optimize import brentq, newton, bisect
 from pyfoil import sampling
-import os
 import pygeo
 
 
@@ -49,7 +45,7 @@ def readCoordFile(filename, headerlines=0):
     r = []
     try:
         r.append([float(s) for s in line.split()])
-    except:
+    except:  # noqa
         r = []
 
     while True:
@@ -375,10 +371,10 @@ class Airfoil(object):
         bottom = self.spline.getDerivative(1)
         bottom = bottom / np.linalg.norm(bottom)
         # print(np.dot(top,bottom))
-        TE_angle = np.pi - np.arccos(np.dot(top, bottom))
+        self.TE_angle = np.pi - np.arccos(np.dot(top, bottom))
         return np.rad2deg(self.TE_angle)
 
-    ##TODO write
+    # TODO write
     def getMaxThickness(self, method):
         """
         method : str
@@ -482,6 +478,7 @@ class Airfoil(object):
         if end is None:
             xstart = self.spline.getValue(start)
             # Make the trailing edge parallel with y-axis
+
             def findEnd(s):
                 xend = self.spline.getValue(s)
                 return xend[0] - xstart[0]
@@ -532,9 +529,6 @@ class Airfoil(object):
 
         ## make the TE curve
         te_curve = pySpline.Curve(t=t, k=k, coef=coeff)
-
-        ## sample the curve
-        pts = self.spline.getValue(np.linspace(0, 1, 300))
 
         # ----- combine the TE curve with the spline curve -----
         upper_curve, lower_curve = te_curve.splitCurve(0.5)
@@ -618,7 +612,7 @@ class Airfoil(object):
         if not self.closedCurve:
             coords = np.vstack((coords, coords[0]))
 
-        ##TODO
+        # TODO
         # - reintagrate cell check
 
         # if cell_check is True:
@@ -660,7 +654,7 @@ class Airfoil(object):
         # if self.sampled_X is not None:
         plt.plot(self.spline.X[:, 0], self.spline.X[:, 1], "o")
 
-        ##TODO
+        # TODO
         # if self.camber_pts is not None:
         #     fig2 = plt.figure()
         #     plt.plot(self.camber_pts[:,0],self.camber_pts[:,1],'-og',label='camber')

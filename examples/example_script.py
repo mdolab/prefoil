@@ -1,5 +1,5 @@
 """
-Sample usage script showing some use cases, and how the API should work. 
+Sample usage script showing some use cases, and how the API should work.
 """
 
 
@@ -8,7 +8,7 @@ from pyfoil import sampling
 import matplotlib.pyplot as plt
 
 # import tecplot_interface as ti # This does not exist yet
-# from postprocessing.pytecplot.tecplotFileParser import TecplotParser
+from postprocessing.pytecplot.tecplotFileParser import TecplotParser
 
 """
 Here we read an airfoil coordinate file from a database, perform geometric

@@ -1,4 +1,3 @@
-from __future__ import print_function
 import numpy as np
 from scipy import optimize
 
@@ -103,7 +102,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
         a_na = a1 * ra ** na
         nb = np.log(a_na / b1) / np.log(rb)
         nb = np.round(nb)
-        b_nb = b1 * rb ** nb
+        b_nb = b1 * rb ** nb  # noqa
         da = a1 * (1 - ra ** na) / (1 - ra)
         db = b1 * (1 - rb ** nb) / (1 - rb)
 
@@ -154,7 +153,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     a_na = a1 * ra ** na
     nb = np.log(a_na / b1) / np.log(rb)
     nb = int(np.round(nb))
-    b_nb = b1 * rb ** nb
+    b_nb = b1 * rb ** nb  # noqa
     da = a1 * (1 - ra ** na) / (1 - ra)
     db = b1 * (1 - rb ** nb) / (1 - rb)
 
