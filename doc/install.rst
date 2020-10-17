@@ -3,7 +3,7 @@
 Installation
 ============
 
-Clone `this repo <https://github.com/mdolab/pyhyp>`_ or download the zip and unzip it, then:
+Clone this repo or download the zip and unzip it, then:
 
 .. code-block::
 
