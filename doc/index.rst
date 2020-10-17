@@ -26,4 +26,5 @@ The tool is still incomplete but in a functional beta version, user contribution
    :maxdepth: 2
    :caption: Guide contents
 
+   install
    API
