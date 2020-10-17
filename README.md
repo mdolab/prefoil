@@ -1,9 +1,11 @@
 # pyFoil
 [![Build Status](https://travis-ci.com/mdolab/pyfoil.svg?token=36zwuokfRKs1pbmxMGZX&branch=master)](https://travis-ci.com/mdolab/pyfoil)
 
-This repo contains basic tools for working with airfoils, using pySpline as the backend. You can:
-- Initialize with coordinates
-- Modify airfoils
-- Compute geometric parameters
-- Sample according to specific distributions
-- Output to a number of formats, for visualization or meshing with pyHyp
+pyFoil is a simple set of tools to support airfoil manipulation and mesh generation.
+
+This repo is functional but many features are still experimental.
+
+
+Please see the [documentation](https://mdolab-pyfoil.readthedocs-hosted.com/en/latest/) for further details and API documentation.
+
+
