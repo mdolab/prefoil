@@ -1,5 +1,6 @@
 # pyFoil
 [![Build Status](https://travis-ci.com/mdolab/pyfoil.svg?token=36zwuokfRKs1pbmxMGZX&branch=master)](https://travis-ci.com/mdolab/pyfoil)
+[![Documentation Status](https://readthedocs.com/projects/mdolab-pyfoil/badge/?version=latest)](https://mdolab-pyfoil.readthedocs-hosted.com/en/latest/?badge=latest)
 
 pyFoil is a simple set of tools to support airfoil manipulation and mesh generation.
 
