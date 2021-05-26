@@ -685,14 +685,21 @@ class Airfoil(object):
 
         fitted : bool
             flag to pick between a fitted FFD (True) and box FFD (False)
+
         xmargin : float
             The closest distance of the FFD box to the tip and aft of the airfoil
 
         ymarginu : float
-            The closest distance of the FFD box to the upper surface of the airfoil
+            When a box ffd is generated this specifies the top of the box's y values as
+            the maximum y value in the airfoil coordinates plus this margin.
+            When a fitted ffd is generated this is the margin between the FFD point at
+            an xslice location and the upper surface of the airfoil at this location
 
         ymarginl : float
-            The closes distance of the FFD box to the lower surface of the airfoil
+            When a box ffd is generated this specifies the bottom of the box's y values as
+            the minimum y value in the airfoil coordinates minus this margin.
+            When a fitted ffd is generated this is the margin between the FFD point at
+            an xslice location and the lower surface of the airfoil at this location
 
         xslices : Ndarray [N,2]
             User specified xslice locations. If this is chosen nffd is ignored
