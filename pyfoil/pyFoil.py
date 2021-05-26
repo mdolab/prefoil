@@ -669,21 +669,22 @@ class Airfoil(object):
         else:
             raise Error(format + " is not a supported output format!")
 
-    def writeFFD(self, coords, nffd, filename, xmargin=0.001, ymarginu=0.02, ymarginl=0.02):
+    def writeFFD(
+        self, nffd, filename, fitted=True, xmargin=0.001, ymarginu=0.02, ymarginl=0.02, xslice=None, coords=None
+    ):
         """
         This function writes out an FFD in plot3D format for an airfoil
 
         Parameters
         ----------
-        coords : Ndarray [N,2]
-            the coordinates defining the airfoil
-
         nffd : int
             number of FFD points along the chord
 
         filename : str
             filename to write out, not including the '.xyz' ending
 
+        fitted : bool
+            flag to pick between a fitted FFD (True) and box FFD (False)
         xmargin : float
             The closest distance of the FFD box to the tip and aft of the airfoil
 
@@ -693,20 +694,41 @@ class Airfoil(object):
         ymarginl : float
             The closes distance of the FFD box to the lower surface of the airfoil
 
+        xslices : Ndarray [N,2]
+            User specified xslice locations. If this is chosen nffd is ignored
+
+        coords : Ndarray [N,2]
+            the coordinates to use for defining the airfoil, if the user does not
+            want the original coordinates for the airfoil used. This shouldn't be
+            used unless the user wants fine tuned control over the FFD creation,
+            It should be sufficient to ignore.
+
         """
 
-        FFDbox = np.zeros((nffd, 2, 2, 3))
-        xslice = np.zeros(nffd)
-        ylower = np.zeros(nffd)
-        yupper = np.zeros(nffd)
+        if coords is None:
+            coords = self.getPts()
 
-        for i in range(nffd):
-            xtemp = i * 1.0 / (nffd - 1.0)
-            xslice[i] = -1.0 * xmargin + (1 + 2.0 * xmargin) * xtemp
-            ymargin = ymarginu + (ymarginl - ymarginu) * xslice[i]
-            yu, yl = self._getClosest(coords, xslice[i])
-            yupper[i] = yu + ymargin
-            ylower[i] = yl - ymargin
+        if xslice is None:
+            xslice = np.zeros(nffd)
+            for i in range(nffd):
+                xtemp = i * 1.0 / (nffd - 1.0)
+                xslice[i] = min(coords[:, 0]) - 1.0 * xmargin + (self.chord + 2.0 * xmargin) * xtemp
+        else:
+            nffd = len(xslice)
+
+        FFDbox = np.zeros((nffd, 2, 2, 3))
+
+        if fitted:
+            ylower = np.zeros(nffd)
+            yupper = np.zeros(nffd)
+            for i in range(nffd):
+                ymargin = ymarginu + (ymarginl - ymarginu) * xslice[i]
+                yu, yl = self._getClosest(coords, xslice[i])
+                yupper[i] = yu + ymargin
+                ylower[i] = yl - ymargin
+        else:
+            yupper = np.ones(nffd) * (max(coords[:, 1]) + ymarginu)
+            ylower = np.ones(nffd) * (min(coords[:, 1]) - ymarginl)
 
         # X
         FFDbox[:, 0, 0, 0] = xslice[:].copy()
