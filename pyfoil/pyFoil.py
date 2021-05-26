@@ -105,6 +105,7 @@ def _writePlot3D(filename, x, y):
                     else:
                         f.write("%g\n" % (float(j)))
 
+
 def _writeDat(filename, x, y):
     filename += ".dat"
 
@@ -387,7 +388,7 @@ class Airfoil(object):
     def _getClosest(self, coords, x):
         """
         Gets the closest y value on the upper and lower point to an x value
-        
+
         Parameters
         ----------
         coords : Ndarray [N,2]
@@ -396,18 +397,18 @@ class Airfoil(object):
         x : float
             The x value to find the closest point for
         """
-        #TODO should this be modified to interpolate points using findPts?
+        # TODO should this be modified to interpolate points using findPts?
 
-        top = coords[:len(coords+1)//2+1, :]
-        bottom = coords[len(coords+1)//2:, :]
+        top = coords[: len(coords + 1) // 2 + 1, :]
+        bottom = coords[len(coords + 1) // 2 :, :]
 
         x_top = np.ones(len(top))
         for i in range(len(top)):
-            x_top[i] = abs(top[i,0] - x)
+            x_top[i] = abs(top[i, 0] - x)
         yu = top[np.argmin(x_top), 1]
         x_bottom = np.ones(len(bottom))
         for i in range(len(bottom)):
-            x_bottom[i] = abs(bottom[i,0] - x)
+            x_bottom[i] = abs(bottom[i, 0] - x)
         yl = bottom[np.argmin(x_bottom), 1]
 
         return yu, yl
@@ -668,11 +669,11 @@ class Airfoil(object):
             _writeDat(filename, coords[:, 0], coords[:, 1])
         else:
             raise Error(format + " is not a supported output format!")
-    
+
     def writeFFD(self, coords, nffd, filename, xmargin=0.001, ymarginu=0.02, ymarginl=0.02):
         """
         This function writes out an FFD in plot3D format for an airfoil
-        
+
         Parameters
         ----------
         coords : Ndarray [N,2]
@@ -685,10 +686,10 @@ class Airfoil(object):
             filename to write out, not including the '.xyz' ending
 
         some additional option:
-    
+
         xmargin : float
             The closest distance of the FFD box to the tip and aft of the airfoil
-        
+
         ymarginu : float
             The closest distance of the FFD box to the upper surface of the airfoil
 
@@ -701,10 +702,6 @@ class Airfoil(object):
         xslice = np.zeros(nffd)
         ylower = np.zeros(nffd)
         yupper = np.zeros(nffd)
-
-        xmargin = 0.001
-        ymargin1 = 0.02
-        ymargin2 = 0.005
 
         for i in range(nffd):
             xtemp = i * 1.0 / (nffd - 1.0)
