@@ -92,7 +92,6 @@ def _writePlot3D(filename, x, y):
     filename += ".xyz"
 
     with open(filename, "w") as f:
-        f = open(filename, "w")
         f.write("1\n")
         f.write("%d %d %d\n" % (len(x), 2, 1))
         for iDim in range(3):
@@ -685,8 +684,6 @@ class Airfoil(object):
         filename : str
             filename to write out, not including the '.xyz' ending
 
-        some additional option:
-
         xmargin : float
             The closest distance of the FFD box to the tip and aft of the airfoil
 
@@ -727,7 +724,7 @@ class Airfoil(object):
         FFDbox[:, :, 1, 2] = 1.0
 
         # Write to file
-        with open("ffd.xyz", "w") as f:
+        with open(filename, "w") as f:
             f.write("1\n")
             f.write(str(nffd) + " 2 2\n")
             for ell in range(3):
