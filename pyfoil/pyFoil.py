@@ -654,34 +654,12 @@ class Airfoil(object):
 
         return coords
 
-    ## Output
-    def writeCoords(self, coords, filename, format="plot3d"):
+    def getFFD(self, nffd, fitted=True, xmargin=0.001, ymarginu=0.02, ymarginl=0.02, xslice=None, coords=None):
         """
-        We have to discuss which types of printfiles we want to get and how
-        to handle them (does this class print the last "sampled" x,y or do
-        we want more options?)
-        """
-
-        if format == "plot3d":
-            _writePlot3D(filename, coords[:, 0], coords[:, 1])
-        elif format == "dat":
-            _writeDat(filename, coords[:, 0], coords[:, 1])
-        else:
-            raise Error(format + " is not a supported output format!")
-
-    def writeFFD(
-        self, nffd, filename, fitted=True, xmargin=0.001, ymarginu=0.02, ymarginl=0.02, xslice=None, coords=None
-    ):
-        """
-        This function writes out an FFD in plot3D format for an airfoil
-
         Parameters
         ----------
         nffd : int
             number of FFD points along the chord
-
-        filename : str
-            filename to write out, not including the '.xyz' ending
 
         fitted : bool
             flag to pick between a fitted FFD (True) and box FFD (False)
@@ -719,7 +697,7 @@ class Airfoil(object):
             xslice = np.zeros(nffd)
             for i in range(nffd):
                 xtemp = i * 1.0 / (nffd - 1.0)
-                xslice[i] = min(coords[:, 0]) - 1.0 * xmargin + (self.chord + 2.0 * xmargin) * xtemp
+                xslice[i] = min(coords[:, 0]) - 1.0 * xmargin + (max(coords[:, 0]) + 2.0 * xmargin) * xtemp
         else:
             nffd = len(xslice)
 
@@ -752,6 +730,40 @@ class Airfoil(object):
         # Z
         FFDbox[:, :, 1, 2] = 1.0
 
+        return FFDbox
+
+    ## Output
+    def writeCoords(self, coords, filename, format="plot3d"):
+        """
+        We have to discuss which types of printfiles we want to get and how
+        to handle them (does this class print the last "sampled" x,y or do
+        we want more options?)
+        """
+
+        if format == "plot3d":
+            _writePlot3D(filename, coords[:, 0], coords[:, 1])
+        elif format == "dat":
+            _writeDat(filename, coords[:, 0], coords[:, 1])
+        else:
+            raise Error(format + " is not a supported output format!")
+
+    def writeFFD(self, FFDbox, filename):
+        """
+        This function writes out an FFD in plot3D format for a given FFDbox
+
+        Parameters
+        ----------
+        FFDbox : Ndarray [N,2,2,3]
+            An FFDbox generated from the getFFD function
+
+        filename : str
+            filename to write out, not including the '.xyz' ending
+
+
+        """
+
+        nffd = FFDbox.shape[0]
+
         # Write to file
         with open(filename, "w") as f:
             f.write("1\n")
@@ -762,6 +774,7 @@ class Airfoil(object):
                         for i in range(nffd):
                             f.write("%.15f " % (FFDbox[i, j, k, ell]))
                         f.write("\n")
+        return
 
     ## Utils
     # maybe remove and put into a separate location?
