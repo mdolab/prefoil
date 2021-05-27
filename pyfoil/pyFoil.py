@@ -113,6 +113,34 @@ def _writeDat(filename, x, y):
             f.write(str(round(x[i], 12)) + "\t\t" + str(round(y[i], 12)) + "\n")
 
 
+def writeFFD(FFDbox, filename):
+    """
+    This function writes out an FFD in plot3D format from an FFDbox.
+
+    Parameters
+    ----------
+    FFDBox : Ndarray [N,2,2,3]
+        FFD Box to write out
+
+    filename : str
+        filename to write out, not including the '.xyz' ending
+
+    """
+
+    nffd = FFDbox.shape[0]
+
+    # Write to file
+    with open(filename + ".xyz", "w") as f:
+        f.write("1\n")
+        f.write(str(nffd) + " 2 2\n")
+        for ell in range(3):
+            for k in range(2):
+                for j in range(2):
+                    for i in range(nffd):
+                        f.write("%.15f " % (FFDbox[i, j, k, ell]))
+                    f.write("\n")
+
+
 def _translateCoords(X, dX):
     """shifts the input coordinates by dx and dy"""
     return X + dX
@@ -654,8 +682,10 @@ class Airfoil(object):
 
         return coords
 
-    def getFFD(self, nffd, fitted=True, xmargin=0.001, ymarginu=0.02, ymarginl=0.02, xslice=None, coords=None):
+    def _buildFFD(self, nffd, fitted, xmargin, ymarginu, ymarginl, xslice, coords):
         """
+        The function that actually builds the FFD Box from all of the given parameters
+
         Parameters
         ----------
         nffd : int
@@ -747,34 +777,49 @@ class Airfoil(object):
         else:
             raise Error(format + " is not a supported output format!")
 
-    def writeFFD(self, FFDbox, filename):
+    def generateFFD(
+        self, nffd, filename, fitted=True, xmargin=0.001, ymarginu=0.02, ymarginl=0.02, xslice=None, coords=None
+    ):
         """
-        This function writes out an FFD in plot3D format for a given FFDbox
+        Generates an FFD from the airfoil and writes it out to file
 
-        Parameters
-        ----------
-        FFDbox : Ndarray [N,2,2,3]
-            An FFDbox generated from the getFFD function
+        nffd : int
+            the number of chordwise points in the FFD
 
         filename : str
             filename to write out, not including the '.xyz' ending
 
+        fitted : bool
+            flag to pick between a fitted FFD (True) and box FFD (False)
 
+        xmargin : float
+            The closest distance of the FFD box to the tip and aft of the airfoil
+
+        ymarginu : float
+            When a box ffd is generated this specifies the top of the box's y values as
+            the maximum y value in the airfoil coordinates plus this margin.
+            When a fitted ffd is generated this is the margin between the FFD point at
+            an xslice location and the upper surface of the airfoil at this location
+
+        ymarginl : float
+            When a box ffd is generated this specifies the bottom of the box's y values as
+            the minimum y value in the airfoil coordinates minus this margin.
+            When a fitted ffd is generated this is the margin between the FFD point at
+            an xslice location and the lower surface of the airfoil at this location
+
+        xslice : Ndarray [N,2]
+            User specified xslice locations. If this is chosen nffd is ignored
+
+        coords : Ndarray [N,2]
+            the coordinates to use for defining the airfoil, if the user does not
+            want the original coordinates for the airfoil used. This shouldn't be
+            used unless the user wants fine tuned control over the FFD creation,
+            It should be sufficient to ignore.
         """
 
-        nffd = FFDbox.shape[0]
+        FFDbox = self._buildFFD(nffd, fitted, xmargin, ymarginu, ymarginl, xslice, coords)
 
-        # Write to file
-        with open(filename, "w") as f:
-            f.write("1\n")
-            f.write(str(nffd) + " 2 2\n")
-            for ell in range(3):
-                for k in range(2):
-                    for j in range(2):
-                        for i in range(nffd):
-                            f.write("%.15f " % (FFDbox[i, j, k, ell]))
-                        f.write("\n")
-        return
+        writeFFD(FFDbox, filename)
 
     ## Utils
     # maybe remove and put into a separate location?

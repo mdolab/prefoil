@@ -89,7 +89,7 @@ class TestFFD(unittest.TestCase):
         self.assertEqual(yl, 0)
 
     def test_box_FFD(self):
-        FFD_box = self.foil.getFFD(4, fitted=False)
+        FFD_box = self.foil._buildFFD(4, False, 0.001, 0.02, 0.02, None, None)
         FFD_box_actual = np.zeros((4, 2, 2, 3))
 
         xslice = np.array([-0.001, 0.3297966667, 0.6605933334, 0.9913900001])
@@ -104,7 +104,7 @@ class TestFFD(unittest.TestCase):
         np.testing.assert_array_almost_equal(FFD_box, FFD_box_actual, decimal=5)
 
     def test_fitted_FFD(self):
-        FFD_box = self.wave.getFFD(3)
+        FFD_box = self.wave._buildFFD(3, True, 0.001, 0.02, 0.02, None, None)
 
         FFD_box_actual = np.zeros((3, 2, 2, 3))
         xslice = np.array([-0.001, 0.5, 1.001])
@@ -124,7 +124,7 @@ class TestFFD(unittest.TestCase):
 
     def test_specify_coord(self):
         coords = self.wave.getPts()
-        FFD_box = self.foil.getFFD(3, coords=coords)
+        FFD_box = self.foil._buildFFD(3, True, 0.001, 0.02, 0.02, None, coords)
 
         FFD_box_actual = np.zeros((3, 2, 2, 3))
         xslice = np.array([-0.001, 0.5, 1.001])
@@ -144,7 +144,7 @@ class TestFFD(unittest.TestCase):
 
     def test_specify_xslice(self):
         xslice = np.array([0.0, 0.5, 1.0])
-        FFD_box = self.wave.getFFD(7, xslice=xslice)
+        FFD_box = self.wave._buildFFD(7, True, 0.001, 0.02, 0.02, xslice, None)
 
         FFD_box_actual = np.zeros((3, 2, 2, 3))
         FFD_box_actual[:, 0, 0, 0] = xslice[:].copy()
