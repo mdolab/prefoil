@@ -78,6 +78,16 @@ class TestFFD(unittest.TestCase):
         self.foil = Airfoil(X)
         self.wave = Airfoil(np.array([[1, 0], [0.5, 0.25], [0, 0], [0.5, -0.25], [1, 0]]))
 
+    def test_getClosest(self):
+        yu, yl = self.wave._getClosest(self.wave.getPts(), 0.3)
+        self.assertEqual(yu, 0.25)
+        self.assertEqual(yl, -0.25)
+
+    def test_getClosest_off_end(self):
+        yu, yl = self.wave._getClosest(self.wave.getPts(), -1)
+        self.assertEqual(yu, 0)
+        self.assertEqual(yl, 0)
+
     def test_box_FFD(self):
         FFD_box = self.foil.getFFD(4, fitted=False)
         FFD_box_actual = np.zeros((4, 2, 2, 3))
