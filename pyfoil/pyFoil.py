@@ -679,7 +679,7 @@ class Airfoil(object):
             When a fitted ffd is generated this is the margin between the FFD point at
             an xslice location and the lower surface of the airfoil at this location
 
-        xslices : Ndarray [N,2]
+        xslice : Ndarray [N,2]
             User specified xslice locations. If this is chosen nffd is ignored
 
         coords : Ndarray [N,2]
