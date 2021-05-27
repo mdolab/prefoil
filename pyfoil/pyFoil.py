@@ -184,6 +184,35 @@ def checkCellRatio(X, ratio_tol=1.2):
     return cell_ratio, max_cell_ratio, avg_cell_ratio, exc
 
 
+def _getClosest(coords, x):
+    """
+    Gets the closest y value on the upper and lower point to an x value
+
+    Parameters
+    ----------
+    coords : Ndarray [N,2]
+        coordinates defining the airfoil
+
+    x : float
+        The x value to find the closest point for
+    """
+    # TODO should this be modified to interpolate points using findPts?
+
+    top = coords[: len(coords + 1) // 2 + 1, :]
+    bottom = coords[len(coords + 1) // 2 :, :]
+
+    x_top = np.ones(len(top))
+    for i in range(len(top)):
+        x_top[i] = abs(top[i, 0] - x)
+    yu = top[np.argmin(x_top), 1]
+    x_bottom = np.ones(len(bottom))
+    for i in range(len(bottom)):
+        x_bottom[i] = abs(bottom[i, 0] - x)
+    yl = bottom[np.argmin(x_bottom), 1]
+
+    return yu, yl
+
+
 class Airfoil(object):
     """
     A class for manipulating airfoil geometry.
@@ -411,34 +440,6 @@ class Airfoil(object):
 
     def getMaxCamber(self):
         pass
-
-    def _getClosest(self, coords, x):
-        """
-        Gets the closest y value on the upper and lower point to an x value
-
-        Parameters
-        ----------
-        coords : Ndarray [N,2]
-            coordinates defining the airfoil
-
-        x : float
-            The x value to find the closest point for
-        """
-        # TODO should this be modified to interpolate points using findPts?
-
-        top = coords[: len(coords + 1) // 2 + 1, :]
-        bottom = coords[len(coords + 1) // 2 :, :]
-
-        x_top = np.ones(len(top))
-        for i in range(len(top)):
-            x_top[i] = abs(top[i, 0] - x)
-        yu = top[np.argmin(x_top), 1]
-        x_bottom = np.ones(len(bottom))
-        for i in range(len(bottom)):
-            x_bottom[i] = abs(bottom[i, 0] - x)
-        yl = bottom[np.argmin(x_bottom), 1]
-
-        return yu, yl
 
     def isReflex(self):
         """
@@ -738,7 +739,7 @@ class Airfoil(object):
             yupper = np.zeros(nffd)
             for i in range(nffd):
                 ymargin = ymarginu + (ymarginl - ymarginu) * xslice[i]
-                yu, yl = self._getClosest(coords, xslice[i])
+                yu, yl = _getClosest(coords, xslice[i])
                 yupper[i] = yu + ymargin
                 ylower[i] = yl - ymargin
         else:
