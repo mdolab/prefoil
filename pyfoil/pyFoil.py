@@ -184,7 +184,7 @@ def checkCellRatio(X, ratio_tol=1.2):
     return cell_ratio, max_cell_ratio, avg_cell_ratio, exc
 
 
-def _getClosest(coords, x):
+def _getClosestY(coords, x):
     """
     Gets the closest y value on the upper and lower point to an x value
 
@@ -196,7 +196,7 @@ def _getClosest(coords, x):
     x : float
         The x value to find the closest point for
     """
-    # TODO should this be modified to interpolate points using findPts?
+    # TODO should this be modified to use the spline from the airfoil?
 
     top = coords[: len(coords + 1) // 2 + 1, :]
     bottom = coords[len(coords + 1) // 2 :, :]
@@ -739,7 +739,7 @@ class Airfoil(object):
             yupper = np.zeros(nffd)
             for i in range(nffd):
                 ymargin = ymarginu + (ymarginl - ymarginu) * xslice[i]
-                yu, yl = _getClosest(coords, xslice[i])
+                yu, yl = _getClosestY(coords, xslice[i])
                 yupper[i] = yu + ymargin
                 ylower[i] = yl - ymargin
         else:
