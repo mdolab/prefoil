@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import os
-from pyfoil.pyFoil import readCoordFile, Airfoil, _getClosest
+from pyfoil.pyFoil import readCoordFile, Airfoil, _getClosestY
 from pyfoil import sampling
 
 baseDir = os.path.dirname(os.path.abspath(__file__))
@@ -79,12 +79,12 @@ class TestFFD(unittest.TestCase):
         self.wave = Airfoil(np.array([[1, 0], [0.5, 0.25], [0, 0], [0.5, -0.25], [1, 0]]))
 
     def test_getClosest(self):
-        yu, yl = _getClosest(self.wave.getPts(), 0.3)
+        yu, yl = _getClosestY(self.wave.getPts(), 0.3)
         self.assertEqual(yu, 0.25)
         self.assertEqual(yl, -0.25)
 
     def test_getClosest_off_end(self):
-        yu, yl = _getClosest(self.wave.getPts(), -1)
+        yu, yl = _getClosestY(self.wave.getPts(), -1)
         self.assertEqual(yu, 0)
         self.assertEqual(yl, 0)
 
