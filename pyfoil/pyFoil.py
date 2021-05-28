@@ -90,28 +90,55 @@ def _cleanup_TE(X, tol):
 
 def _writePlot3D(filename, x, y):
     filename += ".xyz"
-    f = open(filename, "w")
-    f.write("1\n")
-    f.write("%d %d %d\n" % (len(x), 2, 1))
-    for iDim in range(3):
-        for j in range(2):
-            for i in range(len(x)):
-                if iDim == 0:
-                    f.write("%g\n" % x[i])
-                elif iDim == 1:
-                    f.write("%g\n" % y[i])
-                else:
-                    f.write("%g\n" % (float(j)))
-    f.close()
+
+    with open(filename, "w") as f:
+        f.write("1\n")
+        f.write("%d %d %d\n" % (len(x), 2, 1))
+        for iDim in range(3):
+            for j in range(2):
+                for i in range(len(x)):
+                    if iDim == 0:
+                        f.write("%g\n" % x[i])
+                    elif iDim == 1:
+                        f.write("%g\n" % y[i])
+                    else:
+                        f.write("%g\n" % (float(j)))
 
 
 def _writeDat(filename, x, y):
     filename += ".dat"
-    f = open(filename, "w")
 
-    for i in range(0, len(x)):
-        f.write(str(round(x[i], 12)) + "\t\t" + str(round(y[i], 12)) + "\n")
-    f.close()
+    with open(filename, "w") as f:
+        for i in range(0, len(x)):
+            f.write(str(round(x[i], 12)) + "\t\t" + str(round(y[i], 12)) + "\n")
+
+
+def writeFFD(FFDbox, filename):
+    """
+    This function writes out an FFD in plot3D format from an FFDbox.
+
+    Parameters
+    ----------
+    FFDBox : Ndarray [N,2,2,3]
+        FFD Box to write out
+
+    filename : str
+        filename to write out, not including the '.xyz' ending
+
+    """
+
+    nffd = FFDbox.shape[0]
+
+    # Write to file
+    with open(filename + ".xyz", "w") as f:
+        f.write("1\n")
+        f.write(str(nffd) + " 2 2\n")
+        for ell in range(3):
+            for k in range(2):
+                for j in range(2):
+                    for i in range(nffd):
+                        f.write("%.15f " % (FFDbox[i, j, k, ell]))
+                    f.write("\n")
 
 
 def _translateCoords(X, dX):
@@ -155,6 +182,35 @@ def checkCellRatio(X, ratio_tol=1.2):
     print("Average cell ratio", avg_cell_ratio)
 
     return cell_ratio, max_cell_ratio, avg_cell_ratio, exc
+
+
+def _getClosestY(coords, x):
+    """
+    Gets the closest y value on the upper and lower point to an x value
+
+    Parameters
+    ----------
+    coords : Ndarray [N,2]
+        coordinates defining the airfoil
+
+    x : float
+        The x value to find the closest point for
+    """
+    # TODO should this be modified to use the spline from the airfoil?
+
+    top = coords[: len(coords + 1) // 2 + 1, :]
+    bottom = coords[len(coords + 1) // 2 :, :]
+
+    x_top = np.ones(len(top))
+    for i in range(len(top)):
+        x_top[i] = abs(top[i, 0] - x)
+    yu = top[np.argmin(x_top), 1]
+    x_bottom = np.ones(len(bottom))
+    for i in range(len(bottom)):
+        x_bottom[i] = abs(bottom[i, 0] - x)
+    yl = bottom[np.argmin(x_bottom), 1]
+
+    return yu, yl
 
 
 class Airfoil(object):
@@ -627,6 +683,86 @@ class Airfoil(object):
 
         return coords
 
+    def _buildFFD(self, nffd, fitted, xmargin, ymarginu, ymarginl, xslice, coords):
+        """
+        The function that actually builds the FFD Box from all of the given parameters
+
+        Parameters
+        ----------
+        nffd : int
+            number of FFD points along the chord
+
+        fitted : bool
+            flag to pick between a fitted FFD (True) and box FFD (False)
+
+        xmargin : float
+            The closest distance of the FFD box to the tip and aft of the airfoil
+
+        ymarginu : float
+            When a box ffd is generated this specifies the top of the box's y values as
+            the maximum y value in the airfoil coordinates plus this margin.
+            When a fitted ffd is generated this is the margin between the FFD point at
+            an xslice location and the upper surface of the airfoil at this location
+
+        ymarginl : float
+            When a box ffd is generated this specifies the bottom of the box's y values as
+            the minimum y value in the airfoil coordinates minus this margin.
+            When a fitted ffd is generated this is the margin between the FFD point at
+            an xslice location and the lower surface of the airfoil at this location
+
+        xslice : Ndarray [N,2]
+            User specified xslice locations. If this is chosen nffd is ignored
+
+        coords : Ndarray [N,2]
+            the coordinates to use for defining the airfoil, if the user does not
+            want the original coordinates for the airfoil used. This shouldn't be
+            used unless the user wants fine tuned control over the FFD creation,
+            It should be sufficient to ignore.
+
+        """
+
+        if coords is None:
+            coords = self.getPts()
+
+        if xslice is None:
+            xslice = np.zeros(nffd)
+            for i in range(nffd):
+                xtemp = i * 1.0 / (nffd - 1.0)
+                xslice[i] = min(coords[:, 0]) - 1.0 * xmargin + (max(coords[:, 0]) + 2.0 * xmargin) * xtemp
+        else:
+            nffd = len(xslice)
+
+        FFDbox = np.zeros((nffd, 2, 2, 3))
+
+        if fitted:
+            ylower = np.zeros(nffd)
+            yupper = np.zeros(nffd)
+            for i in range(nffd):
+                ymargin = ymarginu + (ymarginl - ymarginu) * xslice[i]
+                yu, yl = _getClosestY(coords, xslice[i])
+                yupper[i] = yu + ymargin
+                ylower[i] = yl - ymargin
+        else:
+            yupper = np.ones(nffd) * (max(coords[:, 1]) + ymarginu)
+            ylower = np.ones(nffd) * (min(coords[:, 1]) - ymarginl)
+
+        # X
+        FFDbox[:, 0, 0, 0] = xslice[:].copy()
+        FFDbox[:, 1, 0, 0] = xslice[:].copy()
+        # Y
+        # lower
+        FFDbox[:, 0, 0, 1] = ylower[:].copy()
+        # upper
+        FFDbox[:, 1, 0, 1] = yupper[:].copy()
+        # copy
+        FFDbox[:, :, 1, :] = FFDbox[:, :, 0, :].copy()
+        # Z
+        FFDbox[:, :, 0, 2] = 0.0
+        # Z
+        FFDbox[:, :, 1, 2] = 1.0
+
+        return FFDbox
+
     ## Output
     def writeCoords(self, coords, filename, format="plot3d"):
         """
@@ -641,6 +777,50 @@ class Airfoil(object):
             _writeDat(filename, coords[:, 0], coords[:, 1])
         else:
             raise Error(format + " is not a supported output format!")
+
+    def generateFFD(
+        self, nffd, filename, fitted=True, xmargin=0.001, ymarginu=0.02, ymarginl=0.02, xslice=None, coords=None
+    ):
+        """
+        Generates an FFD from the airfoil and writes it out to file
+
+        nffd : int
+            the number of chordwise points in the FFD
+
+        filename : str
+            filename to write out, not including the '.xyz' ending
+
+        fitted : bool
+            flag to pick between a fitted FFD (True) and box FFD (False)
+
+        xmargin : float
+            The closest distance of the FFD box to the tip and aft of the airfoil
+
+        ymarginu : float
+            When a box ffd is generated this specifies the top of the box's y values as
+            the maximum y value in the airfoil coordinates plus this margin.
+            When a fitted ffd is generated this is the margin between the FFD point at
+            an xslice location and the upper surface of the airfoil at this location
+
+        ymarginl : float
+            When a box ffd is generated this specifies the bottom of the box's y values as
+            the minimum y value in the airfoil coordinates minus this margin.
+            When a fitted ffd is generated this is the margin between the FFD point at
+            an xslice location and the lower surface of the airfoil at this location
+
+        xslice : Ndarray [N,2]
+            User specified xslice locations. If this is chosen nffd is ignored
+
+        coords : Ndarray [N,2]
+            the coordinates to use for defining the airfoil, if the user does not
+            want the original coordinates for the airfoil used. This shouldn't be
+            used unless the user wants fine tuned control over the FFD creation,
+            It should be sufficient to ignore.
+        """
+
+        FFDbox = self._buildFFD(nffd, fitted, xmargin, ymarginu, ymarginl, xslice, coords)
+
+        writeFFD(FFDbox, filename)
 
     ## Utils
     # maybe remove and put into a separate location?
