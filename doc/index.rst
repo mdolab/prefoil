@@ -27,4 +27,5 @@ The tool is still incomplete but in a functional beta version, user contribution
    :caption: Guide contents
 
    install
-   API
+   pyFoil
+   sampling

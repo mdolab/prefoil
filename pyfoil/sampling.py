@@ -60,19 +60,22 @@ def polynomial(start, end, n, m=np.pi, order=5):
     similar to cosSacing but instead of a unit circle, a func of the form 1 - x^order is used.
     This does a better job on not overly clustering points at the edges.
 
-            ---------------|---------------
-          -/            -/ | \-            \-    order 4
-        -/            -/   |   \-            \-
-      -/            -/     |     \-            \-
-    -/            -/       |       \-            \-
-    |           -/         |         \-           |
-    |         -/           | order 1   \-         |
-    |       -/             |             \-       |
-    |     -/               |               \-     |
-    |   -/                 |                 \-   |
-    | -/                   |                   \- |
-    |/                     |                     \|
-    ------------------------------------------------
+    .. code-block:: text
+
+                ---------------|---------------
+              -/            -/ | \-            \-    order 4
+            -/            -/   |   \-            \-
+          -/            -/     |     \-            \-
+        -/            -/       |       \-            \-
+        |           -/         |         \-           |
+        |         -/           | order 1   \-         |
+        |       -/             |             \-       |
+        |     -/               |               \-     |
+        |   -/                 |                 \-   |
+        | -/                   |                   \- |
+        |/                     |                     \|
+        ------------------------------------------------
+
 
     Parameters
     ----------
@@ -116,11 +119,15 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     with the final spacing from each sequence. The default settings work well
     for n~100 (200 on entire airfoil).
 
-     a1                           deltac                               b1
-    |                             <----->                               |
-    |  |   |    |     |     |     |     |     |     |     |    |   |  | |
-    |                                                                   |
-    <-- na=3 --><--------------- nc=n-2-na-nb -----------><--- nb=4  --->
+    .. code-block:: text
+
+         a1                           deltac                               b1
+        |                             <----->                               |
+        |  |   |    |     |     |     |     |     |     |     |    |   |  | |
+        |                                                                   |
+        <-- na=3 --><--------------- nc=n-2-na-nb -----------><--- nb=4  --->
+
+
     Parameters
     ----------
     start : float
@@ -231,13 +238,15 @@ def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
     desired to specify different spacing functions for the top and the bottom,
     the user can provide a list for the spacingFunc and func_args.
 
-                        s1                            s2
-    || |  |   |    |     |     |    |   |  | |||| |  |   |    |     |     |    |   |  | ||
-                                                /\
-                                                s_LE
+    .. code-block::text
+                            s1                            s2
+        || |  |   |    |     |     |    |   |  | |||| |  |   |    |     |     |    |   |  | ||
+                                                    /\
+                                                    s_LE
 
     Note that one point is added when sampling due to the removal of "double"
     elements when returning the point array
+
 
     Parameters
     ----------

@@ -1,13 +1,15 @@
 """
-pyFoil
---------
 
-Contains a class for creating, modifying and exporting airfoils.
+..    pyFoil
+    --------
+
+    Contains a class for creating, modifying and exporting airfoils.
 
 
-Questions:
-- Modes?!? Should we provide any functionality for that?
-- Do we want twist in deg or rad?
+    Questions:
+    - Modes?!? Should we provide any functionality for that?
+    - Do we want twist in deg or rad?
+
 """
 
 import numpy as np
@@ -352,8 +354,9 @@ class Airfoil(object):
     Create an instance of an airfoil. There are two ways of instantiating
     this object: by passing in a set of points, or by reading in a coordinate
     file. The points must satisfy the following requirements:
-        - Ordered such that they form a continuous airfoil surface
-        - First and last points correspond to trailing edge
+
+       - Ordered such that they form a continuous airfoil surface
+       - First and last points correspond to trailing edge
 
     It is not necessary for the points to be in a counter-clockwise ordering. If
     they are not ordered counter-clockwise, the order will be reversed so that
