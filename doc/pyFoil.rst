@@ -1,4 +1,4 @@
-.. _pFoil_API:
+.. _pyFoil_API:
 
 pyFoil API
 ----------

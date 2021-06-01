@@ -98,15 +98,6 @@ def _cleanup_pts(X):
     return data
 
 
-def _genNACACoords(name):
-    pass
-
-
-def _cleanup_TE(X, tol):
-    TE = np.mean(X[[-1, 0], :], axis=0)
-    return X, TE
-
-
 def _writePlot3D(filename, x, y):
     """
     This function writes out a 2D airfoil surface in 3D (one element in z direction)
