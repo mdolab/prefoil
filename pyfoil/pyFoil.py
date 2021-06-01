@@ -936,7 +936,23 @@ class Airfoil(object):
         self.recompute(coords)
 
     def removeTE(self, tol=0.3, xtol=0.9):
-        """  """
+        """
+        Removes points from the trailing edge of an airfoil, and recomputes the underlying spline.
+
+        Parameters
+        ----------
+        tol : float
+            A point is part of the trailing edge if the magnitude of the dot product of the normalized vector of `coord[i+1]-coord[i]` and the normalized vector from the trailing edge to the leading edge is less than this tolerance.
+            This means that decreasing the tolerance will require the orientation of an element to approach being perpendicular to the chord to be consider part of the trailing edge.
+
+        xtol : float
+            Only checks for trailing edge points if the coodinate is past this fraction of the cord.
+
+        Returns
+        -------
+        TE_points : Ndarray [N,2]
+            The points that were flagged as trailing edge points and removed from the airfoil coordinates.
+        """
         coords = self.getPts()
         chord_vec = self.TE - self.LE
         unit_chord_vec = chord_vec / np.linalg.norm(chord_vec)
