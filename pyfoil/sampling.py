@@ -238,12 +238,12 @@ def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
 
     Note that one point is added when sampling due to the removal of "double"
     elements when returning the point array
-    
+
     Parameters
     ----------
-    n : int 
+    n : int
         the number of points to sample
-    
+
     spacingFunc : function
         a function that returns the sampling spacing
 
