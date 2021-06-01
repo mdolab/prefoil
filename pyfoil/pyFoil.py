@@ -946,7 +946,7 @@ class Airfoil(object):
             This means that decreasing the tolerance will require the orientation of an element to approach being perpendicular to the chord to be consider part of the trailing edge.
 
         xtol : float
-            Only checks for trailing edge points if the coodinate is past this fraction of the cord.
+            Only checks for trailing edge points if the coodinate is past this fraction of the chord.
 
         Returns
         -------
