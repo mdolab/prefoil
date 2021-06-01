@@ -42,8 +42,8 @@ class Error(Exception):
 
 def readCoordFile(filename, headerlines=0):
     """
-    This function reads in a '.dat' style airfoil coordinate file.
-    With each coordinate on a new line and each line containing an xy pair
+    This function reads in a '.dat' style airfoil coordinate file,
+    with each coordinate on a new line and each line containing an xy pair
     separate by whitespace
 
     Parameters
@@ -109,7 +109,7 @@ def _cleanup_TE(X, tol):
 
 def _writePlot3D(filename, x, y):
     """
-    This function writes out a airfoil 2D airfoil surface in 3D (one element in z direction)
+    This function writes out a 2D airfoil surface in 3D (one element in z direction)
 
     Parameters
     ----------
@@ -221,9 +221,9 @@ def _rotateCoords(X, angle, origin):
         The x/y coordinate pairs that are being rotated
 
     angle : float
-        The angle in degrees to rotate the coordinates
+        The angle in radians to rotate the coordinates
 
-    origin : 2darray [2]
+    origin : Ndarray [2]
         The x/y coordinate pair specifying the rotation origin
 
     Returns
@@ -288,7 +288,7 @@ def checkCellRatio(X, ratio_tol=1.2):
     avg_cell_ratio : float
         the average cell ratio
 
-    exc : Ndarray [N]
+    exc : Ndarray
         the cell indicies that exceed the ratio tolerance
     """
     X_diff = X[1:, :] - X[:-1, :]
@@ -375,10 +375,6 @@ class Airfoil(object):
     normalize : bool
         True to normalize the chord of the airfoil
 
-    Examples
-    --------
-    The general sequence of operations for using pyfoil is as follows::
-      >>> from pyfoil.pyFoil import *
     """
 
     def __init__(self, coords, spline_order=3, normalize=False):
@@ -460,7 +456,7 @@ class Airfoil(object):
 
         Returns
         -------
-        LE : 2darray [2]
+        LE : Ndarray [2]
             the coordinate of the leading edge
 
         s_LE : float
@@ -539,7 +535,7 @@ class Airfoil(object):
 
         Returns
         -------
-        X : 2darray [2]
+        X : Ndarray [2]
             The coordinate at the intersection
 
         s_x : float
@@ -731,7 +727,7 @@ class Airfoil(object):
         angle : float
             the angle to rotate the airfoil in degrees
 
-        origin : 2darray [2]
+        origin : Ndarray [2]
             the point about which to rotate the airfoil
         """
         new_coords = _rotateCoords(self.spline.X, np.deg2rad(angle), origin)
@@ -746,7 +742,7 @@ class Airfoil(object):
 
         Parameters
         ----------
-        origin : 2darray [2]
+        origin : Ndarray [2]
             the location about which to preform the rotation
         """
         self.rotate(-1.0 * self.twist, origin=origin)
@@ -760,7 +756,7 @@ class Airfoil(object):
         factor : float
             the scaling factor
 
-        origin : 2darray [2]
+        origin : Ndarray [2]
             the coordinate about which to preform the scaling
         """
 
@@ -773,7 +769,7 @@ class Airfoil(object):
 
         Parameters
         ----------
-        origin : 2darray [2]
+        origin : Ndarray [2]
             the point about which to scale the airfoil
         """
 
@@ -789,7 +785,7 @@ class Airfoil(object):
 
         Parameters
         ----------
-        delta : 2darray [2]
+        delta : Ndarray [2]
             the vector that defines the translation of the airfoil
         """
 
