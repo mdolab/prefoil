@@ -6,6 +6,28 @@ from scipy import optimize
 
 
 def cosine(start, end, n, m=np.pi):
+    """
+    cosine spacing sampling function
+
+    Parameters
+    ----------
+    start : float
+        the parametic point to start sampling at
+
+    end : float
+        the parametric point to stop sampling at
+
+    n : int
+        the number of points to sample
+
+    m : float
+        the maximum angle to sample at
+
+    Returns
+    -------
+    s : Ndarray [N]
+        The parametric spline locations that define the sampling
+    """
     s = conical(start, end, n, m, coeff=1)
     return s
 
@@ -51,6 +73,27 @@ def polynomial(start, end, n, m=np.pi, order=5):
     | -/                   |                   \- |
     |/                     |                     \|
     ------------------------------------------------
+
+    Parameters
+    ----------
+    start : float
+        parametric location of the sampling start point
+
+    end : float
+        parametric location of the sampling end point
+
+    n : int
+        number of points to sample
+
+    m : float
+        the maximum angle for the sampling process
+
+    order : float
+        the order of polynomial from which to sample
+    Returns
+    -------
+    s : Ndarray [N]
+        The parametric spline locations that define the sampling
     """
 
     def poly(x):
@@ -80,9 +123,9 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     <-- na=3 --><--------------- nc=n-2-na-nb -----------><--- nb=4  --->
     Parameters
     ----------
-    start : int
+    start : float
         Parametric location of start of distribution (between 0 and 1).
-    end : int
+    end : float
         Parametric location of end of distribution (between 0 and 1).
     n : int
         Number of nodes needed in distribution (including start and end).
@@ -94,6 +137,11 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
         Geometric ratio from the start.
     rb : float
         Geometric ratio from the end.
+
+    Returns
+    -------
+    s : Ndarray [N]
+        The parametric spline locations that define the sampling
     """
     s = np.zeros(n)
     s[n - 1] = 1.0
@@ -190,6 +238,25 @@ def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
 
     Note that one point is added when sampling due to the removal of "double"
     elements when returning the point array
+    
+    Parameters
+    ----------
+    n : int 
+        the number of points to sample
+    
+    spacingFunc : function
+        a function that returns the sampling spacing
+
+    func_args : dict
+        options to pass into the spacingFunc
+
+    s_LE : float
+        parametric location of the leading edge
+
+    Returns
+    -------
+    s : Ndarray [N]
+        The parametric spline locations that define the sampling
     """
     if callable(spacingFunc):
         spacingFunc = [spacingFunc] * 2
