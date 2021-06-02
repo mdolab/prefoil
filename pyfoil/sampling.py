@@ -43,28 +43,28 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
     The default m=pi thus means that sampled points will accumulate at the leading and trailing edge.
     If you double this frequency with m=2pi, then there will be an additional sampling concentration at mid chord, with m=3pi there will be 2 additional concentrations, and so on.
     The user can also use a non-integer multiplier to have non-equally spaced refined areas - e.g. with m = 0.5*pi the sampling will be coarse at the LE and refined at the TE.
-    
-    A more-than-cosine distribution exacerbates the non-linearity introduced by the cosine.    
+
+    A more-than-cosine distribution exacerbates the non-linearity introduced by the cosine.
     The `coeff` parameter, b for conciseness in the code, defines the "strength" of the distortion:
         b = 0 : linear distribution
         b = 1 : cosine distribution
-        b > 1 : more-than-cosine distribution, meaning that the points are 
+        b > 1 : more-than-cosine distribution, meaning that the points are
     The overall function is composed of two sub-functions, continuous at b = 1 ---> s = cos(x).
     For b < 1, the following function is used:
-    
+
     .. math::
-    
+
         s = ((\cos(x) + 1) / 2 - x / \pi) * b + x / \pi
-    
+
     While for coeff >=1:
-    
+
     .. math::
-        
+
         s = (1 + 1 / \sqrt(np.cos(x) ^ 2 + np.sin(x) ^ 2 / b ^ 2) * \cos(x)) * 0.5
-     
+
     For more clarity, the user can plot these functions and see how the first one goes from linear to cosine as b approaches 1, and the second goes from cosine to a discontinuous 1/0 function for b ~ infinity.
     Note that the cosine/conical functions are normalized and shifted to fit into the user-prescribed sampling interval.
-    
+
     Parameters
     ----------
     start : float
@@ -79,7 +79,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
     m : float
         the maximum angle used for sampling the point distribution, starting from zero.
         This implicitly defines the "frequency" of the refinement, e.g. m=pi refinement at LE and TE, m=2*pi refinement at LE, TE, and mid-chord, etc
-    
+
     bad_edge :  bool
         This is some kind of sneaky hack used to avoid bad meshes.
         If true, the second and second to last points of the ndarray are removed from the sampling vector.
@@ -91,7 +91,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
     -------
     s : Ndarray [N]
         The parametric spline locations that define the sampling
-    
+
     """
 
     b = coeff
