@@ -7,7 +7,7 @@ from scipy import optimize
 
 def cosine(start, end, n, m=np.pi):
     """
-    Sampling function based on cosine spacing. Check ``conical()`` for more implementation information.
+    Sampling function based on cosine spacing. Check :meth:`pyfoil.sampling.conical()` for more implementation information.
 
     Parameters
     ----------
@@ -22,7 +22,7 @@ def cosine(start, end, n, m=np.pi):
 
     m : float
         the maximum angle used for sampling the point distribution, starting from zero.
-        This implicitly defines the "frequency" of the refinement, e.g. m=pi refinement at LE and TE, m=2*pi refinement at LE, TE, and mid-chord, etc
+        This implicitly defines the "frequency" of the refinement, e.g. m=pi refinement at LE and TE, :math:`m=2\pi` refinement at LE, TE, and mid-chord, etc
 
     Returns
     -------
@@ -39,30 +39,32 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
     The user selects the chord intervals over which this function is defined, the number of sampling points, and the "frequency" of the distribution.
     At a high level, this function translates a linear distribution of angles into a non-linear distribution of sampling points using a composite trigonometric function.
     The periodicity of the sampling refinement is defined by the angle sampling range ``m``.
-    The cosine function turns a set of equally-spaced angles into a set of ``x`` coordinates denser at n*pi (with n : int).
-    The default m=pi thus means that sampled points will accumulate at the leading and trailing edge.
-    If you double this frequency with m=2pi, then there will be an additional sampling concentration at mid chord, with m=3pi there will be 2 additional concentrations, and so on.
-    The user can also use a non-integer multiplier to have non-equally spaced refined areas - e.g. with m = 0.5*pi the sampling will be coarse at the LE and refined at the TE.
+    The cosine function turns a set of equally-spaced angles into a set of ``x`` coordinates denser at :math:`n\pi` (with n : int).
+    The default :math:`m=\pi` thus means that sampled points will accumulate at the leading and trailing edge.
+    If you double this frequency with :math:`m=2\pi`, then there will be an additional sampling concentration at mid chord, with :math:`m=3\pi`` there will be 2 additional concentrations, and so on.
+    The user can also use a non-integer multiplier to have non-equally spaced refined areas - e.g. with :math:`m = \pi/2` the sampling will be coarse at the LE and refined at the TE.
 
     A more-than-cosine distribution exacerbates the non-linearity introduced by the cosine.
-    The `coeff` parameter, b for conciseness in the code, defines the "strength" of the distortion:
-        b = 0 : linear distribution
-        b = 1 : cosine distribution
-        b > 1 : more-than-cosine distribution, meaning that the points are
-    The overall function is composed of two sub-functions, continuous at b = 1 ---> s = cos(x).
-    For b < 1, the following function is used:
+    The ``coeff`` parameter, ``b`` for conciseness in the code, defines the "strength" of the distortion:
+
+        - :math:`b = 0`: linear distribution
+        - :math:`b = 1`: cosine distribution
+        - :math:`b > 1`: more-than-cosine distribution, meaning that the points are
+
+    The overall function is composed of two sub-functions, continuous at :math:`b = 1 \\rightarrow s = \\cos(x)`.
+    For :math:`b < 1`, the following function is used:
 
     .. math::
 
-        s = ((\cos(x) + 1) / 2 - x / \pi) * b + x / \pi
+        s = \\left(\\frac{\cos(x) + 1}{2} - \\frac{x}{\pi}\\right)b + \\frac{x}{\pi}
 
     While for coeff >=1:
 
     .. math::
 
-        s = (1 + 1 / \sqrt(np.cos(x) ^ 2 + np.sin(x) ^ 2 / b ^ 2) * \cos(x)) * 0.5
+        s = \\frac{1}{2}\\left(1 + \\frac{\cos(x)}{\sqrt{\cos(x) ^ 2 + \sin(x) ^ 2 / b ^ 2}}\\right)
 
-    For more clarity, the user can plot these functions and see how the first one goes from linear to cosine as b approaches 1, and the second goes from cosine to a discontinuous 1/0 function for b ~ infinity.
+    For more clarity, the user can plot these functions and see how the first one goes from linear to cosine as b approaches 1, and the second goes from cosine to a discontinuous (flipped) Heaviside function for :math:`b \\rightarrow \infty`.
     Note that the cosine/conical functions are normalized and shifted to fit into the user-prescribed sampling interval.
 
     Parameters
@@ -78,7 +80,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
 
     m : float
         the maximum angle used for sampling the point distribution, starting from zero.
-        This implicitly defines the "frequency" of the refinement, e.g. m=pi refinement at LE and TE, m=2*pi refinement at LE, TE, and mid-chord, etc
+        This implicitly defines the "frequency" of the refinement, e.g. m=pi refinement at LE and TE, :math:`m=2\pi` refinement at LE, TE, and mid-chord, etc
 
     bad_edge :  bool
         This is some kind of sneaky hack used to avoid bad meshes.
@@ -112,7 +114,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
 
 def polynomial(start, end, n, m=np.pi, order=5):
     """
-    similar to cosSacing but instead of a unit circle, a func of the form 1 - x^order is used.
+    similar to cosine spacing but instead of a unit circle, a function of the form :math:`1 - x^{\mathrm{order}}` is used.
     This does a better job on not overly clustering points at the edges.
 
     .. code-block:: text
@@ -289,9 +291,9 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
 
 def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
     """
-    Function that returns two point distributions joined at s_LE. If it is
-    desired to specify different spacing functions for the top and the bottom,
-    the user can provide a list for the spacingFunc and func_args.
+    Function that returns two point distributions joined at ``s_LE``.
+    If it is desired to specify different spacing functions for the top and the bottom,
+    the user can provide a list for the ``spacingFunc`` and ``func_args``.
 
     .. code-block::text
                             s1                            s2
