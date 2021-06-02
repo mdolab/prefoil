@@ -7,21 +7,22 @@ from scipy import optimize
 
 def cosine(start, end, n, m=np.pi):
     """
-    cosine spacing sampling function
+    Sampling function based on cosine spacing. Check ``conical()`` for more implementation information.
 
     Parameters
     ----------
     start : float
-        the parametic point to start sampling at
+        the airfoil chord location to start sampling at
 
     end : float
-        the parametric point to stop sampling at
+        the airfoil chord location to stop sampling at
 
     n : int
         the number of points to sample
 
     m : float
-        the maximum angle to sample at
+        the maximum angle used for sampling the point distribution, starting from zero.
+        This implicitly defines the "frequency" of the refinement, e.g. m=pi refinement at LE and TE, m=2*pi refinement at LE, TE, and mid-chord, etc
 
     Returns
     -------
@@ -34,9 +35,63 @@ def cosine(start, end, n, m=np.pi):
 
 def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
     """
-    Here I make a sneaky hack to remove the second and second to last points
-    of the ndarray. This is necessary to avoid bad mesh elements at small
-    leading and trailing edges
+    Generalized sampling function that extends from linear to more-than-cosine point distribution.
+    The user selects the chord intervals over which this function is defined, the number of sampling points, and the "frequency" of the distribution.
+    At a high level, this function translates a linear distribution of angles into a non-linear distribution of sampling points using a composite trigonometric function.
+    The periodicity of the sampling refinement is defined by the angle sampling range ``m``.
+    The cosine function turns a set of equally-spaced angles into a set of ``x`` coordinates denser at n*pi (with n : int).
+    The default m=pi thus means that sampled points will accumulate at the leading and trailing edge.
+    If you double this frequency with m=2pi, then there will be an additional sampling concentration at mid chord, with m=3pi there will be 2 additional concentrations, and so on.
+    The user can also use a non-integer multiplier to have non-equally spaced refined areas - e.g. with m = 0.5*pi the sampling will be coarse at the LE and refined at the TE.
+    
+    A more-than-cosine distribution exacerbates the non-linearity introduced by the cosine.    
+    The `coeff` parameter, b for conciseness in the code, defines the "strength" of the distortion:
+        b = 0 : linear distribution
+        b = 1 : cosine distribution
+        b > 1 : more-than-cosine distribution, meaning that the points are 
+    The overall function is composed of two sub-functions, continuous at b = 1 ---> s = cos(x).
+    For b < 1, the following function is used:
+    
+    .. math::
+    
+        s = ((\cos(x) + 1) / 2 - x / \pi) * b + x / \pi
+    
+    While for coeff >=1:
+    
+    .. math::
+        
+        s = (1 + 1 / \sqrt(np.cos(x) ^ 2 + np.sin(x) ^ 2 / b ^ 2) * \cos(x)) * 0.5
+     
+    For more clarity, the user can plot these functions and see how the first one goes from linear to cosine as b approaches 1, and the second goes from cosine to a discontinuous 1/0 function for b ~ infinity.
+    Note that the cosine/conical functions are normalized and shifted to fit into the user-prescribed sampling interval.
+    
+    Parameters
+    ----------
+    start : float
+        the airfoil chord location to start sampling at
+
+    end : float
+        the airfoil chord location to stop sampling at
+
+    n : int
+        the number of points to sample
+
+    m : float
+        the maximum angle used for sampling the point distribution, starting from zero.
+        This implicitly defines the "frequency" of the refinement, e.g. m=pi refinement at LE and TE, m=2*pi refinement at LE, TE, and mid-chord, etc
+    
+    bad_edge :  bool
+        This is some kind of sneaky hack used to avoid bad meshes.
+        If true, the second and second to last points of the ndarray are removed from the sampling vector.
+        This is necessary to avoid bad mesh elements at small leading and trailing edges.
+        Such problem often occurs for high N and high b.
+        As a rule of thumb, the size of the smallest element (considering a normalized airfoil of size 1m) should always be > 1e-4 for pyHyp to extrude the mesh correctly.
+
+    Returns
+    -------
+    s : Ndarray [N]
+        The parametric spline locations that define the sampling
+    
     """
 
     b = coeff
