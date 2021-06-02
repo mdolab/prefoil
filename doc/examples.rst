@@ -41,7 +41,7 @@ Here, sampling an airfoil refers to the definition of points along the surface t
 This block of codes plots two different point samplings along an airfoil.
 After sampling an airfoil, the ``plot`` function shows the most recently sampled points rather than the original.
 
-.. note:: Sampling points does not change the underlying spline in the ``Airfoil``. That is only changed by ``removeTE``.
+.. note:: Sampling points does not change the underlying spline in the ``Airfoil``. That is only changed by ``removeTE`` or any of the geometry modification functions (``scale``, ``rotate``, etc.).
 
 Both sets of sampled points containing 50 points.
 When using the ``conical`` sampling function, higher coefficents result in more nodes being clustered near the ends of the airfoil.
