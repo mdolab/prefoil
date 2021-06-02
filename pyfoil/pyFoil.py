@@ -1,13 +1,15 @@
 """
-pyFoil
---------
 
-Contains a class for creating, modifying and exporting airfoils.
+..    pyFoil
+    --------
+
+    Contains a class for creating, modifying and exporting airfoils.
 
 
-Questions:
-- Modes?!? Should we provide any functionality for that?
-- Do we want twist in deg or rad?
+    Questions:
+    - Modes?!? Should we provide any functionality for that?
+    - Do we want twist in deg or rad?
+
 """
 
 import numpy as np
@@ -39,7 +41,24 @@ class Error(Exception):
 
 
 def readCoordFile(filename, headerlines=0):
-    """ Load the airfoil file"""
+    """
+    This function reads in a '.dat' style airfoil coordinate file,
+    with each coordinate on a new line and each line containing an xy pair
+    separate by whitespace
+
+    Parameters
+    ----------
+    filename : str
+        the file to read from
+
+    headerlines : int
+        the number of lines to skip at the beginning of the file to reach the coordinates
+
+    Returns
+    -------
+    X : Ndarray [N,2]
+        The coordinates read from the file
+    """
     f = open(filename, "r")
     line = f.readline()  # Read (and ignore) the first line
     r = []
@@ -79,16 +98,22 @@ def _cleanup_pts(X):
     return data
 
 
-def _genNACACoords(name):
-    pass
-
-
-def _cleanup_TE(X, tol):
-    TE = np.mean(X[[-1, 0], :], axis=0)
-    return X, TE
-
-
 def _writePlot3D(filename, x, y):
+    """
+    This function writes out a 2D airfoil surface in 3D (one element in z direction)
+
+    Parameters
+    ----------
+    filename : str
+        filename to write out, not including the '.xyz' ending
+
+    x : Ndarray [N]
+        a list of all the x values of the coordinates
+
+    y : Ndarray [N]
+        a list of all the y values of the coordinates
+
+    """
     filename += ".xyz"
 
     with open(filename, "w") as f:
@@ -106,6 +131,22 @@ def _writePlot3D(filename, x, y):
 
 
 def _writeDat(filename, x, y):
+    """
+    This function writes out coordinates in a space delimited list
+
+    Parameters
+    ----------
+    filename : str
+        filename to write out, not including the '.dat' ending
+
+    x : Ndarray [N]
+        a list of all the x values of the coordinates
+
+    y : Ndarray [N]
+        a list of all the y values of the coordinates
+
+    """
+
     filename += ".dat"
 
     with open(filename, "w") as f:
@@ -142,12 +183,45 @@ def writeFFD(FFDbox, filename):
 
 
 def _translateCoords(X, dX):
-    """shifts the input coordinates by dx and dy"""
+    """
+    Translates the input coordinates
+
+    Parameters
+    ----------
+    X : Ndarray [N,2]
+        The x/y coordinate pairs that are being translated
+
+    dX : Ndarray [N,2]
+        The dx/dy amount to translate in each direction
+
+    Returns
+    -------
+    translated_X : Ndarray [N,2]
+        The translated coordinates
+    """
     return X + dX
 
 
 def _rotateCoords(X, angle, origin):
-    """retruns the coordinates rotated about the specified origin by angle (in deg)"""
+    """
+    Rotates coordinates about the specified origin by angle (in deg)
+
+    Parameters
+    ----------
+    X : Ndarray [N,2]
+        The x/y coordinate pairs that are being rotated
+
+    angle : float
+        The angle in radians to rotate the coordinates
+
+    origin : Ndarray [2]
+        The x/y coordinate pair specifying the rotation origin
+
+    Returns
+    -------
+    rotated_X : Ndarray[N,2]
+        The rotated coordinate pairs
+    """
     c, s = np.cos(angle), np.sin(angle)
     R = np.array(((c, -s), (s, c)))
     shifted_X = X - origin
@@ -157,7 +231,25 @@ def _rotateCoords(X, angle, origin):
 
 
 def _scaleCoords(X, scale, origin):
-    """scales the coordinates in both dimension by the scaling factor"""
+    """
+    Scales coordinates in both dimensions by the scaling factor from a given origin
+
+    Parameters
+    ----------
+    X : Ndarry [N,2]
+        The x/y coordinate pairs that are being scaled
+
+    scale : float
+        The scaling factor
+
+    origin : float
+        The location about which scaling occurs (This point will not change)
+
+    Returns
+    -------
+    scaled_X : Ndarray [N,2]
+        the scaled coordinate values
+    """
     shifted_X = X - origin
     shifted_scaled_X = shifted_X * scale
     scaled_X = shifted_scaled_X + origin
@@ -165,6 +257,31 @@ def _scaleCoords(X, scale, origin):
 
 
 def checkCellRatio(X, ratio_tol=1.2):
+    """
+    Checks a set of coordinates for consecutive cell ratios that exceed a given tolerance
+
+    Parameters
+    ----------
+    X : Ndarray [N,2]
+        The set of coordinates being checked
+
+    ratio_tol : float
+        The maximum cell ratio that is allowed
+
+    Returns
+    -------
+    cell_ratio : Ndarray [N]
+        the cell ratios for each cell
+
+    max_cell_ratio : float
+        the maximum cell ratio
+
+    avg_cell_ratio : float
+        the average cell ratio
+
+    exc : Ndarray
+        the cell indicies that exceed the ratio tolerance
+    """
     X_diff = X[1:, :] - X[:-1, :]
     cell_size = np.sqrt(X_diff[:, 0] ** 2 + X_diff[:, 1] ** 2)
     crit_cell_size = np.flatnonzero(cell_size < 1e-10)
@@ -195,6 +312,14 @@ def _getClosestY(coords, x):
 
     x : float
         The x value to find the closest point for
+
+    Returns
+    -------
+    yu : float
+        The y value of the closest coordinate on the upper surface
+
+    yl : float
+        The y value of the closest coordinate on the lower surface
     """
     # TODO should this be modified to use the spline from the airfoil?
 
@@ -220,8 +345,9 @@ class Airfoil(object):
     Create an instance of an airfoil. There are two ways of instantiating
     this object: by passing in a set of points, or by reading in a coordinate
     file. The points must satisfy the following requirements:
-        - Ordered such that they form a continuous airfoil surface
-        - First and last points correspond to trailing edge
+
+       - Ordered such that they form a continuous airfoil surface
+       - First and last points correspond to trailing edge
 
     It is not necessary for the points to be in a counter-clockwise ordering. If
     they are not ordered counter-clockwise, the order will be reversed so that
@@ -234,20 +360,12 @@ class Airfoil(object):
     coords : ndarray[N,3]
         Full array of airfoil coordinates
 
-    some additional option:
-
-    k : int
+    spline_order : int
         Order of the spline
-    nCtl : int
-        Number of control points
-    name : str
-        The name of the airfoil.
 
+    normalize : bool
+        True to normalize the chord of the airfoil
 
-    Examples
-    --------
-    The general sequence of operations for using pyfoil is as follows::
-      >>> from pygeo import *
     """
 
     def __init__(self, coords, spline_order=3, normalize=False):
@@ -261,6 +379,15 @@ class Airfoil(object):
             self.normalizeChord()
 
     def recompute(self, coords):
+        """
+        Recomputes the underlying spline and relevant parameters from the given set of coordinate
+
+        Parameters
+        ----------
+        coords : Ndarray [N,2]
+            The coordinate pairs to compute the airfoil spline from
+
+        """
         self.spline = pySpline.Curve(X=coords, k=self.spline_order)
         self.reorder()
 
@@ -272,8 +399,7 @@ class Airfoil(object):
 
     def reorder(self):
         """
-        This function serves two purposes. First, it makes sure the points are oriented in counter-clockwise
-        direction. Second, it makes sure the points start at the TE.
+        This function orients the points counterclockwise and sets the start point to the TE
         """
 
         # Check to make sure spline ends at TE (For now assume this is True)
@@ -299,6 +425,15 @@ class Airfoil(object):
     ## Geometry Information
 
     def getTE(self):
+        """
+        Calculates the trailing edge point on the spline
+
+        Returns
+        -------
+        TE : 2darry [2]
+            The coordinate of the trailing edge of the airfoil
+        """
+
         TE = (self.spline.getValue(0) + self.spline.getValue(1)) / 2
         return TE
 
@@ -310,9 +445,16 @@ class Airfoil(object):
 
         The function dellds computes the quantity :math:`\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}` which is then used by brentq to find its root, with an initial bracket at [0.3, 0.7].
 
-        TODO
-        Use a Newton solver, employing 2nd derivative information and use 0.5 as the initial guess.
+        Returns
+        -------
+        LE : Ndarray [2]
+            the coordinate of the leading edge
+
+        s_LE : float
+            the parametric position of the leading edge
         """
+
+        # TODO Use a Newton solver, employing 2nd derivative information and use 0.5 as the initial guess.
 
         def dellds(s, spline, TE):
             pt = spline.getValue(s)
@@ -327,22 +469,69 @@ class Airfoil(object):
         return LE, s_LE
 
     def getTwist(self):
+        """
+        Calculates the twist of the airfoil using the leading and trailing edge points
+
+        Returns
+        -------
+        twist : float
+            The twist in degrees of the airfoil
+
+        """
+
         chord_vec = self.TE - self.LE
         twist = np.arctan2(chord_vec[1], chord_vec[0]) * 180 / np.pi
         # twist = np.arccos(normalized_chord.dot(np.array([1., 0.]))) * np.sign(normalized_chord[1])
         return twist
 
     def getChord(self):
+        """
+        Calculates the chord of the airfoil as the distance between the leading and trailing edges
+
+        Returns
+        -------
+        chord : float
+            The chord length
+        """
+
         chord = np.linalg.norm(self.TE - self.LE)
         return chord
 
     def getPts(self):
-        """alias for returning the points that make the airfoil spline"""
+        """
+        alias for returning the points that make the airfoil spline
+
+        Returns
+        -------
+        X : Ndarry [N, 2]
+            the coordinates that define the airfoil spline
+        """
         return self.spline.X
 
     def findPt(self, position, axis=0, s_0=0):
-        """finds that point at the intersection of the plane defined by the axis and the postion
-        and the airfoil curve"""
+        """
+        finds that point at the intersection of the plane defined by the axis and the postion
+        and the airfoil curve
+
+        Parameters
+        ----------
+        position : float
+            the position of the plane on the given axis
+
+        axis : int
+            the axis the plane will intersect 0 for x and 1 for y
+
+        s_0 : float
+            an initial guess for the parameteric position of the solution
+
+        Returns
+        -------
+        X : Ndarray [2]
+            The coordinate at the intersection
+
+        s_x : float
+            the parametric location of the intersection
+        """
 
         def err(s):
             return self.spline(s)[axis] - position
@@ -355,6 +544,14 @@ class Airfoil(object):
         return self.spline.getValue(s_x), s_x
 
     def getTEThickness(self):
+        """
+        gets the trailing edge thickness for the airfoil
+
+        Returns
+        -------
+        TE_thickness : float
+            the trailing edge thickness
+        """
         top = self.spline.getValue(0)
         bottom = self.spline.getValue(1)
         TE_thickness = np.array([top[0] + bottom[0], top[1] - bottom[1]]) / 2
@@ -363,6 +560,11 @@ class Airfoil(object):
     def getLERadius(self):
         """
         Computes the leading edge radius of the airfoil. Note that this is heavily dependent on the initialization points, as well as the spline order/smoothing.
+
+        Returns
+        -------
+        LE_rad : float
+            The leading edge radius
         """
         # if self.s_LE is None:
         #     self.getLE()
@@ -375,6 +577,14 @@ class Airfoil(object):
     def getCTDistribution(self):
         """
         Return the coordinates of the camber points, as well as the thicknesses (this is with british convention).
+
+        Returns
+        -------
+        camber_pts : Ndarray [N, 2]
+            the locations of the camber points of the airfoil
+
+        thickness_pts : Ndarray [N]
+            the thickness of the airfoil at each camber point
         """
         self._splitAirfoil()
 
@@ -421,6 +631,11 @@ class Airfoil(object):
         """
         Computes the trailing edge angle of the airfoil. We assume here that the spline goes from top to bottom, and that s=0 and s=1 corresponds to the
         top and bottom trailing edge points. Whether or not the airfoil is closed is irrelevant.
+
+        Returns
+        -------
+        TE_angle : float
+            The angle of the trailing edge in degrees
         """
         top = self.spline.getDerivative(0)
         top = top / np.linalg.norm(top)
@@ -433,19 +648,39 @@ class Airfoil(object):
     # TODO write
     def getMaxThickness(self, method):
         """
+        Parameters
+        ----------
         method : str
             Can be one of 'british', 'american', or 'projected'
+
+        Returns
+        -------
+        max_thickness : float
+            the maximum thickness of the airfoil
+
         """
         pass
 
     def getMaxCamber(self):
+        """
+        Returns
+        -------
+        max_camber : float
+            the maximum camber of the airfoil
+
+        """
         pass
 
     def isReflex(self):
         """
-        An airfoil is reflex if the derivative of the camber line at the trailing edge is positive.
-        #TODO this has not been tested
+        Determines if an airfoil is reflex by checking if the derivative of the camber line at the trailing edge is positive.
+
+        Returns
+        -------
+        reflexive : bool
+            True if reflexive
         """
+        # TODO this has not been tested
         if self.camber is None:
             self.getCamber()
 
@@ -455,7 +690,19 @@ class Airfoil(object):
             return False
 
     def isSymmetric(self, tol=1e-6):
-        # test camber and thickness dist
+        """
+        Checks if an airfoil is symmetric
+
+        Parameters
+        ----------
+        tol : float
+            tolerance for camber line to still be consdiered symmetrical
+
+        Returns
+        -------
+        symmetric : bool
+            True if the airfoil is symmetric within the given tolerance
+        """
         pass
 
     # ==============================================================================
@@ -463,6 +710,17 @@ class Airfoil(object):
     # ==============================================================================
 
     def rotate(self, angle, origin=np.zeros(2)):
+        """
+        rotates the airfoil about the specified origin
+
+        Parameters
+        ----------
+        angle : float
+            the angle to rotate the airfoil in degrees
+
+        origin : Ndarray [2]
+            the point about which to rotate the airfoil
+        """
         new_coords = _rotateCoords(self.spline.X, np.deg2rad(angle), origin)
 
         # reset initialize with the new set of coordinates
@@ -470,13 +728,42 @@ class Airfoil(object):
         # self.update(new_coords, spline_order=self.spline.k)
 
     def derotate(self, origin=np.zeros(2)):
+        """
+        derotates the airfoil about the origin by the twist
+
+        Parameters
+        ----------
+        origin : Ndarray [2]
+            the location about which to preform the rotation
+        """
         self.rotate(-1.0 * self.twist, origin=origin)
 
     def scale(self, factor, origin=np.zeros(2)):
+        """
+        Scale the airfoil by factor about the origin
+
+        Parameters
+        ----------
+        factor : float
+            the scaling factor
+
+        origin : Ndarray [2]
+            the coordinate about which to preform the scaling
+        """
+
         new_coords = _scaleCoords(self.spline.X, factor, origin)
         self.__init__(new_coords, spline_order=self.spline.k)
 
     def normalizeChord(self, origin=np.zeros(2)):
+        """
+        Set the chord to 1 by scaling the airfoil about the given origin
+
+        Parameters
+        ----------
+        origin : Ndarray [2]
+            the point about which to scale the airfoil
+        """
+
         if self.spline is None:
             self.recompute()
         elif self.chord == 1:
@@ -484,6 +771,15 @@ class Airfoil(object):
         self.scale(1.0 / self.chord, origin=origin)
 
     def translate(self, delta):
+        """
+        Translate the airfoil by the vector delta
+
+        Parameters
+        ----------
+        delta : Ndarray [2]
+            the vector that defines the translation of the airfoil
+        """
+
         sample_pts = self._getDefaultSampling()
         self.X = _translateCoords(sample_pts, delta)
         self.recompute()
@@ -491,6 +787,10 @@ class Airfoil(object):
             self.LE += delta
 
     def center(self):
+        """
+        Move the airfoil so that the leading edge is at the origin
+        """
+
         if self.spline is None:
             self.recompute()
         if self.LE is None:
@@ -500,12 +800,39 @@ class Airfoil(object):
         self.translate(-1.0 * self.LE)
 
     def splitAirfoil(self):
+        """
+        Splits the airfoil into upper and lower surfaces
+
+        Returns
+        -------
+        top : pySpline curve object
+            A spline that defines the upper surface
+
+        bottom : pySpline curve object
+            A spline that defines the lower surface
+        """
+
         # if self.s_LE is None:
         # self.getLE()
         top, bottom = self.spline.splitCurve(self.s_LE)
         return top, bottom
 
     def normalizeAirfoil(self, derotate=True, normalize=True, center=True):
+        """
+        Sets the twist to zero, the chord to one, and the leading edge location to the origin
+
+        Parameters
+        ----------
+        derotate : bool
+            True to set twist to zero
+
+        normalize : bool
+            True to set the chord length to one
+
+        center : bool
+            True to put the leading edge at the origin
+        """
+
         if derotate or normalize or center:
             origin = np.zeros(2)
             sample_pts = self.spline.X
@@ -526,10 +853,16 @@ class Airfoil(object):
 
     def makeBluntTE(self, start=0.01, end=None):
         """
-        This cuts the upper surface at s=start and the lower surface at s=end
-        and creates a blunt trailing edge between the two cut points. If end
-        is not provided, then the cut is made on the upper surface and projected
-        down to the lower surface along the y-axis.
+        This cuts the upper and lower surfaces to creates a blunt trailing edge between the two cut points.
+
+        Parameters
+        ----------
+        start : float
+            the parametric value at which to cut the upper surface
+
+        end : float
+            the parameteric value at which to cut the lower surface. If end is not provided,
+            then the cut is made on the upper surface and projected down to the lower surface along the y-axis.
         """
         if end is None:
             xstart = self.spline.getValue(start)
@@ -549,13 +882,14 @@ class Airfoil(object):
         pass
 
     def roundTE(self, xCut=0.98, k=4, nPts=20):
-        """this method creates a smooth round trailing edge **from a blunt one** using a spline
+        """
+        this method creates a smooth round trailing edge **from a blunt one** using a spline
 
         Parameters
         ----------
         xCut : float
             x location of the cut **as a percentage of the chord**
-        K: int (3 or 4)
+        k: int (3 or 4)
             order of the spline used to make the rounded trailing edge of the airfoil.
         nPts : int
             Number of trailing edge points to add to the airfoil spline
@@ -602,7 +936,23 @@ class Airfoil(object):
         self.recompute(coords)
 
     def removeTE(self, tol=0.3, xtol=0.9):
-        """  """
+        """
+        Removes points from the trailing edge of an airfoil, and recomputes the underlying spline.
+
+        Parameters
+        ----------
+        tol : float
+            A point is part of the trailing edge if the magnitude of the dot product of the normalized vector of `coord[i+1]-coord[i]` and the normalized vector from the trailing edge to the leading edge is less than this tolerance.
+            This means that decreasing the tolerance will require the orientation of an element to approach being perpendicular to the chord to be consider part of the trailing edge.
+
+        xtol : float
+            Only checks for trailing edge points if the coodinate is past this fraction of the chord.
+
+        Returns
+        -------
+        TE_points : Ndarray [N,2]
+            The points that were flagged as trailing edge points and removed from the airfoil coordinates.
+        """
         coords = self.getPts()
         chord_vec = self.TE - self.LE
         unit_chord_vec = chord_vec / np.linalg.norm(chord_vec)
@@ -637,7 +987,6 @@ class Airfoil(object):
 
         >>> sample_dict = {'distribution' : 'conical',
         >>>        'coeff' : 1,
-        >>>        'npts' : 50,
         >>>        'bad_edge': False}
 
         The point distribution currently implemented are:
@@ -646,13 +995,19 @@ class Airfoil(object):
             - *Parabolic*:
             - *Polynomial*:
 
-        :param upper: dictionary
-                Upper surface sampling dictionary
-        :param lower: dictionary
-                Lower surface sampling dictionary
-        :param npts_TE: float
-                Number of points along the **blunt** trailing edge
-        :return: Coordinates array, anticlockwise, from trailing edge
+        Parameters
+        ----------
+        upper: dictionary
+            Upper surface sampling dictionary
+        lower: dictionary
+            Lower surface sampling dictionary
+        npts_TE: float
+            Number of points along the **blunt** trailing edge
+
+        Returns
+        -------
+        coords : Ndarray [N, 2]
+            Coordinates array, anticlockwise, from trailing edge
         """
         s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args)
         coords = self.spline.getValue(s)
@@ -769,6 +1124,17 @@ class Airfoil(object):
         We have to discuss which types of printfiles we want to get and how
         to handle them (does this class print the last "sampled" x,y or do
         we want more options?)
+
+        Parameters
+        ----------
+        coords : Ndarray [N,2]
+            the coordinates to write out to a file
+
+        filename : str
+            the filename without extension to write to
+
+        format : str
+            the file format to write, can be `plot3d` or `dat`
         """
 
         if format == "plot3d":
@@ -784,6 +1150,8 @@ class Airfoil(object):
         """
         Generates an FFD from the airfoil and writes it out to file
 
+        Parameters
+        ----------
         nffd : int
             the number of chordwise points in the FFD
 
@@ -825,6 +1193,15 @@ class Airfoil(object):
     ## Utils
     # maybe remove and put into a separate location?
     def plot(self):
+        """
+        Plots the airfoil
+
+        Returns
+        -------
+        fig : matplotlib.pyplot.Figure
+            The figure with the plotted airfoil
+        """
+
         import matplotlib.pyplot as plt
 
         fig = plt.figure()
