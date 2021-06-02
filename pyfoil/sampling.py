@@ -34,7 +34,7 @@ def cosine(start, end, n, m=np.pi):
 
 
 def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
-    """
+    r"""
     Generalized sampling function that extends from linear to more-than-cosine point distribution.
     The user selects the chord intervals over which this function is defined, the number of sampling points, and the "frequency" of the distribution.
     At a high level, this function translates a linear distribution of angles into a non-linear distribution of sampling points using a composite trigonometric function.
@@ -51,20 +51,20 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
         - :math:`b = 1`: cosine distribution
         - :math:`b > 1`: more-than-cosine distribution, meaning that the points are
 
-    The overall function is composed of two sub-functions, continuous at :math:`b = 1 \\rightarrow s = \\cos(x)`.
+    The overall function is composed of two sub-functions, continuous at :math:`b = 1 \rightarrow s = \cos(x)`.
     For :math:`b < 1`, the following function is used:
 
     .. math::
 
-        s = \\left(\\frac{\cos(x) + 1}{2} - \\frac{x}{\pi}\\right)b + \\frac{x}{\pi}
+        s = \left(\frac{\cos(x) + 1}{2} - \frac{x}{\pi}\right)b + \frac{x}{\pi}
 
     While for coeff >=1:
 
     .. math::
 
-        s = \\frac{1}{2}\\left(1 + \\frac{\cos(x)}{\sqrt{\cos(x) ^ 2 + \sin(x) ^ 2 / b ^ 2}}\\right)
+        s = \frac{1}{2}\left(1 + \frac{\cos(x)}{\sqrt{\cos(x) ^ 2 + \sin(x) ^ 2 / b ^ 2}}\right)
 
-    For more clarity, the user can plot these functions and see how the first one goes from linear to cosine as b approaches 1, and the second goes from cosine to a discontinuous (flipped) Heaviside function for :math:`b \\rightarrow \infty`.
+    For more clarity, the user can plot these functions and see how the first one goes from linear to cosine as b approaches 1, and the second goes from cosine to a discontinuous (flipped) Heaviside function for :math:`b \rightarrow \infty`.
     Note that the cosine/conical functions are normalized and shifted to fit into the user-prescribed sampling interval.
 
     Parameters
@@ -150,6 +150,7 @@ def polynomial(start, end, n, m=np.pi, order=5):
 
     order : float
         the order of polynomial from which to sample
+
     Returns
     -------
     s : Ndarray [N]
