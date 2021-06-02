@@ -2,25 +2,28 @@
 Sample usage script showing some use cases, and how the API should work.
 """
 
-
+# rst IMPORTS start
 from pyfoil.pyFoil import Airfoil, readCoordFile
 from pyfoil import sampling
 import matplotlib.pyplot as plt
-
-# import tecplot_interface as ti # This does not exist yet
-from postprocessing.pytecplot.tecplotFileParser import TecplotParser
+# rst IMPORTS end
 
 """
 Here we read an airfoil coordinate file from a database, perform geometric
 cleanup, and then sample it with a particular distribution.
 """
+
+# rst PLOT start
+# Read the Coordinate file
 filename = "../tests/rae2822.dat"
 coords = readCoordFile(filename)
-airfoil = Airfoil(coords, normalize=False)
-coords = airfoil.getSampledPts(50, spacingFunc=sampling.conical, func_args={"coeff": 1})
+airfoil = Airfoil(coords)
+
+# Plot the airfoil
 fig1 = airfoil.plot()
 fig1.suptitle("Test single distribution")
 plt.show()
+# rst PLOT end
 
 # # -------------------------------------------------------------------
 """
@@ -28,9 +31,8 @@ Here we sample the airfoil with two different distributions, and examine them si
 by side.
 """
 
-# airfoil = Airfoil(x=x,y=y)
-# airfoil.derotate()
-
+# rst COMPSAMPLE start
+# Compare two different conical coefficient samplings
 coords = airfoil.getSampledPts(50, spacingFunc=sampling.conical, func_args={"coeff": 1})
 fig2 = airfoil.plot()
 fig2.suptitle("coeff = 1")
@@ -38,6 +40,7 @@ coords2 = airfoil.getSampledPts(50, spacingFunc=sampling.conical, func_args={"co
 fig3 = airfoil.plot()
 fig3.suptitle("coeff = 3")
 plt.show()
+# rst COMPSAMPLE end
 
 # -----------------------------------------
 """
@@ -45,60 +48,30 @@ Here we sample the airfoil with two separate distributions for the upper and
 lower surfaces. We also thicken the trailing edge, and specify npts_TE during
 sampling. These points are then saved to a plot3d file for use with pyHyp.
 """
-# airfoil = Airfoil(X=X,cleanup=True)
-# airfoil.thickenTE(thickness=0.01)
 
+# rst ULSAMPLING start
+# Sample with a bigeometric on the upper surface and eigth order polynomial on the lower surface
 coords = airfoil.getSampledPts(
     50, spacingFunc=[sampling.bigeometric, sampling.polynomial], func_args=[{}, {"order": 8}]
 )
-airfoil.writeCoords(coords=coords, filename="new_coords", format="plot3d")
 
-# Plotting samples
+# Plot the sample
 fig4 = airfoil.plot()
 fig4.suptitle("Test double distribution")
 plt.show()
+# rst ULSAMPLING end
 
-exit()
-
-# -----------------------------------------
+# ---------------------------------------------
 """
-Here we read in a slice file from ADflow. There is some guesswork as to the
-API for ti, but the idea is there. We retrieve geometric information from the airfoil,
-cleanup the trailing edge, then compute geometric properties needed for postprocessing.
+Here we write out the previous sampling to a plot3d surface mesh that pyhyp
+can use and generate an FFD. This sets us up to use the rest of the mach-aero
+framework to run an optimization.
 """
-filename = "tests/fc0_013_slices.dat"
 
-# sectionName, sectionData, sectionConn = ti.readTecplotFEdata(filename)
+# rst OPTSETUP start
+# Write surface mesh
+airfoil.writeCoords(coords, "rae2822", format="plot3d")
 
-# data = sectionData[1]
-# conn = sectionConn[1]
-# coords = ti.convert(data,conn)
-
-# x = coords[:,0]
-# y = coords[:,2]
-
-tpp = TecplotParser(filename, debug=False)
-# For plotting and indexing retrieve the variable names and zones
-zoneNames = tpp.getZoneNames()
-data = tpp.getData()
-x = data[zoneNames[1]]["CoordinateX"]
-y = data[zoneNames[1]]["CoordinateZ"]
-plt.figure()
-plt.plot(x, y, "-o")
-plt.show()
-
-## THIS APPROACH IS VERY BAD. NEED BETTER WAY TO DO GEOMETRY CLEANUP
-airfoil = Airfoil(x=x, y=y, cleanup=True)
-fig = airfoil.plotAirfoil()
-airfoil.derotate()
-airfoil.center()
-airfoil.normalize()
-fig2 = airfoil.plotAirfoil()
-plt.show()
-max_camber, camber_loc = airfoil.getMaxCamber()
-max_thickness, thickness_loc = airfoil.getMaxThickness()
-chord = airfoil.getChord()
-c_c = camber_loc / chord
-t_c = thickness_loc / chord
-
-twist = airfoil.getTwist()
+# Write a fitted FFD with 10 chordwise points
+airfoil.generateFFD(10, "ffd")
+# rst OPTSETUP end

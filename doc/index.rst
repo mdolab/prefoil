@@ -23,9 +23,9 @@ The user can:
 The tool is still incomplete but in a functional beta version, user contributions are welcome.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Guide contents
+   :maxdepth: 1
 
    install
    pyFoil
    sampling
+   examples
