@@ -6,6 +6,7 @@ Sample usage script showing some use cases, and how the API should work.
 from pyfoil.pyFoil import Airfoil, readCoordFile
 from pyfoil import sampling
 import matplotlib.pyplot as plt
+
 # rst IMPORTS end
 
 """
