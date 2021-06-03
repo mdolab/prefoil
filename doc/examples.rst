@@ -12,9 +12,9 @@ Import Libraries
    :end-before: # rst IMPORTS end
 
 These are the typical imports for using pyFoil.
-``Airfoil`` and ``readCoordFile`` are always needed to use pyFoil.
+:class:`Airfoil` and :meth:`readCoordFile` are always needed to use pyFoil.
 ``sampling`` gives access some :ref:`sampling functions <sampling_API>` that can be used to create surface meshes.
-``maplotlib`` is imported to enable visualizing airfoils through built in plotting tools, however this is not necessary for scripts that generate surface meshes.
+``matplotlib`` is imported to enable visualizing airfoils through built in plotting tools, however this is not necessary for scripts that generate surface meshes.
 
 Plotting an Airfoil
 -------------------
@@ -22,9 +22,12 @@ Plotting an Airfoil
    :start-after: # rst PLOT start
    :end-before: # rst PLOT end
 
-pyFoil performs most of its functionality through the use of the ``Airfoil`` class.
-The ``readCoordFile`` returns a set of coordinates that can be used to initialize the ``Airfoil``.
-Then the airfoil can be visualized by calling ``plot``, which returns a ``matplotlib.pyplot.Figure`` object.
+pyFoil performs most of its functionality through the use of the :class:`Airfoil` class.
+The :meth:`readCoordFile` returns a set of coordinates that can be used to initialize the :class:`Airfoil`.
+Then the airfoil can be visualized by calling :meth:`plot`, which returns a ``matplotlib.pyplot.Figure`` object.
+The resulting plot is shown below.
+
+.. image:: images/airfoil.png
 
 Sampling an Airfoil
 -------------------
@@ -39,19 +42,19 @@ Here, sampling an airfoil refers to the definition of points along the surface t
    :end-before: # rst COMPSAMPLE end
 
 This block of codes plots two different point samplings along an airfoil.
-After sampling an airfoil, the ``plot`` function shows the most recently sampled points rather than the original.
+After sampling an airfoil, the :meth:`plot` function shows the most recently sampled points rather than the original.
 
-.. note:: Sampling points does not change the underlying spline in the ``Airfoil``. That is only changed by ``removeTE`` or any of the geometry modification functions (``scale``, ``rotate``, etc.).
+.. note:: Sampling points does not change the underlying spline in the :class:`pyfoil.pyFoil.Airfoil`. That is only changed by :meth:`pyfoil.pyFoil.Airfoil.removeTE` or any of the geometry modification functions (:meth:`pyfoil.pyFoil.Airfoil.scale`, :meth:`pyfoil.pyFoil.Airfoil.rotate`, etc.).
 
 Both sets of sampled points containing 50 points.
-When using the ``conical`` sampling function, higher coefficents result in more nodes being clustered near the ends of the airfoil.
+When using the :meth:`conical` sampling function, higher coefficents result in more nodes being clustered near the ends of the airfoil.
 
 .. literalinclude:: ../examples/example_script.py
    :start-after: # rst ULSAMPLING start
    :end-before: # rst ULSAMPLING end
 
 This shows a method for defining the sampling of both the upper and lower surfaces of the airfoil.
-If a list containing two functions is passed into ``getSampledPts`` then the first item defines the upper surface sampling function and the second item defines the lower surface sampling function.
+If a list containing two functions is passed into :meth:`getSampledPts` then the first item defines the upper surface sampling function and the second item defines the lower surface sampling function.
 
 Setting up an Optimization
 --------------------------
@@ -62,4 +65,9 @@ Setting up an Optimization
 pyFoil serves two purposes when setting up an airfoil optimization. 
 The first is to generate the ``plot3d`` surface mesh.
 It may seem counterintuitive to set up a 3D mesh for a 2D airfoil, but :doc:`Adflow <adflow:index>` (the Mach-Aero CFD solver used in airfoil optimizations) uses one cell wide 3D meshes to compute 2D cases.
+After generating the surface mesh a fitted FFD is generated to preform an optimization using :meth:`pyfoil.pyFoil.Airfoil.generateFFD`.
+
+.. image:: images/ffd.png
+
+In this image, the one cell wide surface mesh can be seen on the airfoil surrounded by the FFD box highlighted in red.
 From here, an optimization can be preformed starting with :ref:`pyHyp <airfoilopt_mesh>`
