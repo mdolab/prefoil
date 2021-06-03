@@ -12,7 +12,7 @@ Import Libraries
    :end-before: # rst IMPORTS end
 
 These are the typical imports for using pyFoil.
-:class:`Airfoil` and :meth:`readCoordFile` are always needed to use pyFoil.
+:class:`pyfoil.pyFoil.Airfoil` and :meth:`pyfoil.pyFoil.readCoordFile` are always needed to use pyFoil.
 ``sampling`` gives access some :ref:`sampling functions <sampling_API>` that can be used to create surface meshes.
 ``matplotlib`` is imported to visualize airfoils with built-in plotting tools, however this is not necessary for scripts that generate surface meshes.
 
@@ -22,9 +22,9 @@ Plotting an Airfoil
    :start-after: # rst PLOT start
    :end-before: # rst PLOT end
 
-pyFoil performs most of its functionality through the use of the :class:`Airfoil` class.
-:meth:`readCoordFile` returns a set of coordinates that can be used to initialize the :class:`Airfoil`.
-Then the airfoil can be visualized by calling :meth:`plot`, which returns a ``matplotlib.pyplot.Figure`` object.
+pyFoil performs most of its functionality through the use of the :class:`pyfoil.pyFoil.Airfoil` class.
+:meth:`pyfoil.pyFoil.readCoordFile` returns a set of coordinates that can be used to initialize the :class:`pyfoil.pyFoil.Airfoil`.
+Then the airfoil can be visualized by calling :meth:`pyfoil.pyFoil.Airfoil.plot`, which returns a ``matplotlib.pyplot.Figure`` object.
 The resulting figure is shown below.
 
 .. image:: images/airfoil.png
@@ -42,19 +42,19 @@ Here, sampling an airfoil refers to the definition of points along the surface t
    :end-before: # rst COMPSAMPLE end
 
 This block of codes plots two different point samplings along an airfoil.
-After sampling an airfoil, the :meth:`plot` function shows the most recently sampled points rather than the original.
+After sampling an airfoil, the :meth:`pyfoil.pyFoil.Airfoil.plot` function shows the most recently sampled points rather than the original.
 
 .. note:: Sampling points does not change the underlying spline in the :class:`pyfoil.pyFoil.Airfoil`. That is only changed by :meth:`pyfoil.pyFoil.Airfoil.removeTE` or any of the geometry modification functions (:meth:`pyfoil.pyFoil.Airfoil.scale`, :meth:`pyfoil.pyFoil.Airfoil.rotate`, etc.).
 
 Both sets of sampled points containing 50 points.
-When using the :meth:`conical` sampling function, higher coefficents result in more nodes clustered near the ends of the airfoil.
+When using the :meth:`pyfoil.sampling.conical` sampling function, higher coefficents result in more nodes clustered near the ends of the airfoil.
 
 .. literalinclude:: ../examples/example_script.py
    :start-after: # rst ULSAMPLING start
    :end-before: # rst ULSAMPLING end
 
 This shows a method for defining the sampling of both the upper and lower surfaces of the airfoil.
-If a list containing two functions is passed into :meth:`getSampledPts` then the first item defines the upper surface sampling function and the second item defines the lower surface sampling function.
+If a list containing two functions is passed into :meth:`pyfoil.pyFoil.Airfoil.getSampledPts` then the first item defines the upper surface sampling function and the second item defines the lower surface sampling function.
 
 Setting up an Optimization
 --------------------------
