@@ -12,17 +12,13 @@ import sys
 sys.path.insert(0, os.path.abspath("../"))
 
 
-# -- Project information -----------------------------------------------------
-
 project = "pyFoil"
-
-# -- General configuration ---------------------------------------------------
-
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
-extensions.extend(["numpydoc"])
-numpydoc_show_class_members = False
 
 # mock import for autodoc
 autodoc_mock_imports = ["numpy", "pyspline", "scipy", "pygeo"]
+
+# intersphinx
+intersphinx_mapping = {
+    "adflow": (f"https://mdolab-adflow.readthedocs-hosted.com/en/latest", None),
+    "mach-aero": (f"https://mdolab-mach-aero.readthedocs-hosted.com/en/latest", None),
+}

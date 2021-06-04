@@ -64,10 +64,10 @@ Setting up an Optimization
 
 pyFoil serves two purposes when setting up an airfoil optimization. 
 The first is to generate the ``plot3d`` surface mesh.
-It may seem counterintuitive to set up a 3D mesh for a 2D airfoil, but :doc:`Adflow <adflow:index>` (the Mach-Aero CFD solver used in airfoil optimizations) uses one cell wide 3D meshes to compute 2D cases.
+It may seem counterintuitive to set up a 3D mesh for a 2D airfoil, but :doc:`ADflow <adflow:index>` (the CFD solver used in MACH-Aero) uses one cell wide 3D meshes to compute 2D cases.
 After generating the surface mesh a fitted FFD is generated to preform an optimization using :meth:`pyfoil.pyFoil.Airfoil.generateFFD`.
 
 .. image:: images/ffd.png
 
 In this image, the one cell wide surface mesh can be seen on the airfoil surrounded by the FFD box highlighted in red.
-From here, an optimization can be preformed starting with :ref:`pyHyp <airfoilopt_mesh>`
+From here, an optimization can be preformed starting with :ref:`pyHyp <mach-aero:airfoilopt_mesh>`
