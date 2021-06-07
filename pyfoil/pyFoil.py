@@ -380,7 +380,7 @@ class Airfoil(object):
 
     def recompute(self, coords):
         """
-        Recomputes the underlying spline and relevant parameters from the given set of coordinate
+        Recomputes the underlying spline and relevant parameters from the given set of coordinates.
 
         Parameters
         ----------
@@ -396,6 +396,7 @@ class Airfoil(object):
         self.chord = self.getChord()
         self.twist = self.getTwist()
         self.closedCurve = (self.spline.getValue(0) == self.spline.getValue(1)).all()
+        self.sampled_pts = None
 
     def reorder(self):
         """
@@ -1035,6 +1036,7 @@ class Airfoil(object):
         # if single_distr is True and x.size-1 != points_init:
         #     print('WARNING: The number of sampling points has been changed \n'
         #             '\t\tCurrent points number: %i' % (x.size))
+        self.sampled_pts = coords
 
         return coords
 
@@ -1119,7 +1121,7 @@ class Airfoil(object):
         return FFDbox
 
     ## Output
-    def writeCoords(self, coords, filename, format="plot3d"):
+    def writeCoords(self, filename, coords=None, format="plot3d"):
         """
         We have to discuss which types of printfiles we want to get and how
         to handle them (does this class print the last "sampled" x,y or do
@@ -1127,15 +1129,21 @@ class Airfoil(object):
 
         Parameters
         ----------
-        coords : Ndarray [N,2]
-            the coordinates to write out to a file
-
         filename : str
             the filename without extension to write to
+
+        coords : Ndarray [N,2]
+            the coordinates to write out to a file. If None then the most recent sampled set of points is used. If this is also None then the original coordinates are written out.
 
         format : str
             the file format to write, can be `plot3d` or `dat`
         """
+
+        if coords is None:
+            if self.sampled_pts is not None:
+                coords = self.sampled_pts
+            else:
+                coords = self.getPts()
 
         if format == "plot3d":
             _writePlot3D(filename, coords[:, 0], coords[:, 1])
@@ -1194,7 +1202,8 @@ class Airfoil(object):
     # maybe remove and put into a separate location?
     def plot(self):
         """
-        Plots the airfoil
+        Plots the airfoil.
+        It tries to plot the most recently sampled set of points, but if none exists, it will plot the original set of coordinates.
 
         Returns
         -------
@@ -1204,12 +1213,17 @@ class Airfoil(object):
 
         import matplotlib.pyplot as plt
 
+        if self.sampled_pts is None:
+            coords = self.getPts()
+        else:
+            coords = self.sampled_pts
+
         fig = plt.figure()
         # pts = self._getDefaultSampling(npts=1000)
-        plt.plot(self.spline.X[:, 0], self.spline.X[:, 1], "-r")
+        plt.plot(coords[:, 0], coords[:, 1], "-r")
         plt.axis("equal")
         # if self.sampled_X is not None:
-        plt.plot(self.spline.X[:, 0], self.spline.X[:, 1], "o")
+        plt.plot(coords[:, 0], coords[:, 1], "o")
 
         # TODO
         # if self.camber_pts is not None:

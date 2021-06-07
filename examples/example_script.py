@@ -71,7 +71,7 @@ framework to run an optimization.
 
 # rst OPTSETUP start
 # Write surface mesh
-airfoil.writeCoords(coords, "rae2822", format="plot3d")
+airfoil.writeCoords("rae2822", format="plot3d")
 
 # Write a fitted FFD with 10 chordwise points
 airfoil.generateFFD(10, "ffd")
