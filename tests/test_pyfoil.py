@@ -79,12 +79,12 @@ class TestFFD(unittest.TestCase):
         self.wave = Airfoil(np.array([[1, 0], [0.5, 0.25], [0, 0], [0.5, -0.25], [1, 0]]))
 
     def test_getClosest(self):
-        yu, yl = _getClosestY(self.wave.getPts(), 0.3)
+        yu, yl = _getClosestY(self.wave.getSplinePts(), 0.3)
         self.assertEqual(yu, 0.25)
         self.assertEqual(yl, -0.25)
 
     def test_getClosest_off_end(self):
-        yu, yl = _getClosestY(self.wave.getPts(), -1)
+        yu, yl = _getClosestY(self.wave.getSplinePts(), -1)
         self.assertEqual(yu, 0)
         self.assertEqual(yl, 0)
 
@@ -123,7 +123,7 @@ class TestFFD(unittest.TestCase):
         np.testing.assert_array_almost_equal(FFD_box, FFD_box_actual, decimal=8)
 
     def test_specify_coord(self):
-        coords = self.wave.getPts()
+        coords = self.wave.getSplinePts()
         FFD_box = self.foil._buildFFD(3, True, 0.001, 0.02, 0.02, None, coords)
 
         FFD_box_actual = np.zeros((3, 2, 2, 3))

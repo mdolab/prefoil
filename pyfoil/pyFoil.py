@@ -371,6 +371,7 @@ class Airfoil(object):
     def __init__(self, coords, spline_order=3, normalize=False):
 
         self.spline_order = spline_order
+        self.sampled_pts = None
 
         # Initialize geometric information
         self.recompute(coords)
@@ -380,7 +381,7 @@ class Airfoil(object):
 
     def recompute(self, coords):
         """
-        Recomputes the underlying spline and relevant parameters from the given set of coordinate
+        Recomputes the underlying spline and relevant parameters from the given set of coordinates.
 
         Parameters
         ----------
@@ -396,6 +397,7 @@ class Airfoil(object):
         self.chord = self.getChord()
         self.twist = self.getTwist()
         self.closedCurve = (self.spline.getValue(0) == self.spline.getValue(1)).all()
+        self.sampled_pts = None
 
     def reorder(self):
         """
@@ -497,7 +499,7 @@ class Airfoil(object):
         chord = np.linalg.norm(self.TE - self.LE)
         return chord
 
-    def getPts(self):
+    def getSplinePts(self):
         """
         alias for returning the points that make the airfoil spline
 
@@ -953,7 +955,7 @@ class Airfoil(object):
         TE_points : Ndarray [N,2]
             The points that were flagged as trailing edge points and removed from the airfoil coordinates.
         """
-        coords = self.getPts()
+        coords = self.getSplinePts()
         chord_vec = self.TE - self.LE
         unit_chord_vec = chord_vec / np.linalg.norm(chord_vec)
 
@@ -1010,18 +1012,18 @@ class Airfoil(object):
             Coordinates array, anticlockwise, from trailing edge
         """
         s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args)
-        coords = self.spline.getValue(s)
+        sampled_coords = self.spline.getValue(s)
 
         if nTEPts:
-            coords_TE = np.zeros((nTEPts + 2, coords.shape[1]))
-            for idim in range(coords.shape[1]):
+            coords_TE = np.zeros((nTEPts + 2, sampled_coords.shape[1]))
+            for idim in range(sampled_coords.shape[1]):
                 val1 = self.spline.getValue(1)[idim]
                 val2 = self.spline.getValue(0)[idim]
                 coords_TE[:, idim] = np.linspace(val1, val2, nTEPts + 2)
-            coords = np.vstack((coords, coords_TE[1:-1]))
+            sampled_coords = np.vstack((sampled_coords, coords_TE[1:-1]))
 
         if not self.closedCurve:
-            coords = np.vstack((coords, coords[0]))
+            sampled_coords = np.vstack((sampled_coords, sampled_coords[0]))
 
         # TODO
         # - reintagrate cell check
@@ -1035,8 +1037,9 @@ class Airfoil(object):
         # if single_distr is True and x.size-1 != points_init:
         #     print('WARNING: The number of sampling points has been changed \n'
         #             '\t\tCurrent points number: %i' % (x.size))
+        self.sampled_pts = sampled_coords
 
-        return coords
+        return sampled_coords
 
     def _buildFFD(self, nffd, fitted, xmargin, ymarginu, ymarginl, xslice, coords):
         """
@@ -1077,7 +1080,7 @@ class Airfoil(object):
         """
 
         if coords is None:
-            coords = self.getPts()
+            coords = self.getSplinePts()
 
         if xslice is None:
             xslice = np.zeros(nffd)
@@ -1119,23 +1122,34 @@ class Airfoil(object):
         return FFDbox
 
     ## Output
-    def writeCoords(self, coords, filename, format="plot3d"):
+    def writeCoords(self, filename, coords=None, spline_coords=False, format="plot3d"):
         """
-        We have to discuss which types of printfiles we want to get and how
-        to handle them (does this class print the last "sampled" x,y or do
-        we want more options?)
+        Writes out a set of airfoil coordinates. By default, the most recently sampled coordinates are written out.
+        If there are no recently sampled coordinates and none are passed in this will fail.
 
         Parameters
         ----------
-        coords : Ndarray [N,2]
-            the coordinates to write out to a file
-
         filename : str
             the filename without extension to write to
+
+        coords : Ndarray [N,2]
+            the coordinates to write out to a file. If None then the most recent sampled set of points is used.
+
+        spline_coords : bool
+            If true it will write out the underlying spline coordinates and the value of `coords` will be ignored. Useful if only geometric modifications to coordinates are being preformed.
 
         format : str
             the file format to write, can be `plot3d` or `dat`
         """
+
+        if spline_coords is True:
+            coords = self.getSplinePts()
+
+        if coords is None:
+            if self.sampled_pts is not None:
+                coords = self.sampled_pts
+            else:
+                raise Error("No coordinates to write!")
 
         if format == "plot3d":
             _writePlot3D(filename, coords[:, 0], coords[:, 1])
@@ -1194,7 +1208,8 @@ class Airfoil(object):
     # maybe remove and put into a separate location?
     def plot(self):
         """
-        Plots the airfoil
+        Plots the airfoil.
+        It tries to plot the most recently sampled set of points, but if none exists, it will plot the original set of coordinates.
 
         Returns
         -------
@@ -1204,12 +1219,17 @@ class Airfoil(object):
 
         import matplotlib.pyplot as plt
 
+        if self.sampled_pts is None:
+            coords = self.getSplinePts()
+        else:
+            coords = self.sampled_pts
+
         fig = plt.figure()
         # pts = self._getDefaultSampling(npts=1000)
-        plt.plot(self.spline.X[:, 0], self.spline.X[:, 1], "-r")
+        plt.plot(coords[:, 0], coords[:, 1], "-r")
         plt.axis("equal")
         # if self.sampled_X is not None:
-        plt.plot(self.spline.X[:, 0], self.spline.X[:, 1], "o")
+        plt.plot(coords[:, 0], coords[:, 1], "o")
 
         # TODO
         # if self.camber_pts is not None:
