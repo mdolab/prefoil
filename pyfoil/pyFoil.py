@@ -1004,7 +1004,7 @@ class Airfoil(object):
             Upper surface sampling dictionary
         lower: dictionary
             Lower surface sampling dictionary
-        npts_TE: float
+        nTEPts: float
             Number of points along the **blunt** trailing edge
         TE_knot: bool
             If True, add a duplicate point between the lower airfoil surface and the TE to indicate that a knot is present. If there is a sharp or round trailing edge then this does nothing.
