@@ -36,8 +36,6 @@ class TestSampling(unittest.TestCase):
     def setUp(self):
         X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
         self.foil = Airfoil(X)
-        X = readCoordFile(os.path.join(baseDir, "hypersonic_glider.dat"))
-        self.hg = Airfoil(X)
 
     def test_defaults(self):
         self.foil.getSampledPts(100, nTEPts=10)
@@ -48,6 +46,12 @@ class TestSampling(unittest.TestCase):
     def test_pass_args_to_dist(self):
         func_args = {"coeff": 2}
         self.foil.getSampledPts(100, spacingFunc=sampling.conical, func_args=func_args)
+
+
+class TestSamplingTE(unittest.TestCase):
+    def setUp(self):
+        X = readCoordFile(os.path.join(baseDir, "hypersonic_glider.dat"))
+        self.hg = Airfoil(X)
 
     def test_nTEPts(self):
         self.assertFalse(self.hg.closedCurve)

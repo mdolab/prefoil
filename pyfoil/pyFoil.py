@@ -372,7 +372,7 @@ class Airfoil(object):
 
         self.spline_order = spline_order
         self.sampled_pts = None
-        self.closedCurve = False
+        self.closedCurve = None
 
         # Initialize geometric information
         self.recompute(coords)
