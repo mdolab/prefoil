@@ -53,20 +53,30 @@ class TestSampling(unittest.TestCase):
         self.assertFalse(self.hg.closedCurve)
         coords = self.hg.getSampledPts(100, nTEPts=1)
         TEref = np.array([1, 0])
-        np.testing.assert_array_equal(TEref, coords[-2,:])
+        np.testing.assert_array_equal(TEref, coords[-2, :])
+
+    def test_noTE_knot_noPts(self):
+        self.assertFalse(self.hg.closedCurve)
+        coords = self.hg.getSampledPts(100)
+        ref_upper = np.array([1, 0.5])
+        ref_lower = np.array([1, -0.5])
+        np.testing.assert_array_equal(coords[-1, :], ref_upper)
+        np.testing.assert_array_equal(coords[-2, :], ref_lower)
+        self.assertNotEqual(coords[-2, 0], coords[-3, 0])
+        self.assertNotEqual(coords[-2, 1], coords[-3, 1])
 
     def test_TE_knot_noPts(self):
         self.assertFalse(self.hg.closedCurve)
         coords = self.hg.getSampledPts(100, TE_knot=True)
-        np.testing.assert_array_equal(coords[-1,:], coords[0,:])
-        np.testing.assert_array_equal(coords[-2,:], coords[-3,:])
-    
+        np.testing.assert_array_equal(coords[-1, :], coords[0, :])
+        np.testing.assert_array_equal(coords[-2, :], coords[-3, :])
+
     def test_TE_knot(self):
         self.assertFalse(self.hg.closedCurve)
         coords = self.hg.getSampledPts(100, TE_knot=True, nTEPts=1)
-        np.testing.assert_array_equal(coords[-1,:], coords[0,:])
-        np.testing.assert_array_equal(coords[-3,:], coords[-4,:])
-    
+        np.testing.assert_array_equal(coords[-1, :], coords[0, :])
+        np.testing.assert_array_equal(coords[-3, :], coords[-4, :])
+
 
 class TestGeoModification(unittest.TestCase):
     def setUp(self):
@@ -92,6 +102,7 @@ class TestGeoModification(unittest.TestCase):
         newTE = self.foil.TE
         np.testing.assert_array_almost_equal(refTE, newTE, decimal=8)
         self.assertFalse(self.foil.closedCurve)
+
 
 class TestFFD(unittest.TestCase):
     def setUp(self):
