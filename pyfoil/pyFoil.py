@@ -372,6 +372,7 @@ class Airfoil(object):
 
         self.spline_order = spline_order
         self.sampled_pts = None
+        self.closedCurve = None
 
         # Initialize geometric information
         self.recompute(coords)
@@ -980,7 +981,7 @@ class Airfoil(object):
         return coords[list(set(TE_mask))]
 
     ## Sampling
-    def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args={}, nTEPts=0):
+    def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args={}, nTEPts=0, TE_knot=False):
         """
         This function defines the point sampling along airfoil surface. The
         coordinates are given as a closed curve (i.e. the first and last point
@@ -1003,8 +1004,10 @@ class Airfoil(object):
             Upper surface sampling dictionary
         lower: dictionary
             Lower surface sampling dictionary
-        npts_TE: float
+        nTEPts: float
             Number of points along the **blunt** trailing edge
+        TE_knot: bool
+            If True, add a duplicate point between the lower airfoil surface and the TE to indicate that a knot is present. If there is a sharp or round trailing edge then this does nothing.
 
         Returns
         -------
@@ -1013,6 +1016,8 @@ class Airfoil(object):
         """
         s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args)
         sampled_coords = self.spline.getValue(s)
+        if not self.closedCurve and TE_knot:
+            sampled_coords = np.vstack((sampled_coords, sampled_coords[-1]))
 
         if nTEPts:
             coords_TE = np.zeros((nTEPts + 2, sampled_coords.shape[1]))
