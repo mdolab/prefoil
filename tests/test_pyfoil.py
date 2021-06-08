@@ -36,6 +36,8 @@ class TestSampling(unittest.TestCase):
     def setUp(self):
         X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
         self.foil = Airfoil(X)
+        X = readCoordFile(os.path.join(baseDir, "hypersonic_glider.dat"))
+        self.hg = Airfoil(X)
 
     def test_defaults(self):
         self.foil.getSampledPts(100, nTEPts=10)
@@ -47,6 +49,24 @@ class TestSampling(unittest.TestCase):
         func_args = {"coeff": 2}
         self.foil.getSampledPts(100, spacingFunc=sampling.conical, func_args=func_args)
 
+    def test_nTEPts(self):
+        self.assertFalse(self.hg.closedCurve)
+        coords = self.hg.getSampledPts(100, nTEPts=1)
+        TEref = np.array([1, 0])
+        np.testing.assert_array_equal(TEref, coords[-2,:])
+
+    def test_TE_knot_noPts(self):
+        self.assertFalse(self.hg.closedCurve)
+        coords = self.hg.getSampledPts(100, TE_knot=True)
+        np.testing.assert_array_equal(coords[-1,:], coords[0,:])
+        np.testing.assert_array_equal(coords[-2,:], coords[-3,:])
+    
+    def test_TE_knot(self):
+        self.assertFalse(self.hg.closedCurve)
+        coords = self.hg.getSampledPts(100, TE_knot=True, nTEPts=1)
+        np.testing.assert_array_equal(coords[-1,:], coords[0,:])
+        np.testing.assert_array_equal(coords[-3,:], coords[-4,:])
+    
 
 class TestGeoModification(unittest.TestCase):
     def setUp(self):
@@ -64,19 +84,21 @@ class TestGeoModification(unittest.TestCase):
         refTE = np.array([0.990393, 0.0013401])
         newTE = self.foil.TE
         np.testing.assert_array_almost_equal(refTE, newTE, decimal=6)
+        self.assertTrue(self.foil.closedCurve)
 
     def test_blunt_TE(self):
         self.foil.makeBluntTE()
         refTE = np.array([0.97065494, 0.00352594])
         newTE = self.foil.TE
         np.testing.assert_array_almost_equal(refTE, newTE, decimal=8)
-
+        self.assertFalse(self.foil.closedCurve)
 
 class TestFFD(unittest.TestCase):
     def setUp(self):
         X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
         self.foil = Airfoil(X)
-        self.wave = Airfoil(np.array([[1, 0], [0.5, 0.25], [0, 0], [0.5, -0.25], [1, 0]]))
+        X = readCoordFile(os.path.join(baseDir, "wave.dat"))
+        self.wave = Airfoil(X)
 
     def test_getClosest(self):
         yu, yl = _getClosestY(self.wave.getSplinePts(), 0.3)
