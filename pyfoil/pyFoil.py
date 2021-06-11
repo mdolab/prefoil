@@ -16,7 +16,6 @@ import numpy as np
 import pyspline as pySpline
 from scipy.optimize import brentq, newton, bisect
 from pyfoil import sampling
-import pygeo
 
 
 class Error(Exception):
@@ -85,7 +84,9 @@ def _cleanup_pts(X):
     For now this just removes points which are too close together. In the future we may need to add further
     functionalities. This is just a generic cleanup tool which is called as part of preprocessing.
     """
-    uniquePts, link = pygeo.geo_utils.pointReduce(X, nodeTol=1e-12)
+    from pygeo.geo_utils import pointReduce
+
+    uniquePts, link = pointReduce(X, nodeTol=1e-12)
     nUnique = len(uniquePts)
 
     # Create the mask for the unique data:
@@ -373,6 +374,9 @@ class Airfoil(object):
         self.spline_order = spline_order
         self.sampled_pts = None
         self.closedCurve = None
+        self.camber = None
+        self.british_thickness = None
+        self.american_thickness = None
 
         # Initialize geometric information
         self.recompute(coords)
@@ -400,6 +404,11 @@ class Airfoil(object):
         self.closedCurve = (self.spline.getValue(0) == self.spline.getValue(1)).all()
         self.sampled_pts = None
 
+        camber_pts = self.getCTDistribution(100)
+        self.camber = pySpline.Curve(X=camber_pts, k=3)
+        self.british_thickness = pySpline.Curve(X=self.getThickness(100, "british"), k=3)
+        self.american_thickness = pySpline.Curve(X=self.getThickness(100, "american"), k=3)
+
     def reorder(self):
         """
         This function orients the points counterclockwise and sets the start point to the TE
@@ -426,6 +435,18 @@ class Airfoil(object):
             self.recompute(self.spline.X[::-1, :])
 
     ## Geometry Information
+
+    def getCamber(self):
+        """
+        Calculates the camber spline spline defined by the airfoil
+
+        Returns
+        -------
+        camber : pySpline curve object
+            The spline that defines the camberline from s = 0 at the trailing edge to s = 1 at the Leading edge.
+        """
+
+        return self.camber
 
     def getTE(self):
         """
@@ -557,7 +578,7 @@ class Airfoil(object):
         """
         top = self.spline.getValue(0)
         bottom = self.spline.getValue(1)
-        TE_thickness = np.array([top[0] + bottom[0], top[1] - bottom[1]]) / 2
+        TE_thickness = np.array([(top[0] + bottom[0]) / 2, top[1] - bottom[1]])
         return TE_thickness
 
     def getLERadius(self):
@@ -577,58 +598,99 @@ class Airfoil(object):
         LE_rad = np.linalg.norm(first) ** 3 / np.linalg.norm(first[0] * second[1] - first[1] * second[0])
         return LE_rad
 
-    def getCTDistribution(self):
+    def getCTDistribution(self, nPts):
         """
-        Return the coordinates of the camber points, as well as the thicknesses (this is with british convention).
+        Return the coordinates of the camber points
+
+        Parameters
+        ----------
+        nPts : int
+            The number of points to sample
 
         Returns
         -------
-        camber_pts : Ndarray [N, 2]
+        camber_pts : Ndarray [nPts, 2]
             the locations of the camber points of the airfoil
 
-        thickness_pts : Ndarray [N]
-            the thickness of the airfoil at each camber point
         """
-        self._splitAirfoil()
-
-        num_chord_pts = 100
+        top_surf, bottom_surf = self.splitAirfoil()
 
         # Compute the chord
         chord_pts = np.vstack([self.LE, self.TE])
-        chord = pySpline.line(chord_pts)
+        chord = pySpline.Curve(X=chord_pts, k=2)
 
-        cos_sampling = np.linspace(0, 1, num_chord_pts + 1, endpoint=False)[1:]
-        # cos_sampling = smp.conical(num_chord_pts+2,coeff=1)[1:-1]
+        lin_sampling = np.linspace(0, 1, nPts - 1, endpoint=False)[1:]
 
-        chord_pts = chord.getValue(cos_sampling)
-        camber_pts = np.zeros((num_chord_pts, 2))
-        thickness_pts = np.zeros((num_chord_pts, 2))
+        chord_pts = chord.getValue(lin_sampling)
+        camber_pts = np.zeros((nPts - 2, 2))
+
         for j in range(chord_pts.shape[0]):
             direction = np.array([np.cos(np.pi / 2 - self.twist), np.sin(np.pi / 2 - self.twist)])
             direction = direction / np.linalg.norm(direction)
             top = chord_pts[j, :] + 0.5 * self.chord * direction
             bottom = chord_pts[j, :] - 0.5 * self.chord * direction
             temp = np.vstack((top, bottom))
-            normal = pySpline.line(temp)
-            s_top, t_top, D = self.top.projectCurve(normal, nIter=5000, eps=1e-16)
-            s_bottom, t_bottom, D = self.bottom.projectCurve(normal, nIter=5000, eps=1e-16)
-            intersect_top = self.top.getValue(s_top)
-            intersect_bottom = self.bottom.getValue(s_bottom)
-
-            # plt.plot(temp[:,0],temp[:,1],'-og')
-            # plt.plot(intersect_top[0],intersect_top[1],'or')
-            # plt.plot(intersect_bottom[0],intersect_bottom[1],'ob')
+            normal = pySpline.Curve(X=temp, k=2)
+            s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=1e-16)
+            s_bottom, t_bottom, D = bottom_surf.projectCurve(normal, nIter=5000, eps=1e-16)
+            intersect_top = top_surf.getValue(s_top)
+            intersect_bottom = bottom_surf.getValue(s_bottom)
 
             camber_pts[j, :] = (intersect_top + intersect_bottom) / 2
-            thickness_pts[j, 0] = (intersect_top[0] + intersect_bottom[0]) / 2
-            thickness_pts[j, 1] = (intersect_top[1] - intersect_bottom[1]) / 2
-        # plt.plot(camber_pts[:,0],camber_pts[:,1],'ok')
 
-        self.camber_pts = np.vstack((self.LE, camber_pts, self.TE))  # Add TE and LE to the camber points.
-        self.getTEThickness()
-        self.thickness_pts = np.vstack((np.array((self.LE[0], 0)), thickness_pts, self.TE_thickness))
+        # Add TE and LE to the camber points.
+        camber_pts = np.vstack((self.LE, camber_pts, self.TE))
+        return camber_pts
 
-        return self.camber_pts, self.thickness_pts
+    def getThickness(self, nPts, thickness):
+        """
+        Computes the thicknesses at each x stations spaced linearly along airfoil
+
+        Parameters
+        ----------
+        nPts : int
+            number of points to sample including the edge
+
+        thickness : str
+            either "american" or "british"
+
+        Returns
+        -------
+        thickness_pts : Ndarray [nPts, 2]
+            The thickness at each x station
+        """
+
+        if thickness != "american" and thickness != "british":
+            raise Error("Do not recognize thickness type!")
+
+        top_surf, bottom_surf = self.splitAirfoil()
+
+        s = np.linspace(0, 1, nPts - 1, endpoint=False)[1:]
+        thickness_pts = np.zeros((nPts - 2, 2))
+
+        for j in range(len(s)):
+            if thickness == "british":
+                direction = np.array([np.cos(np.pi / 2 - self.twist), np.sin(np.pi / 2 - self.twist)])
+            else:
+                dx = self.camber.getDerivative(s[j])
+                direction = np.array([dx[1], -dx[0]])
+            direction = direction / np.linalg.norm(direction)
+
+            top = self.camber.getValue(s[j]) + 0.5 * self.chord * direction
+            bottom = self.camber.getValue(s[j]) - 0.5 * self.chord * direction
+            normal = pySpline.Curve(X=np.vstack([top, bottom]), k=2)
+            s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=1e-16)
+            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=1e-16)
+
+            thickness_pts[j, 0] = self.camber.getValue(s[j])[0]
+            if thickness == "british":
+                thickness_pts[j, 1] = top_surf.getValue(s_top)[1] - bottom_surf.getValue(s_bottom)[1]
+            else:
+                x_top = top_surf.getValue(s_top)
+                x_bottom = bottom_surf.getValue(s_bottom)
+                thickness_pts[j, 1] = np.linalg.norm(x_top - x_bottom)
+
+        return np.vstack([[self.LE[0], 0], thickness_pts, self.getTEThickness()])
 
     def getTEAngle(self):
         """
@@ -1211,10 +1273,15 @@ class Airfoil(object):
 
     ## Utils
     # maybe remove and put into a separate location?
-    def plot(self):
+    def plot(self, camber=False):
         """
         Plots the airfoil.
         It tries to plot the most recently sampled set of points, but if none exists, it will plot the original set of coordinates.
+
+        Parameters
+        ----------
+        camber : bool
+            True to plot the camber line
 
         Returns
         -------
@@ -1236,11 +1303,8 @@ class Airfoil(object):
         # if self.sampled_X is not None:
         plt.plot(coords[:, 0], coords[:, 1], "o")
 
-        # TODO
-        # if self.camber_pts is not None:
-        #     fig2 = plt.figure()
-        #     plt.plot(self.camber_pts[:,0],self.camber_pts[:,1],'-og',label='camber')
-        #     plt.plot(self.thickness_pts[:,0],self.thickness_pts[:,1],'-ob',label='thickness')
-        #     plt.legend(loc='best')
-        #     plt.title(self.name)
+        if camber is not None:
+            camber_pts = self.camber.getValue(np.linspace(0, 1, 200))
+            plt.plot(camber_pts[:, 0], camber_pts[:, 1], "--g", label="camber")
+
         return fig
