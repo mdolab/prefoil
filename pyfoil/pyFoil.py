@@ -404,7 +404,7 @@ class Airfoil(object):
         self.closedCurve = (self.spline.getValue(0) == self.spline.getValue(1)).all()
         self.sampled_pts = None
 
-        camber_pts = self.getCDistribution(300)
+        camber_pts = self.getCDistribution(100)
         self.camber = pySpline.Curve(X=camber_pts, k=3)
         self.british_thickness = pySpline.Curve(X=self.getThickness(100, "british"), k=3)
         self.american_thickness = pySpline.Curve(X=self.getThickness(100, "american"), k=3)
@@ -438,12 +438,12 @@ class Airfoil(object):
 
     def getCamber(self):
         """
-        Calculates the camber spline spline defined by the airfoil
+        Calculates the camber spline defined by the airfoil
 
         Returns
         -------
         camber : pySpline curve object
-            The spline that defines the camberline from s = 0 at the trailing edge to s = 1 at the Leading edge.
+            The spline that defines the camberline from s = 0 at the leading edge to s = 1 at the trailing edge.
         """
 
         return self.camber
@@ -610,7 +610,7 @@ class Airfoil(object):
         Returns
         -------
         camber_pts : Ndarray [nPts, 2]
-            the locations of the camber points of the airfoil
+            the locations of the camber points of the airfoil starting with the leading edge and ending with the trailing edge
 
         """
         top_surf, bottom_surf = self.splitAirfoil()
@@ -642,7 +642,7 @@ class Airfoil(object):
         camber_pts = np.vstack((self.LE, camber_pts, self.TE))
         return camber_pts
 
-    def getThickness(self, nPts, thickness):
+    def getThickness(self, nPts, tType):
         """
         Computes the thicknesses at each x stations spaced linearly along airfoil
 
@@ -651,7 +651,7 @@ class Airfoil(object):
         nPts : int
             number of points to sample including the edge
 
-        thickness : str
+        tType : str
             either "american" or "british"
 
         Returns
@@ -660,7 +660,7 @@ class Airfoil(object):
             The thickness at each x station
         """
 
-        if thickness != "american" and thickness != "british":
+        if tType not in ["american", "british"]:
             raise Error("Do not recognize thickness type!")
 
         top_surf, bottom_surf = self.splitAirfoil()
@@ -669,21 +669,21 @@ class Airfoil(object):
         thickness_pts = np.zeros((nPts - 2, 2))
 
         for j in range(len(s)):
-            if thickness == "british":
+            if tType == "british":
                 direction = np.array([np.cos(np.pi / 2 - self.twist), np.sin(np.pi / 2 - self.twist)])
             else:
                 dx = self.camber.getDerivative(s[j])
-                direction = np.array([dx[1], -dx[0]])
+                direction = np.array([-dx[1], dx[0]])
             direction = direction / np.linalg.norm(direction)
 
-            top = self.camber.getValue(s[j]) + 0.5 * self.chord * direction
-            bottom = self.camber.getValue(s[j]) - 0.5 * self.chord * direction
+            top = self.camber.getValue(s[j]) + 10 * self.chord * direction
+            bottom = self.camber.getValue(s[j]) - 10 * self.chord * direction
             normal = pySpline.Curve(X=np.vstack([top, bottom]), k=2)
-            s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=1e-16)
-            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=1e-16)
+            s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=1e-16, t=0.5)
+            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=1e-16, t=0.5)
 
             thickness_pts[j, 0] = self.camber.getValue(s[j])[0]
-            if thickness == "british":
+            if tType == "british":
                 thickness_pts[j, 1] = top_surf.getValue(s_top)[1] - bottom_surf.getValue(s_bottom)[1]
             else:
                 x_top = top_surf.getValue(s_top)
@@ -710,20 +710,24 @@ class Airfoil(object):
         self.TE_angle = np.pi - np.arccos(np.dot(top, bottom))
         return np.rad2deg(self.TE_angle)
 
-    # TODO write
-    def getMaxThickness(self, method):
+    def getMaxThickness(self, tType):
         """
         Parameters
         ----------
-        method : str
+        tType : str
             Can be one of 'british' or 'american'
 
         Returns
         -------
+        x_loc : float
+            The x station containing the maximum thickness
+
         max_thickness : float
             the maximum thickness of the airfoil
 
         """
+        if tType not in ["american", "british"]:
+            raise Error("Do not recognize thickness type!")
 
         def american_f(s):
             return -self.american_thickness.getValue(s)[1]
@@ -737,14 +741,15 @@ class Airfoil(object):
         def british_df(s):
             return -self.british_thickness.getDerivative(s)[1]
 
-        if method == "american":
+
+        if tType == "american":
             opt = minimize(american_f, 0.5, method="SLSQP", jac=american_df, bounds=[(0, 1)])
 
             if not opt.success:
                 raise Error("Optimization failed.")
 
             return self.american_thickness.getValue(opt.x)
-        elif method == "british":
+        else:
             opt = minimize(british_f, 0.5, method="SLSQP", jac=british_df, bounds=[(0, 1)])
 
             if not opt.success:
@@ -752,12 +757,14 @@ class Airfoil(object):
                 raise Error("Optimization failed.")
             return self.british_thickness.getValue(opt.x)
 
-        raise Error("Method type not recognized.")
 
     def getMaxCamber(self):
         """
         Returns
         -------
+        x_loc : float
+            the x location of the maximum camber
+
         max_camber : float
             the maximum camber of the airfoil
 
@@ -780,6 +787,8 @@ class Airfoil(object):
         """
         Returns
         -------
+        x_loc : flaot
+            the x location of the maximum ngative camber
         min_camber : float
             the maximum negative camber of the airfoil
         """

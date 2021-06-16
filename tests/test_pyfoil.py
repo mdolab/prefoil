@@ -201,14 +201,22 @@ class TestFFD(unittest.TestCase):
 
 class TestCamber(unittest.TestCase):
     def setUp(self):
-        self.flat(readCoordFile("testAirfoil.dat"))
+        self.flat = Airfoil(readCoordFile("testAirfoil.dat"))
+        self.hg = Airfoil(readCoordFile("hypersonic_glider.dat"))
 
-    def zero_camber(self):
-        self.Equal(0, self.flat.getMaxCamber()[1])
-        self.Equal(0, self.flat.getMinCamber()[1])
+    def test_zero_camber(self):
+        self.assertEqual(0, self.flat.getMaxCamber()[1])
+        self.assertEqual(0, self.flat.getMinCamber()[1])
 
-    def zero_thickness(self):
-        self.Equal(0, self.flat.getMaxThickness()[1])
+    def test_zero_thickness(self):
+        self.assertEqual(0, self.flat.getMaxThickness("american")[1])
+        self.assertEqual(0, self.flat.getMaxThickness("british")[1])
+
+    def test_blunt_te(self):
+        np.testing.assert_array_almost_equal([1, 1], self.hg.getMaxThickness("british"))
+        np.testing.assert_array_almost_equal([1, 1], self.hg.getMaxThickness("american"))
+        np.testing.assert_array_almost_equal(0, self.hg.getMaxCamber())
+        np.testing.assert_array_almost_equal(0, self.hg.getMinCamber())
 
 
 if __name__ == "__main__":
