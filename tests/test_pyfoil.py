@@ -201,8 +201,8 @@ class TestFFD(unittest.TestCase):
 
 class TestCamber(unittest.TestCase):
     def setUp(self):
-        self.flat = Airfoil(readCoordFile("testAirfoil.dat"))
-        self.hg = Airfoil(readCoordFile("hypersonic_glider.dat"))
+        self.flat = Airfoil(readCoordFile(os.path.join(baseDir, "testAirfoil.dat")))
+        self.hg = Airfoil(readCoordFile(os.path.join(baseDir, "hypersonic_glider.dat")))
 
     def test_zero_camber(self):
         self.assertEqual(0, self.flat.getMaxCamber()[1])

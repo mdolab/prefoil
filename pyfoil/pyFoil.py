@@ -741,7 +741,6 @@ class Airfoil(object):
         def british_df(s):
             return -self.british_thickness.getDerivative(s)[1]
 
-
         if tType == "american":
             opt = minimize(american_f, 0.5, method="SLSQP", jac=american_df, bounds=[(0, 1)])
 
@@ -756,7 +755,6 @@ class Airfoil(object):
 
                 raise Error("Optimization failed.")
             return self.british_thickness.getValue(opt.x)
-
 
     def getMaxCamber(self):
         """
