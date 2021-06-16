@@ -14,7 +14,7 @@
 
 import numpy as np
 import pyspline as pySpline
-from scipy.optimize import brentq, newton, bisect
+from scipy.optimize import brentq, newton, bisect, minimize
 from pyfoil import sampling
 
 
@@ -404,7 +404,7 @@ class Airfoil(object):
         self.closedCurve = (self.spline.getValue(0) == self.spline.getValue(1)).all()
         self.sampled_pts = None
 
-        camber_pts = self.getCTDistribution(100)
+        camber_pts = self.getCDistribution(300)
         self.camber = pySpline.Curve(X=camber_pts, k=3)
         self.british_thickness = pySpline.Curve(X=self.getThickness(100, "british"), k=3)
         self.american_thickness = pySpline.Curve(X=self.getThickness(100, "american"), k=3)
@@ -598,7 +598,7 @@ class Airfoil(object):
         LE_rad = np.linalg.norm(first) ** 3 / np.linalg.norm(first[0] * second[1] - first[1] * second[0])
         return LE_rad
 
-    def getCTDistribution(self, nPts):
+    def getCDistribution(self, nPts):
         """
         Return the coordinates of the camber points
 
@@ -627,8 +627,8 @@ class Airfoil(object):
         for j in range(chord_pts.shape[0]):
             direction = np.array([np.cos(np.pi / 2 - self.twist), np.sin(np.pi / 2 - self.twist)])
             direction = direction / np.linalg.norm(direction)
-            top = chord_pts[j, :] + 0.5 * self.chord * direction
-            bottom = chord_pts[j, :] - 0.5 * self.chord * direction
+            top = chord_pts[j, :] + 10 * self.chord * direction
+            bottom = chord_pts[j, :] - 10 * self.chord * direction
             temp = np.vstack((top, bottom))
             normal = pySpline.Curve(X=temp, k=2)
             s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=1e-16)
@@ -716,7 +716,7 @@ class Airfoil(object):
         Parameters
         ----------
         method : str
-            Can be one of 'british', 'american', or 'projected'
+            Can be one of 'british' or 'american'
 
         Returns
         -------
@@ -724,7 +724,35 @@ class Airfoil(object):
             the maximum thickness of the airfoil
 
         """
-        pass
+
+        def american_f(s):
+            return -self.american_thickness.getValue(s)[1]
+
+        def american_df(s):
+            return -self.american_thickness.getDerivative(s)[1]
+
+        def british_f(s):
+            return -self.british_thickness.getValue(s)[1]
+
+        def british_df(s):
+            return -self.british_thickness.getDerivative(s)[1]
+
+        if method == "american":
+            opt = minimize(american_f, 0.5, method="SLSQP", jac=american_df, bounds=[(0, 1)])
+
+            if not opt.success:
+                raise Error("Optimization failed.")
+
+            return self.american_thickness.getValue(opt.x)
+        elif method == "british":
+            opt = minimize(british_f, 0.5, method="SLSQP", jac=british_df, bounds=[(0, 1)])
+
+            if not opt.success:
+
+                raise Error("Optimization failed.")
+            return self.british_thickness.getValue(opt.x)
+
+        raise Error("Method type not recognized.")
 
     def getMaxCamber(self):
         """
@@ -734,7 +762,40 @@ class Airfoil(object):
             the maximum camber of the airfoil
 
         """
-        pass
+
+        def pos_f(s):
+            return -self.camber.getValue(s)[1]
+
+        def pos_df(s):
+            return -self.camber.getDerivative(s)[1]
+
+        opt = minimize(pos_f, 0.5, method="SLSQP", jac=pos_df, bounds=[(0, 1)])
+
+        if not opt.success:
+            raise Error("Optimization not successful.")
+
+        return self.camber.getValue(opt.x)
+
+    def getMinCamber(self):
+        """
+        Returns
+        -------
+        min_camber : float
+            the maximum negative camber of the airfoil
+        """
+
+        def neg_f(s):
+            return self.camber.getValue(s)[1]
+
+        def neg_df(s):
+            return self.camber.getDerivative(s)[1]
+
+        opt = minimize(neg_f, 0.5, method="SLSQP", jac=neg_df, bounds=[(0, 1)])
+
+        if not opt.success:
+            raise Error("Optimization not successful.")
+
+        return self.camber.getValue(opt.x)
 
     def isReflex(self):
         """
@@ -768,7 +829,11 @@ class Airfoil(object):
         symmetric : bool
             True if the airfoil is symmetric within the given tolerance
         """
-        pass
+
+        if abs(self.getMinCamber()[1]) < tol and abs(self.getMaxCamber()[1]) < tol:
+            return True
+
+        return False
 
     # ==============================================================================
     # Geometry Modification

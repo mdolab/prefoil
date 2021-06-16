@@ -199,5 +199,17 @@ class TestFFD(unittest.TestCase):
         np.testing.assert_array_almost_equal(FFD_box, FFD_box_actual, decimal=8)
 
 
+class TestCamber(unittest.TestCase):
+    def setUp(self):
+        self.flat(readCoordFile("testAirfoil.dat"))
+
+    def zero_camber(self):
+        self.Equal(0, self.flat.getMaxCamber()[1])
+        self.Equal(0, self.flat.getMinCamber()[1])
+
+    def zero_thickness(self):
+        self.Equal(0, self.flat.getMaxThickness()[1])
+
+
 if __name__ == "__main__":
     unittest.main()
