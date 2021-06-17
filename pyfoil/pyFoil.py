@@ -17,6 +17,8 @@ import pyspline as pySpline
 from scipy.optimize import brentq, newton, bisect, minimize
 from pyfoil import sampling
 
+EPS = np.finfo(np.float64).eps
+
 
 class Error(Exception):
     """
@@ -424,9 +426,12 @@ class Airfoil(object):
         for i in range(1, N - 1):
             v = coords[i + 1] - coords[i]
             r = coords[i + 1] - coords[i - 1]
+            # skip duplicate points
+            if np.linalg.norm(r) < EPS:
+                continue
             s = (coords[i, 0] * r[0] + coords[i, 1] * r[1]) / np.linalg.norm(r)
             n = coords[i] - r * s
-            if np.linalg.norm(n) != 0:
+            if np.linalg.norm(n) > EPS:
                 n = n / np.linalg.norm(n)
             orientation += n[0] * v[1] - n[1] * v[0]
 
@@ -631,8 +636,8 @@ class Airfoil(object):
             bottom = chord_pts[j, :] - 10 * self.chord * direction
             temp = np.vstack((top, bottom))
             normal = pySpline.Curve(X=temp, k=2)
-            s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=1e-16)
-            s_bottom, t_bottom, D = bottom_surf.projectCurve(normal, nIter=5000, eps=1e-16)
+            s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
+            s_bottom, t_bottom, D = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
             intersect_top = top_surf.getValue(s_top)
             intersect_bottom = bottom_surf.getValue(s_bottom)
 
@@ -679,8 +684,8 @@ class Airfoil(object):
             top = self.camber.getValue(s[j]) + 10 * self.chord * direction
             bottom = self.camber.getValue(s[j]) - 10 * self.chord * direction
             normal = pySpline.Curve(X=np.vstack([top, bottom]), k=2)
-            s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=1e-16, t=0.5)
-            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=1e-16, t=0.5)
+            s_top, _, d1 = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=s[j])
+            s_bottom, _, d2 = bottom_surf.projectCurve(normal, nIter=100, eps=EPS, s=s[j])
 
             thickness_pts[j, 0] = self.camber.getValue(s[j])[0]
             if tType == "british":
@@ -740,7 +745,6 @@ class Airfoil(object):
 
         def british_df(s):
             return -self.british_thickness.getDerivative(s)[1]
-
 
         if tType == "american":
             opt = minimize(american_f, 0.5, method="SLSQP", jac=american_df, bounds=[(0, 1)])
