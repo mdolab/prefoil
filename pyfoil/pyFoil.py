@@ -757,6 +757,43 @@ class Airfoil(object):
                 raise Error("Optimization failed.")
             return self.british_thickness.getValue(opt.x)
 
+    def _MaxOptimize(self, maximum):
+        """
+        Used to compute the most negative and most positive cambers of an airfoil
+
+        Parameters
+        ----------
+        maximum : bool
+            If true find most positive, if false find most negative
+
+        
+        Returns
+        -------
+        x_loc : float
+            the x location of the maximum camber
+
+        max_camber : float
+            the maximum camber
+        """
+        def f(s, factor):
+            return factor*self.camber.getValue(s)[1]
+
+        def df(s, factor):
+            return factor*self.camber.getDerivative(s)[1]
+
+        if maximum:
+            factor = -1
+        else:
+            factor = 1
+
+        opt = minimize(lambda s : f(s, factor), 0.5, method="SLSQP", jac=lambda s : df(s, factor), bounds=[(0,1)])
+
+        if not opt.success:
+            raise Error("Optimization not successful")
+
+        opt_point = self.camber.getValue(opt.x)
+
+        return opt_point[0], opt_point[1]
 
     def getMaxCamber(self):
         """
@@ -770,18 +807,7 @@ class Airfoil(object):
 
         """
 
-        def pos_f(s):
-            return -self.camber.getValue(s)[1]
-
-        def pos_df(s):
-            return -self.camber.getDerivative(s)[1]
-
-        opt = minimize(pos_f, 0.5, method="SLSQP", jac=pos_df, bounds=[(0, 1)])
-
-        if not opt.success:
-            raise Error("Optimization not successful.")
-
-        return self.camber.getValue(opt.x)
+        return self._MaxOptimize(True)
 
     def getMinCamber(self):
         """
@@ -793,18 +819,7 @@ class Airfoil(object):
             the maximum negative camber of the airfoil
         """
 
-        def neg_f(s):
-            return self.camber.getValue(s)[1]
-
-        def neg_df(s):
-            return self.camber.getDerivative(s)[1]
-
-        opt = minimize(neg_f, 0.5, method="SLSQP", jac=neg_df, bounds=[(0, 1)])
-
-        if not opt.success:
-            raise Error("Optimization not successful.")
-
-        return self.camber.getValue(opt.x)
+        return self._MaxOptimize(False)
 
     def isReflex(self):
         """
