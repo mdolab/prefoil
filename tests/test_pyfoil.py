@@ -200,23 +200,27 @@ class TestFFD(unittest.TestCase):
 
 
 class TestCamber(unittest.TestCase):
-    def setUp(self):
-        self.flat = Airfoil(readCoordFile(os.path.join(baseDir, "testAirfoil.dat")))
-        self.hg = Airfoil(readCoordFile(os.path.join(baseDir, "hypersonic_glider.dat")))
-
     def test_zero_camber(self):
-        self.assertEqual(0, self.flat.getMaxCamber()[1])
-        self.assertEqual(0, self.flat.getMinCamber()[1])
+        flat = Airfoil(readCoordFile(os.path.join(baseDir, "testAirfoil.dat")))
+        self.assertEqual(0, flat.getMaxCamber()[1])
+        self.assertEqual(0, flat.getMinCamber()[1])
 
     def test_zero_thickness(self):
-        self.assertEqual(0, self.flat.getMaxThickness("american")[1])
-        self.assertEqual(0, self.flat.getMaxThickness("british")[1])
+        flat = Airfoil(readCoordFile(os.path.join(baseDir, "testAirfoil.dat")))
+        self.assertEqual(0, flat.getMaxThickness("american")[1])
+        self.assertEqual(0, flat.getMaxThickness("british")[1])
 
     def test_blunt_te(self):
-        np.testing.assert_array_almost_equal([1, 1], self.hg.getMaxThickness("british"))
-        np.testing.assert_array_almost_equal([1, 1], self.hg.getMaxThickness("american"))
-        np.testing.assert_array_almost_equal(0, self.hg.getMaxCamber())
-        np.testing.assert_array_almost_equal(0, self.hg.getMinCamber())
+        hg = Airfoil(readCoordFile(os.path.join(baseDir, "hypersonic_glider.dat")))
+        np.testing.assert_array_almost_equal([1, 1], hg.getMaxThickness("british"))
+        np.testing.assert_array_almost_equal([1, 1], hg.getMaxThickness("american"))
+        np.testing.assert_array_almost_equal(0, hg.getMaxCamber())
+        np.testing.assert_array_almost_equal(0, hg.getMinCamber())
+
+    def test_airfoil(self):
+        foil = Airfoil(readCoordFile(os.path.join(baseDir, "rae2822.dat")))
+        maxThickness = foil.getMaxThickness("british")
+        np.testing.assert_allclose([0.379, 0.121], maxThickness, rtol=1e-2)
 
 
 if __name__ == "__main__":
