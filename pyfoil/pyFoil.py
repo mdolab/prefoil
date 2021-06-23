@@ -624,24 +624,32 @@ class Airfoil(object):
         chord_pts = np.vstack([self.LE, self.TE])
         chord = pySpline.Curve(X=chord_pts, k=2)
 
+        # Sampling along airfoil for camber points
         lin_sampling = np.linspace(0, 1, nPts - 1, endpoint=False)[1:]
 
         chord_pts = chord.getValue(lin_sampling)
         camber_pts = np.zeros((nPts - 2, 2))
 
+        # At each point we are looking for the camber
         for j in range(chord_pts.shape[0]):
+            # Get the direction normal to the chord line
             direction = np.array([np.cos(np.pi / 2 - self.twist), np.sin(np.pi / 2 - self.twist)])
             direction = direction / np.linalg.norm(direction)
-            top = chord_pts[j, :] + 10 * self.chord * direction
-            bottom = chord_pts[j, :] - 10 * self.chord * direction
+
+            # Draw a ray through the airfoil in the given direction
+            top = chord_pts[j, :] + 1 * self.chord * direction
+            bottom = chord_pts[j, :] - 1 * self.chord * direction
             temp = np.vstack((top, bottom))
             normal = pySpline.Curve(X=temp, k=2)
+
+            # Determine the intersection of this ray with both the upper and lower surfaces
             s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
             s_bottom, t_bottom, D = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
             intersect_top = top_surf.getValue(s_top)
             intersect_bottom = bottom_surf.getValue(s_bottom)
 
-            camber_pts[j, :] = (intersect_top + intersect_bottom) / 2
+            # Compute the camber
+            camber_pts[j, :] = (intersect_top + intersect_bottom) / 2 - chord_pts[j, 1]
 
         # Add TE and LE to the camber points.
         camber_pts = np.vstack((self.LE, camber_pts, self.TE))
@@ -670,23 +678,31 @@ class Airfoil(object):
 
         top_surf, bottom_surf = self.splitAirfoil()
 
+        # The parametric spline values along the camber line to find thickness points
         s = np.linspace(0, 1, nPts - 1, endpoint=False)[1:]
         thickness_pts = np.zeros((nPts - 2, 2))
 
+        # Find thickness at each point
         for j in range(len(s)):
+            # If british we project a ray normal to chordline
             if tType == "british":
                 direction = np.array([np.cos(np.pi / 2 - self.twist), np.sin(np.pi / 2 - self.twist)])
+            # If american we project a ray normal to camberline
             else:
                 dx = self.camber.getDerivative(s[j])
                 direction = np.array([-dx[1], dx[0]])
             direction = direction / np.linalg.norm(direction)
 
+            # create a ray through the upper and lower surfaces from given direction
             top = self.camber.getValue(s[j]) + 10 * self.chord * direction
             bottom = self.camber.getValue(s[j]) - 10 * self.chord * direction
             normal = pySpline.Curve(X=np.vstack([top, bottom]), k=2)
-            s_top, _, d1 = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=s[j])
-            s_bottom, _, d2 = bottom_surf.projectCurve(normal, nIter=100, eps=EPS, s=s[j])
 
+            # Find upper and lower intersections
+            s_top, _, d1 = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=0, t=0.5)
+            s_bottom, _, d2 = bottom_surf.projectCurve(normal, nIter=100, eps=EPS, s=1, t=0.5)
+
+            # Compute the thickness
             thickness_pts[j, 0] = self.camber.getValue(s[j])[0]
             if tType == "british":
                 thickness_pts[j, 1] = top_surf.getValue(s_top)[1] - bottom_surf.getValue(s_bottom)[1]
@@ -695,6 +711,7 @@ class Airfoil(object):
                 x_bottom = bottom_surf.getValue(s_bottom)
                 thickness_pts[j, 1] = np.linalg.norm(x_top - x_bottom)
 
+        # Add the trailing and leading edge points when we return
         return np.vstack([[self.LE[0], 0], thickness_pts, self.getTEThickness()])
 
     def getTEAngle(self):
@@ -770,7 +787,7 @@ class Airfoil(object):
         maximum : bool
             If true find most positive, if false find most negative
 
-        
+
         Returns
         -------
         x_loc : float
@@ -779,18 +796,19 @@ class Airfoil(object):
         max_camber : float
             the maximum camber
         """
+
         def f(s, factor):
-            return factor*self.camber.getValue(s)[1]
+            return factor * self.camber.getValue(s)[1]
 
         def df(s, factor):
-            return factor*self.camber.getDerivative(s)[1]
+            return factor * self.camber.getDerivative(s)[1]
 
         if maximum:
             factor = -1
         else:
             factor = 1
 
-        opt = minimize(lambda s : f(s, factor), 0.5, method="SLSQP", jac=lambda s : df(s, factor), bounds=[(0,1)])
+        opt = minimize(lambda s: f(s, factor), 0.5, method="SLSQP", jac=lambda s: df(s, factor), bounds=[(0, 1)])
 
         if not opt.success:
             raise Error("Optimization not successful")
@@ -938,9 +956,8 @@ class Airfoil(object):
             the vector that defines the translation of the airfoil
         """
 
-        sample_pts = self._getDefaultSampling()
-        self.X = _translateCoords(sample_pts, delta)
-        self.recompute()
+        coords = _translateCoords(self.spline.X, delta)
+        self.recompute(coords)
         if self.LE is not None:
             self.LE += delta
 
@@ -1396,7 +1413,7 @@ class Airfoil(object):
         # if self.sampled_X is not None:
         plt.plot(coords[:, 0], coords[:, 1], "o")
 
-        if camber is not None:
+        if camber:
             camber_pts = self.camber.getValue(np.linspace(0, 1, 200))
             plt.plot(camber_pts[:, 0], camber_pts[:, 1], "--g", label="camber")
 

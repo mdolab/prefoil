@@ -198,27 +198,16 @@ class TestFFD(unittest.TestCase):
 
 
 class TestCamber(unittest.TestCase):
-    def test_zero_camber(self):
-        flat = Airfoil(readCoordFile(os.path.join(baseDir, "testAirfoil.dat")))
-        self.assertEqual(0, flat.getMaxCamber()[1])
-        self.assertEqual(0, flat.getMinCamber()[1])
+    def setUp(self):
+        self.foil = Airfoil(readCoordFile(os.path.join(baseDir, "rae2822.dat")))
 
-    def test_zero_thickness(self):
-        flat = Airfoil(readCoordFile(os.path.join(baseDir, "testAirfoil.dat")))
-        self.assertEqual(0, flat.getMaxThickness("american")[1])
-        self.assertEqual(0, flat.getMaxThickness("british")[1])
-
-    def test_blunt_te(self):
-        hg = Airfoil(readCoordFile(os.path.join(baseDir, "hypersonic_glider.dat")))
-        assert_allclose(hg.getMaxThickness("british"), [1, 1])
-        assert_allclose(hg.getMaxThickness("american"), [1, 1])
-        assert_allclose(hg.getMaxCamber(), 0)
-        assert_allclose(hg.getMinCamber(), 0)
-
-    def test_airfoil(self):
-        foil = Airfoil(readCoordFile(os.path.join(baseDir, "rae2822.dat")))
-        maxThickness = foil.getMaxThickness("british")
+    def test_rae2822_thickness(self):
+        maxThickness = self.foil.getMaxThickness("british")
         np.testing.assert_allclose(maxThickness, [0.379, 0.121], rtol=1e-2)
+
+    def test_rae2822_camber(self):
+        maxCamber = self.foil.getMaxCamber()
+        np.testing.assert_allclose(maxCamber, [0.757, 0.013], rtol=0.15)
 
 
 if __name__ == "__main__":
