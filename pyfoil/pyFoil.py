@@ -767,18 +767,22 @@ class Airfoil(object):
             opt = minimize(american_f, 0.5, method="SLSQP", jac=american_df, bounds=[(0, 1)])
 
             if not opt.success:
-                raise Error("Optimization failed.")
+                raise Error("Could not determine the maximum thickness.")
 
-            return self.american_thickness.getValue(opt.x)
+            opt_point = self.american_thickness.getValue(opt.x)
+
         else:
             opt = minimize(british_f, 0.5, method="SLSQP", jac=british_df, bounds=[(0, 1)])
 
             if not opt.success:
 
-                raise Error("Optimization failed.")
-            return self.british_thickness.getValue(opt.x)
+                raise Error("Could not determine the maximum thickness.")
 
-    def _MaxOptimize(self, maximum):
+            opt_point = self.british_thickness.getValue(opt.x)
+
+        return opt_point[0], opt_point[1]
+
+    def _MaxCamberOptimize(self, maximum):
         """
         Used to compute the most negative and most positive cambers of an airfoil
 
@@ -811,7 +815,10 @@ class Airfoil(object):
         opt = minimize(lambda s: f(s, factor), 0.5, method="SLSQP", jac=lambda s: df(s, factor), bounds=[(0, 1)])
 
         if not opt.success:
-            raise Error("Optimization not successful")
+            if maximum:
+                raise Error("Could not determine maximum camber.")
+            else:
+                raise Error("Could not determine minimum camber.")
 
         opt_point = self.camber.getValue(opt.x)
 
@@ -829,7 +836,7 @@ class Airfoil(object):
 
         """
 
-        return self._MaxOptimize(True)
+        return self._MaxCamberOptimize(True)
 
     def getMinCamber(self):
         """
@@ -841,7 +848,7 @@ class Airfoil(object):
             the maximum negative camber of the airfoil
         """
 
-        return self._MaxOptimize(False)
+        return self._MaxCamberOptimize(False)
 
     def isReflex(self):
         """
