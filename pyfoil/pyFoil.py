@@ -384,7 +384,7 @@ class Airfoil(object):
         self.recompute(coords)
 
         if normalize:
-            self.normalizeChord()
+            self.normalizeAirfoil()
 
     def recompute(self, coords):
         """
