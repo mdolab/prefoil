@@ -367,7 +367,7 @@ class Airfoil(object):
         Order of the spline
 
     normalize : bool
-        True to normalize the chord of the airfoil
+        True to normalize the chord of the airfoil, set to zero angle of attack, and move the leading edge to the origin
 
     """
 
