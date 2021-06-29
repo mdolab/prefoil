@@ -28,6 +28,13 @@ class TestBasic(unittest.TestCase):
     def test_findPt(self):
         assert_allclose(self.foil.findPt(0.8)[0][0], 0.8, atol=1e-10)
 
+    def test_splitAirfoil(self):
+        top, bottom = self.foil.splitAirfoil()
+        assert_array_equal(top.getValue(0), np.array([1, 0]))
+        assert_array_equal(top.getValue(1), np.array([0, 0]))
+        assert_array_equal(bottom.getValue(0), np.array([0, 0]))
+        assert_array_equal(bottom.getValue(1), np.array([1, 0]))
+
 
 class TestSampling(unittest.TestCase):
     # for now these just test if it runs without error, not if the output is right
@@ -78,6 +85,66 @@ class TestSamplingTE(unittest.TestCase):
         coords = self.hg.getSampledPts(100, TE_knot=True, nTEPts=1)
         assert_array_equal(coords[-1, :], coords[0, :])
         assert_array_equal(coords[-3, :], coords[-4, :])
+
+
+class TestCoordModification(unittest.TestCase):
+    def setUp(self):
+        X = readCoordFile(os.path.join(baseDir, "testAirfoil.dat"))
+        self.foil = Airfoil(X)
+
+    def test_scale_basic(self):
+        self.foil.scale(2)
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[2, 0], [0, 0], [2, 0]]))
+
+    def test_scale_off_center(self):
+        self.foil.scale(2, origin=np.array([1, 0]))
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [-1, 0], [1, 0]]))
+
+    def test_normalizeChord(self):
+        self.foil.scale(2)
+        self.foil.normalizeChord()
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+
+    def test_translate(self):
+        self.foil.translate([1, -3])
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[2, -3], [1, -3], [2, -3]]))
+
+    def test_center(self):
+        self.foil.translate([1, -3])
+        self.foil.center()
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+
+    def test_rotate_basic(self):
+        self.foil.rotate(-45)
+        coords = self.foil.getSplinePts()
+        ref = np.array([[1 / np.sqrt(2), -1 / np.sqrt(2)], [0, 0], [1 / np.sqrt(2), -1 / np.sqrt(2)]])
+        assert_allclose(coords, ref, atol=1e-10)
+
+    def test_rotate_off_center(self):
+        self.foil.rotate(-45, [1, 0])
+        coords = self.foil.getSplinePts()
+        ref = np.array([[1, 0], [1 - 1 / np.sqrt(2), 1 / np.sqrt(2)], [1, 0]])
+        assert_allclose(coords, ref, atol=1e-10)
+
+    def test_derotate(self):
+        self.foil.rotate(45)
+        self.foil.derotate()
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+
+    def test_normalizeAirfoil(self):
+        self.foil.rotate(15)
+        self.foil.scale(30)
+        self.foil.translate([2, 14])
+        self.foil.rotate(-29)
+        self.foil.normalizeAirfoil()
+        coords = self.foil.getSplinePts()
+        assert_allclose(coords, np.array([[1, 0], [0, 0], [1, 0]]), atol=1e-10)
 
 
 class TestGeoModification(unittest.TestCase):

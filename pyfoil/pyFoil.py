@@ -906,9 +906,7 @@ class Airfoil(object):
         """
         new_coords = _rotateCoords(self.spline.X, np.deg2rad(angle), origin)
 
-        # reset initialize with the new set of coordinates
-        self.__init__(new_coords, spline_order=self.spline.k)
-        # self.update(new_coords, spline_order=self.spline.k)
+        self.recompute(new_coords)
 
     def derotate(self, origin=np.zeros(2)):
         """
@@ -935,7 +933,7 @@ class Airfoil(object):
         """
 
         new_coords = _scaleCoords(self.spline.X, factor, origin)
-        self.__init__(new_coords, spline_order=self.spline.k)
+        self.recompute(new_coords)
 
     def normalizeChord(self, origin=np.zeros(2)):
         """
@@ -965,8 +963,6 @@ class Airfoil(object):
 
         coords = _translateCoords(self.spline.X, delta)
         self.recompute(coords)
-        if self.LE is not None:
-            self.LE += delta
 
     def center(self):
         """
@@ -1016,22 +1012,14 @@ class Airfoil(object):
         """
 
         if derotate or normalize or center:
-            origin = np.zeros(2)
-            sample_pts = self.spline.X
-
             # Order of operation here is important, even though all three operations are linear, because
             # we rotate about the origin for simplicity.
             if center:
-                delta = -1.0 * self.LE
-                sample_pts = _translateCoords(sample_pts, delta)
+                self.center()
             if derotate:
-                angle = -1.0 * self.twist
-                sample_pts = _rotateCoords(sample_pts, angle, origin)
+                self.derotate()
             if normalize:
-                factor = 1.0 / self.chord
-                sample_pts = _scaleCoords(sample_pts, factor, origin)
-
-            self.recompute(sample_pts)
+                self.normalizeChord()
 
     def makeBluntTE(self, start=0.01, end=None):
         """
