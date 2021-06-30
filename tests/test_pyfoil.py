@@ -10,14 +10,10 @@ baseDir = os.path.dirname(os.path.abspath(__file__))
 
 class TestBasic(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "testAirfoil.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/flat_plate.dat"))
         self.foil = Airfoil(X)
-
-    def test_rotate(self):
-        self.foil.rotate(45)
-        assert_allclose(self.foil.TE, np.sqrt(2) / 2 * np.ones(2), atol=1e-10)
-        self.foil.derotate()
-        assert_allclose(self.foil.TE, np.array([1, 0]), atol=1e-10)
+        self.chord = 1
+        self.twist = 0
 
     def test_chord(self):
         assert_allclose(self.foil.getChord(), 1, atol=1e-10)
@@ -35,11 +31,83 @@ class TestBasic(unittest.TestCase):
         assert_array_equal(bottom.getValue(0), np.array([0, 0]))
         assert_array_equal(bottom.getValue(1), np.array([1, 0]))
 
+    def test_scale_basic(self):
+        self.foil.scale(2)
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[2, 0], [0, 0], [2, 0]]))
+        self.assertEqual(self.chord*2, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_scale_off_center(self):
+        self.foil.scale(2, origin=np.array([1, 0]))
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [-1, 0], [1, 0]]))
+        self.assertEqual(self.chord*2, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_normalizeChord(self):
+        self.foil.scale(2)
+        self.foil.normalizeChord()
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+        self.assertEqual(self.chord, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_translate(self):
+        self.foil.translate([1, -3])
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[2, -3], [1, -3], [2, -3]]))
+        self.assertEqual(self.chord, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_center(self):
+        self.foil.translate([1, -3])
+        self.foil.center()
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+        self.assertEqual(self.chord, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_rotate_basic(self):
+        self.foil.rotate(-45)
+        coords = self.foil.getSplinePts()
+        ref = np.array([[1 / np.sqrt(2), -1 / np.sqrt(2)], [0, 0], [1 / np.sqrt(2), -1 / np.sqrt(2)]])
+        assert_allclose(coords, ref, atol=1e-10)
+        self.assertAlmostEqual(self.chord, self.foil.getChord())
+        self.assertAlmostEqual(self.twist-45, self.foil.getTwist())
+
+    def test_rotate_off_center(self):
+        self.foil.rotate(-45, [1, 0])
+        coords = self.foil.getSplinePts()
+        ref = np.array([[1, 0], [1 - 1 / np.sqrt(2), 1 / np.sqrt(2)], [1, 0]])
+        assert_allclose(coords, ref, atol=1e-10)
+        self.assertAlmostEqual(self.chord, self.foil.getChord())
+        self.assertAlmostEqual(self.twist-45, self.foil.getTwist())
+
+    def test_derotate(self):
+        self.foil.rotate(45)
+        self.foil.derotate()
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+        self.assertAlmostEqual(self.chord, self.foil.getChord())
+        self.assertAlmostEqual(self.twist, self.foil.getTwist())
+
+    def test_normalizeAirfoil(self):
+        self.foil.rotate(15)
+        self.foil.scale(30)
+        self.foil.translate([2, 14])
+        self.foil.rotate(-29)
+        self.foil.normalizeAirfoil()
+        coords = self.foil.getSplinePts()
+        assert_allclose(coords, np.array([[1, 0], [0, 0], [1, 0]]), atol=1e-10)
+        self.assertAlmostEqual(self.chord, self.foil.getChord())
+        self.assertAlmostEqual(self.twist, self.foil.getTwist())
+
 
 class TestSampling(unittest.TestCase):
     # for now these just test if it runs without error, not if the output is right
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat"))
         self.foil = Airfoil(X)
 
     def test_defaults(self):
@@ -55,7 +123,7 @@ class TestSampling(unittest.TestCase):
 
 class TestSamplingTE(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "hypersonic_glider.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/hypersonic_glider.dat"))
         self.hg = Airfoil(X)
 
     def test_nTEPts(self):
@@ -87,69 +155,10 @@ class TestSamplingTE(unittest.TestCase):
         assert_array_equal(coords[-3, :], coords[-4, :])
 
 
-class TestCoordModification(unittest.TestCase):
-    def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "testAirfoil.dat"))
-        self.foil = Airfoil(X)
-
-    def test_scale_basic(self):
-        self.foil.scale(2)
-        coords = self.foil.getSplinePts()
-        assert_array_equal(coords, np.array([[2, 0], [0, 0], [2, 0]]))
-
-    def test_scale_off_center(self):
-        self.foil.scale(2, origin=np.array([1, 0]))
-        coords = self.foil.getSplinePts()
-        assert_array_equal(coords, np.array([[1, 0], [-1, 0], [1, 0]]))
-
-    def test_normalizeChord(self):
-        self.foil.scale(2)
-        self.foil.normalizeChord()
-        coords = self.foil.getSplinePts()
-        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
-
-    def test_translate(self):
-        self.foil.translate([1, -3])
-        coords = self.foil.getSplinePts()
-        assert_array_equal(coords, np.array([[2, -3], [1, -3], [2, -3]]))
-
-    def test_center(self):
-        self.foil.translate([1, -3])
-        self.foil.center()
-        coords = self.foil.getSplinePts()
-        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
-
-    def test_rotate_basic(self):
-        self.foil.rotate(-45)
-        coords = self.foil.getSplinePts()
-        ref = np.array([[1 / np.sqrt(2), -1 / np.sqrt(2)], [0, 0], [1 / np.sqrt(2), -1 / np.sqrt(2)]])
-        assert_allclose(coords, ref, atol=1e-10)
-
-    def test_rotate_off_center(self):
-        self.foil.rotate(-45, [1, 0])
-        coords = self.foil.getSplinePts()
-        ref = np.array([[1, 0], [1 - 1 / np.sqrt(2), 1 / np.sqrt(2)], [1, 0]])
-        assert_allclose(coords, ref, atol=1e-10)
-
-    def test_derotate(self):
-        self.foil.rotate(45)
-        self.foil.derotate()
-        coords = self.foil.getSplinePts()
-        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
-
-    def test_normalizeAirfoil(self):
-        self.foil.rotate(15)
-        self.foil.scale(30)
-        self.foil.translate([2, 14])
-        self.foil.rotate(-29)
-        self.foil.normalizeAirfoil()
-        coords = self.foil.getSplinePts()
-        assert_allclose(coords, np.array([[1, 0], [0, 0], [1, 0]]), atol=1e-10)
-
 
 class TestGeoModification(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat"))
         self.foil = Airfoil(X)
 
     def test_reorder(self):
@@ -175,9 +184,9 @@ class TestGeoModification(unittest.TestCase):
 
 class TestFFD(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat"))
         self.foil = Airfoil(X)
-        X = readCoordFile(os.path.join(baseDir, "wave.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/wave.dat"))
         self.wave = Airfoil(X)
 
     def test_getClosest(self):
@@ -266,7 +275,7 @@ class TestFFD(unittest.TestCase):
 
 class TestCamber(unittest.TestCase):
     def setUp(self):
-        self.foil = Airfoil(readCoordFile(os.path.join(baseDir, "rae2822.dat")))
+        self.foil = Airfoil(readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat")))
 
     def test_rae2822_thickness(self):
         maxThickness = self.foil.getMaxThickness("british")

@@ -945,11 +945,8 @@ class Airfoil(object):
             the point about which to scale the airfoil
         """
 
-        if self.spline is None:
-            self.recompute()
-        elif self.chord == 1:
-            return
-        self.scale(1.0 / self.chord, origin=origin)
+        if self.chord != 1:
+            self.scale(1.0 / self.chord, origin=origin)
 
     def translate(self, delta):
         """
@@ -969,13 +966,8 @@ class Airfoil(object):
         Move the airfoil so that the leading edge is at the origin
         """
 
-        if self.spline is None:
-            self.recompute()
-        if self.LE is None:
-            self.getChord()
-        elif np.all(self.LE == np.zeros(2)):
-            return
-        self.translate(-1.0 * self.LE)
+        if not np.all(self.LE == np.zeros(2)):
+            self.translate(-1.0 * self.LE)
 
     def splitAirfoil(self):
         """
