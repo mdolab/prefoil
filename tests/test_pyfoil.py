@@ -35,14 +35,14 @@ class TestBasic(unittest.TestCase):
         self.foil.scale(2)
         coords = self.foil.getSplinePts()
         assert_array_equal(coords, np.array([[2, 0], [0, 0], [2, 0]]))
-        self.assertEqual(self.chord*2, self.foil.getChord())
+        self.assertEqual(self.chord * 2, self.foil.getChord())
         self.assertEqual(self.twist, self.foil.getTwist())
 
     def test_scale_off_center(self):
         self.foil.scale(2, origin=np.array([1, 0]))
         coords = self.foil.getSplinePts()
         assert_array_equal(coords, np.array([[1, 0], [-1, 0], [1, 0]]))
-        self.assertEqual(self.chord*2, self.foil.getChord())
+        self.assertEqual(self.chord * 2, self.foil.getChord())
         self.assertEqual(self.twist, self.foil.getTwist())
 
     def test_normalizeChord(self):
@@ -74,7 +74,7 @@ class TestBasic(unittest.TestCase):
         ref = np.array([[1 / np.sqrt(2), -1 / np.sqrt(2)], [0, 0], [1 / np.sqrt(2), -1 / np.sqrt(2)]])
         assert_allclose(coords, ref, atol=1e-10)
         self.assertAlmostEqual(self.chord, self.foil.getChord())
-        self.assertAlmostEqual(self.twist-45, self.foil.getTwist())
+        self.assertAlmostEqual(self.twist - 45, self.foil.getTwist())
 
     def test_rotate_off_center(self):
         self.foil.rotate(-45, [1, 0])
@@ -82,7 +82,7 @@ class TestBasic(unittest.TestCase):
         ref = np.array([[1, 0], [1 - 1 / np.sqrt(2), 1 / np.sqrt(2)], [1, 0]])
         assert_allclose(coords, ref, atol=1e-10)
         self.assertAlmostEqual(self.chord, self.foil.getChord())
-        self.assertAlmostEqual(self.twist-45, self.foil.getTwist())
+        self.assertAlmostEqual(self.twist - 45, self.foil.getTwist())
 
     def test_derotate(self):
         self.foil.rotate(45)
@@ -153,7 +153,6 @@ class TestSamplingTE(unittest.TestCase):
         coords = self.hg.getSampledPts(100, TE_knot=True, nTEPts=1)
         assert_array_equal(coords[-1, :], coords[0, :])
         assert_array_equal(coords[-3, :], coords[-4, :])
-
 
 
 class TestGeoModification(unittest.TestCase):
