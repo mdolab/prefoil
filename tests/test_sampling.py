@@ -1,7 +1,5 @@
 import unittest
 from baseclasses import BaseRegTest
-import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
 import os
 from pyfoil import sampling
 
