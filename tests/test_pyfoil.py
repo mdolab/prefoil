@@ -1,4 +1,5 @@
 import unittest
+from baseclasses import BaseRegTest
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal
 import os
@@ -105,20 +106,45 @@ class TestBasic(unittest.TestCase):
 
 
 class TestSampling(unittest.TestCase):
-    # for now these just test if it runs without error, not if the output is right
     def setUp(self):
         X = readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat"))
         self.foil = Airfoil(X)
 
-    def test_defaults(self):
-        self.foil.getSampledPts(100, nTEPts=10)
+    def train_defaults(self, train=True):
+        try:
+            self.test_defaults(train=train)
+        except AttributeError:
+            raise unittest.SkipTest()
 
-    def test_custom_dist_sample(self):
-        self.foil.getSampledPts(100, spacingFunc=np.linspace)
+    def test_defaults(self, train=False):
+        ref_file = os.path.join(baseDir, "ref/test_defaults.ref")
+        with BaseRegTest(ref_file, train=train) as handler:
+            points = self.foil.getSampledPts(100, nTEPts=10)
+            handler.root_add_val("{test_default} - Default RAE2822 sampled points:", points, tol=1e-10)
 
-    def test_pass_args_to_dist(self):
-        func_args = {"coeff": 2}
-        self.foil.getSampledPts(100, spacingFunc=sampling.conical, func_args=func_args)
+    def train_linspace(self, train=True):
+        try:
+            self.test_linspace(train=train)
+        except AttributeError:
+            raise unittest.SkipTest()
+
+    def test_linspace(self, train=False):
+        ref_file = os.path.join(baseDir, "ref/test_linspace.ref")
+        with BaseRegTest(ref_file, train=train) as handler:
+            points = self.foil.getSampledPts(100, spacingFunc=np.linspace)
+            handler.root_add_val("{test_linspace} - Linear RAE2822 sampled points:", points, tol=1e-10)
+
+    def train_pass_args_to_dist(self, train=True):
+        try:
+            self.test_pass_args_to_dist(train=train)
+        except AttributeError:
+            raise unittest.SkipTest()
+
+    def test_pass_args_to_dist(self, train=False):
+        ref_file = os.path.join(baseDir, "ref/test_args.ref")
+        with BaseRegTest(ref_file, train=train) as handler:
+            points = self.foil.getSampledPts(100, spacingFunc=sampling.conical, func_args={"coeff": 2})
+            handler.root_add_val("{test_args} - Conical RAE2822 sampled points:", points, tol=1e-10)
 
 
 class TestSamplingTE(unittest.TestCase):
@@ -283,6 +309,52 @@ class TestCamber(unittest.TestCase):
     def test_rae2822_camber(self):
         maxCamber = self.foil.getMaxCamber()
         np.testing.assert_allclose(maxCamber, [0.757, 0.013], rtol=0.15)
+
+
+class TestFileWriting(unittest.TestCase):
+    def setUp(self):
+        self.foil = Airfoil(readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat")))
+
+    def test_writeFFD(self):
+        self.foil.generateFFD(10, os.path.join(baseDir, "writeFFD_temp"))
+        with open(os.path.join(baseDir, "ref/rae2822_ffd.ref"), "r") as ref, open(
+            os.path.join(baseDir, "writeFFD_temp.xyz"), "r"
+        ) as actual:
+            ref_lines = list(ref)
+            actual_lines = list(actual)
+            self.assertEqual(len(ref_lines), len(actual_lines))
+            for i in range(len(ref_lines)):
+                self.assertEqual(ref_lines[i], actual_lines[i])
+
+    def test_writeP3D(self):
+        self.foil.writeCoords(os.path.join(baseDir, "writeP3D_temp"), spline_coords=True, format="plot3d")
+        with open(os.path.join(baseDir, "ref/rae2822_p3d.ref"), "r") as ref, open(
+            os.path.join(baseDir, "writeP3D_temp.xyz"), "r"
+        ) as actual:
+            ref_lines = list(ref)
+            actual_lines = list(actual)
+            self.assertEqual(len(ref_lines), len(actual_lines))
+            for i in range(len(ref_lines)):
+                self.assertEqual(ref_lines[i], actual_lines[i])
+
+    def test_writeDat(self):
+        self.foil.writeCoords(os.path.join(baseDir, "writeDat_temp"), spline_coords=True, format="dat")
+        with open(os.path.join(baseDir, "ref/rae2822_dat.ref"), "r") as ref, open(
+            os.path.join(baseDir, "writeDat_temp.dat"), "r"
+        ) as actual:
+            ref_lines = list(ref)
+            actual_lines = list(actual)
+            self.assertEqual(len(ref_lines), len(actual_lines))
+            for i in range(len(ref_lines)):
+                self.assertEqual(ref_lines[i], actual_lines[i])
+
+    def tearDown(self):
+        if os.path.isfile(os.path.join(baseDir, "writeFFD_temp.xyz")):
+            os.remove(os.path.join(baseDir, "writeFFD_temp.xyz"))
+        if os.path.isfile(os.path.join(baseDir, "writeP3D_temp.xyz")):
+            os.remove(os.path.join(baseDir, "writeP3D_temp.xyz"))
+        if os.path.isfile(os.path.join(baseDir, "writeDat_temp.dat")):
+            os.remove(os.path.join(baseDir, "writeDat_temp.dat"))
 
 
 if __name__ == "__main__":

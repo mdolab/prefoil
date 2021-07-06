@@ -17,5 +17,6 @@ setup(
         "pyfoil",
     ],
     install_requires=["numpy>=1.16", "scipy>=1.2" "pygeo>=1.2.0", "pyspline>=1.1.0"],
+    extra_require={"testing": ["mdolab-baseclasses>=1.4", "testflo"]},
     classifiers=["Operating System :: OS Independent", "Programming Language :: Python"],
 )

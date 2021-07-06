@@ -1147,8 +1147,7 @@ class Airfoil(object):
         are the same, regardless of whether the spline is closed or open).
         An example dictionary is reported below:
 
-        >>> sample_dict = {'distribution' : 'conical',
-        >>>        'coeff' : 1,
+        >>> sample_dict = {'coeff' : 1,
         >>>        'bad_edge': False}
 
         The point distribution currently implemented are:
