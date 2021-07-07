@@ -34,11 +34,11 @@ class TestBasic(unittest.TestCase):
             s = sampling.conical(0, 1, 100, coeff=2)
             handler.root_add_val("test_conical - Sample from Conical with coeff = 2:", s, tol=1e-10)
 
-    def train_bigeometic(self, train=True):
-        self.test_bigeometic(train=train)
+    def train_bigeometric(self, train=True):
+        self.test_bigeometric(train=train)
 
-    def test_bigeometic(self, train=False):
+    def test_bigeometric(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_bigeometic.ref")
         with BaseRegTest(ref_file, train=train) as handler:
             s = sampling.bigeometric(0, 1, 100)
-            handler.root_add_val("test_bigeometic - Sample from Bigeometric:", s, tol=1e-10)
+            handler.root_add_val("test_bigeometric - Sample from Bigeometric:", s, tol=1e-10)
