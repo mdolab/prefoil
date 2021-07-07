@@ -340,12 +340,9 @@ class TestFileWriting(unittest.TestCase):
                 self.assertEqual(ref_lines[i], actual_lines[i])
 
     def tearDown(self):
-        if os.path.isfile(self.temp_ffd):
-            os.remove(self.temp_ffd)
-        if os.path.isfile(self.temp_p3d):
-            os.remove(self.temp_p3d)
-        if os.path.isfile(self.temp_dat):
-            os.remove(self.temp_dat)
+        for file_ in [self.temp_ffd, self.temp_p3d, self.temp_dat]:
+            if os.path.isfile(file_):
+                os.remove(file_)
 
 
 if __name__ == "__main__":
