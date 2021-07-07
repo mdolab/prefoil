@@ -41,4 +41,4 @@ class TestBasic(unittest.TestCase):
         ref_file = os.path.join(baseDir, "ref/test_bigeometic.ref")
         with BaseRegTest(ref_file, train=train) as handler:
             s = sampling.bigeometric(0, 1, 100)
-            handler.root_add_val("test_bigeometric - Sample from Bigeometric:", s, tol=1e-10)
+            handler.root_add_val("test_bigeometic - Sample from Bigeometric:", s, tol=1e-10)
