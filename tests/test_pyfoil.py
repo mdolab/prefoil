@@ -111,34 +111,25 @@ class TestSampling(unittest.TestCase):
         self.foil = Airfoil(X)
 
     def train_defaults(self, train=True):
-        try:
-            self.test_defaults(train=train)
-        except AttributeError:
-            raise unittest.SkipTest()
+        self.test_defaults(train=train)
 
     def test_defaults(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_defaults.ref")
         with BaseRegTest(ref_file, train=train) as handler:
             points = self.foil.getSampledPts(100, nTEPts=10)
-            handler.root_add_val("{test_default} - Default RAE2822 sampled points:", points, tol=1e-10)
+            handler.root_add_val("test_default - Default RAE2822 sampled points:", points, tol=1e-10)
 
     def train_linspace(self, train=True):
-        try:
-            self.test_linspace(train=train)
-        except AttributeError:
-            raise unittest.SkipTest()
+        self.test_linspace(train=train)
 
     def test_linspace(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_linspace.ref")
         with BaseRegTest(ref_file, train=train) as handler:
             points = self.foil.getSampledPts(100, spacingFunc=np.linspace)
-            handler.root_add_val("{test_linspace} - Linear RAE2822 sampled points:", points, tol=1e-10)
+            handler.root_add_val("test_linspace - Linear RAE2822 sampled points:", points, tol=1e-10)
 
     def train_pass_args_to_dist(self, train=True):
-        try:
-            self.test_pass_args_to_dist(train=train)
-        except AttributeError:
-            raise unittest.SkipTest()
+        self.test_pass_args_to_dist(train=train)
 
     def test_pass_args_to_dist(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_args.ref")
@@ -314,12 +305,14 @@ class TestCamber(unittest.TestCase):
 class TestFileWriting(unittest.TestCase):
     def setUp(self):
         self.foil = Airfoil(readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat")))
+        self.temp_ffd = os.path.join(baseDir, "writeFFD_temp")
+        self.temp_p3d = os.path.join(baseDir, "writeP3D_temp")
+        self.temp_dat = os.path.join(baseDir, "writeDat_temp")
 
     def test_writeFFD(self):
-        self.foil.generateFFD(10, os.path.join(baseDir, "writeFFD_temp"))
-        with open(os.path.join(baseDir, "ref/rae2822_ffd.ref"), "r") as ref, open(
-            os.path.join(baseDir, "writeFFD_temp.xyz"), "r"
-        ) as actual:
+        self.foil.generateFFD(10, self.temp_ffd)
+        self.temp_ffd += ".xyz"
+        with open(os.path.join(baseDir, "ref/rae2822_ffd.xyz"), "r") as ref, open(self.temp_ffd, "r") as actual:
             ref_lines = list(ref)
             actual_lines = list(actual)
             self.assertEqual(len(ref_lines), len(actual_lines))
@@ -327,10 +320,9 @@ class TestFileWriting(unittest.TestCase):
                 self.assertEqual(ref_lines[i], actual_lines[i])
 
     def test_writeP3D(self):
-        self.foil.writeCoords(os.path.join(baseDir, "writeP3D_temp"), spline_coords=True, format="plot3d")
-        with open(os.path.join(baseDir, "ref/rae2822_p3d.ref"), "r") as ref, open(
-            os.path.join(baseDir, "writeP3D_temp.xyz"), "r"
-        ) as actual:
+        self.foil.writeCoords(self.temp_p3d, spline_coords=True, format="plot3d")
+        self.temp_p3d += ".xyz"
+        with open(os.path.join(baseDir, "ref/rae2822_p3d.xyz"), "r") as ref, open(self.temp_p3d, "r") as actual:
             ref_lines = list(ref)
             actual_lines = list(actual)
             self.assertEqual(len(ref_lines), len(actual_lines))
@@ -338,10 +330,9 @@ class TestFileWriting(unittest.TestCase):
                 self.assertEqual(ref_lines[i], actual_lines[i])
 
     def test_writeDat(self):
-        self.foil.writeCoords(os.path.join(baseDir, "writeDat_temp"), spline_coords=True, format="dat")
-        with open(os.path.join(baseDir, "ref/rae2822_dat.ref"), "r") as ref, open(
-            os.path.join(baseDir, "writeDat_temp.dat"), "r"
-        ) as actual:
+        self.foil.writeCoords(self.temp_dat, spline_coords=True, format="dat")
+        self.temp_dat += ".dat"
+        with open(os.path.join(baseDir, "ref/rae2822_dat.dat"), "r") as ref, open(self.temp_dat, "r") as actual:
             ref_lines = list(ref)
             actual_lines = list(actual)
             self.assertEqual(len(ref_lines), len(actual_lines))
@@ -349,12 +340,12 @@ class TestFileWriting(unittest.TestCase):
                 self.assertEqual(ref_lines[i], actual_lines[i])
 
     def tearDown(self):
-        if os.path.isfile(os.path.join(baseDir, "writeFFD_temp.xyz")):
-            os.remove(os.path.join(baseDir, "writeFFD_temp.xyz"))
-        if os.path.isfile(os.path.join(baseDir, "writeP3D_temp.xyz")):
-            os.remove(os.path.join(baseDir, "writeP3D_temp.xyz"))
-        if os.path.isfile(os.path.join(baseDir, "writeDat_temp.dat")):
-            os.remove(os.path.join(baseDir, "writeDat_temp.dat"))
+        if os.path.isfile(self.temp_ffd):
+            os.remove(self.temp_ffd)
+        if os.path.isfile(self.temp_p3d):
+            os.remove(self.temp_p3d)
+        if os.path.isfile(self.temp_dat):
+            os.remove(self.temp_dat)
 
 
 if __name__ == "__main__":

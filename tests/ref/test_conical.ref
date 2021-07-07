@@ -1,5 +1,5 @@
 {
-    "{test_conical} - Sample from Conical with coeff = 2:": {
+    "test_conical - Sample from Conical with coeff = 2:": {
         "__ndarray__": [
             0.0,
             6.296786271664523e-05,
