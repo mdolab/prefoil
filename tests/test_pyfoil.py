@@ -104,6 +104,20 @@ class TestBasic(unittest.TestCase):
         self.assertAlmostEqual(self.chord, self.foil.getChord())
         self.assertAlmostEqual(self.twist, self.foil.getTwist())
 
+    def test_chordProj_basic(self):
+        val = self.foil._findChordProj(np.array([0.57, 2]))
+        assert_allclose(np.array([0.57, 0]), val, atol=1e-12)
+
+    def test_chordProj_vertical(self):
+        self.foil.rotate(-90)
+        val = self.foil._findChordProj(np.array([3.7, -0.76]))
+        assert_allclose(np.array([0, -0.76]), val, atol=1e-12)
+
+    def test_chordProj_angle(self):
+        self.foil.rotate(-30)
+        val = self.foil._findChordProj(np.array([0.5, 0]))
+        assert_allclose(np.array([3 / 8, -np.sqrt(3) / 8]), val, atol=1e-12)
+
 
 class TestSampling(unittest.TestCase):
     def setUp(self):
@@ -295,11 +309,26 @@ class TestCamber(unittest.TestCase):
 
     def test_rae2822_thickness(self):
         maxThickness = self.foil.getMaxThickness("british")
-        np.testing.assert_allclose(maxThickness, [0.379, 0.121], rtol=1e-2)
+        assert_allclose(maxThickness, [0.379, 0.121], rtol=1e-2)
 
     def test_rae2822_camber(self):
         maxCamber = self.foil.getMaxCamber()
-        np.testing.assert_allclose(maxCamber, [0.757, 0.013], rtol=0.15)
+        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.19)
+
+    def test_rae2822_camber_scale(self):
+        self.foil.scale(1.5)
+        maxCamber = self.foil.getMaxCamber()
+        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.19)
+
+    def test_rae2822_camber_translate(self):
+        self.foil.translate([0.2, -0.23])
+        maxCamber = self.foil.getMaxCamber()
+        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.19)
+
+    def test_rae2822_camber_rot(self):
+        self.foil.rotate(-30)
+        maxCamber = self.foil.getMaxCamber()
+        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.19)
 
 
 class TestFileWriting(unittest.TestCase):
