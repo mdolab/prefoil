@@ -1,4 +1,5 @@
 import unittest
+from baseclasses import BaseRegTest
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal
 import os
@@ -10,14 +11,10 @@ baseDir = os.path.dirname(os.path.abspath(__file__))
 
 class TestBasic(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "testAirfoil.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/flat_plate.dat"))
         self.foil = Airfoil(X)
-
-    def test_rotate(self):
-        self.foil.rotate(45)
-        assert_allclose(self.foil.TE, np.sqrt(2) / 2 * np.ones(2), atol=1e-10)
-        self.foil.derotate()
-        assert_allclose(self.foil.TE, np.array([1, 0]), atol=1e-10)
+        self.chord = 1
+        self.twist = 0
 
     def test_chord(self):
         assert_allclose(self.foil.getChord(), 1, atol=1e-10)
@@ -28,27 +25,122 @@ class TestBasic(unittest.TestCase):
     def test_findPt(self):
         assert_allclose(self.foil.findPt(0.8)[0][0], 0.8, atol=1e-10)
 
+    def test_splitAirfoil(self):
+        top, bottom = self.foil.splitAirfoil()
+        assert_array_equal(top.getValue(0), np.array([1, 0]))
+        assert_array_equal(top.getValue(1), np.array([0, 0]))
+        assert_array_equal(bottom.getValue(0), np.array([0, 0]))
+        assert_array_equal(bottom.getValue(1), np.array([1, 0]))
+
+    def test_scale_basic(self):
+        self.foil.scale(2)
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[2, 0], [0, 0], [2, 0]]))
+        self.assertEqual(self.chord * 2, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_scale_off_center(self):
+        self.foil.scale(2, origin=np.array([1, 0]))
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [-1, 0], [1, 0]]))
+        self.assertEqual(self.chord * 2, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_normalizeChord(self):
+        self.foil.scale(2)
+        self.foil.normalizeChord()
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+        self.assertEqual(self.chord, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_translate(self):
+        self.foil.translate([1, -3])
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[2, -3], [1, -3], [2, -3]]))
+        self.assertEqual(self.chord, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_center(self):
+        self.foil.translate([1, -3])
+        self.foil.center()
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+        self.assertEqual(self.chord, self.foil.getChord())
+        self.assertEqual(self.twist, self.foil.getTwist())
+
+    def test_rotate_basic(self):
+        self.foil.rotate(-45)
+        coords = self.foil.getSplinePts()
+        ref = np.array([[1 / np.sqrt(2), -1 / np.sqrt(2)], [0, 0], [1 / np.sqrt(2), -1 / np.sqrt(2)]])
+        assert_allclose(coords, ref, atol=1e-10)
+        self.assertAlmostEqual(self.chord, self.foil.getChord())
+        self.assertAlmostEqual(self.twist - 45, self.foil.getTwist())
+
+    def test_rotate_off_center(self):
+        self.foil.rotate(-45, [1, 0])
+        coords = self.foil.getSplinePts()
+        ref = np.array([[1, 0], [1 - 1 / np.sqrt(2), 1 / np.sqrt(2)], [1, 0]])
+        assert_allclose(coords, ref, atol=1e-10)
+        self.assertAlmostEqual(self.chord, self.foil.getChord())
+        self.assertAlmostEqual(self.twist - 45, self.foil.getTwist())
+
+    def test_derotate(self):
+        self.foil.rotate(45)
+        self.foil.derotate()
+        coords = self.foil.getSplinePts()
+        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+        self.assertAlmostEqual(self.chord, self.foil.getChord())
+        self.assertAlmostEqual(self.twist, self.foil.getTwist())
+
+    def test_normalizeAirfoil(self):
+        self.foil.rotate(15)
+        self.foil.scale(30)
+        self.foil.translate([2, 14])
+        self.foil.rotate(-29)
+        self.foil.normalizeAirfoil()
+        coords = self.foil.getSplinePts()
+        assert_allclose(coords, np.array([[1, 0], [0, 0], [1, 0]]), atol=1e-10)
+        self.assertAlmostEqual(self.chord, self.foil.getChord())
+        self.assertAlmostEqual(self.twist, self.foil.getTwist())
+
 
 class TestSampling(unittest.TestCase):
-    # for now these just test if it runs without error, not if the output is right
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat"))
         self.foil = Airfoil(X)
 
-    def test_defaults(self):
-        self.foil.getSampledPts(100, nTEPts=10)
+    def train_defaults(self, train=True):
+        self.test_defaults(train=train)
 
-    def test_custom_dist_sample(self):
-        self.foil.getSampledPts(100, spacingFunc=np.linspace)
+    def test_defaults(self, train=False):
+        ref_file = os.path.join(baseDir, "ref/test_defaults.ref")
+        with BaseRegTest(ref_file, train=train) as handler:
+            points = self.foil.getSampledPts(100, nTEPts=10)
+            handler.root_add_val("test_default - Default RAE2822 sampled points:", points, tol=1e-10)
 
-    def test_pass_args_to_dist(self):
-        func_args = {"coeff": 2}
-        self.foil.getSampledPts(100, spacingFunc=sampling.conical, func_args=func_args)
+    def train_linspace(self, train=True):
+        self.test_linspace(train=train)
+
+    def test_linspace(self, train=False):
+        ref_file = os.path.join(baseDir, "ref/test_linspace.ref")
+        with BaseRegTest(ref_file, train=train) as handler:
+            points = self.foil.getSampledPts(100, spacingFunc=np.linspace)
+            handler.root_add_val("test_linspace - Linear RAE2822 sampled points:", points, tol=1e-10)
+
+    def train_pass_args_to_dist(self, train=True):
+        self.test_pass_args_to_dist(train=train)
+
+    def test_pass_args_to_dist(self, train=False):
+        ref_file = os.path.join(baseDir, "ref/test_args.ref")
+        with BaseRegTest(ref_file, train=train) as handler:
+            points = self.foil.getSampledPts(100, spacingFunc=sampling.conical, func_args={"coeff": 2})
+            handler.root_add_val("{test_args} - Conical RAE2822 sampled points:", points, tol=1e-10)
 
 
 class TestSamplingTE(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "hypersonic_glider.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/hypersonic_glider.dat"))
         self.hg = Airfoil(X)
 
     def test_nTEPts(self):
@@ -82,7 +174,7 @@ class TestSamplingTE(unittest.TestCase):
 
 class TestGeoModification(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat"))
         self.foil = Airfoil(X)
 
     def test_reorder(self):
@@ -108,9 +200,9 @@ class TestGeoModification(unittest.TestCase):
 
 class TestFFD(unittest.TestCase):
     def setUp(self):
-        X = readCoordFile(os.path.join(baseDir, "rae2822.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat"))
         self.foil = Airfoil(X)
-        X = readCoordFile(os.path.join(baseDir, "wave.dat"))
+        X = readCoordFile(os.path.join(baseDir, "airfoils/wave.dat"))
         self.wave = Airfoil(X)
 
     def test_getClosest(self):
@@ -199,7 +291,7 @@ class TestFFD(unittest.TestCase):
 
 class TestCamber(unittest.TestCase):
     def setUp(self):
-        self.foil = Airfoil(readCoordFile(os.path.join(baseDir, "rae2822.dat")))
+        self.foil = Airfoil(readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat")))
 
     def test_rae2822_thickness(self):
         maxThickness = self.foil.getMaxThickness("british")
@@ -208,6 +300,49 @@ class TestCamber(unittest.TestCase):
     def test_rae2822_camber(self):
         maxCamber = self.foil.getMaxCamber()
         np.testing.assert_allclose(maxCamber, [0.757, 0.013], rtol=0.15)
+
+
+class TestFileWriting(unittest.TestCase):
+    def setUp(self):
+        self.foil = Airfoil(readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat")))
+        self.temp_ffd = os.path.join(baseDir, "writeFFD_temp")
+        self.temp_p3d = os.path.join(baseDir, "writeP3D_temp")
+        self.temp_dat = os.path.join(baseDir, "writeDat_temp")
+
+    def test_writeFFD(self):
+        self.foil.generateFFD(10, self.temp_ffd)
+        self.temp_ffd += ".xyz"
+        with open(os.path.join(baseDir, "ref/rae2822_ffd.xyz"), "r") as ref, open(self.temp_ffd, "r") as actual:
+            ref_lines = list(ref)
+            actual_lines = list(actual)
+            self.assertEqual(len(ref_lines), len(actual_lines))
+            for i in range(len(ref_lines)):
+                self.assertEqual(ref_lines[i], actual_lines[i])
+
+    def test_writeP3D(self):
+        self.foil.writeCoords(self.temp_p3d, spline_coords=True, format="plot3d")
+        self.temp_p3d += ".xyz"
+        with open(os.path.join(baseDir, "ref/rae2822_p3d.xyz"), "r") as ref, open(self.temp_p3d, "r") as actual:
+            ref_lines = list(ref)
+            actual_lines = list(actual)
+            self.assertEqual(len(ref_lines), len(actual_lines))
+            for i in range(len(ref_lines)):
+                self.assertEqual(ref_lines[i], actual_lines[i])
+
+    def test_writeDat(self):
+        self.foil.writeCoords(self.temp_dat, spline_coords=True, format="dat")
+        self.temp_dat += ".dat"
+        with open(os.path.join(baseDir, "ref/rae2822_dat.dat"), "r") as ref, open(self.temp_dat, "r") as actual:
+            ref_lines = list(ref)
+            actual_lines = list(actual)
+            self.assertEqual(len(ref_lines), len(actual_lines))
+            for i in range(len(ref_lines)):
+                self.assertEqual(ref_lines[i], actual_lines[i])
+
+    def tearDown(self):
+        for file_ in [self.temp_ffd, self.temp_p3d, self.temp_dat]:
+            if os.path.isfile(file_):
+                os.remove(file_)
 
 
 if __name__ == "__main__":
