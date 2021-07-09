@@ -804,6 +804,25 @@ class Airfoil(object):
 
         return self.TE + s * chord
 
+    def _chordProjDerivative(self, s):
+        # Derivative of camber point with respect to spline parameter (point of interest)
+        dPI = self.camber.getDerivative(s)
+
+        # Derivative of chord parameter from _getChordProj
+        chord = self.LE - self.TE
+        da = (chord[0] * dPI[0] + chord[1] * dPI[1]) / np.linalg.norm(chord)**2
+
+        # Derivative of intersection point
+        dIN = np.array([chord[0] * da, chord[1] * da])
+
+        # derivative of the distance we are maximizing or minimizing
+        PI = self.camber.getValue(s)
+        IN = self._findChordProj(PI)
+        dd = ((PI[0] - IN[0]) * (dPI[0] - dIN[0]) + (PI[1] - IN[1]) * (dPI[1] - dIN[1])) / np.linalg.norm(PI - IN)
+
+        return dd
+        
+
     def _MaxCamberOptimize(self, maximum):
         """
         Used to compute the most negative and most positive cambers of an airfoil
@@ -828,22 +847,7 @@ class Airfoil(object):
             return factor * np.linalg.norm(self.camber.getValue(s) - chordProj)
 
         def df(s, factor):
-            # Derivative of camber point with respect to spline parameter (point of interest)
-            dPI = self.camber.getDerivative(s)
-
-            # Derivative of chord parameter from _getChordProj
-            chord = self.LE - self.TE
-            da = (chord[0] * dPI[0] + chord[1] * dPI[1]) / np.linalg.norm(chord)**2
-
-            # Derivative of intersection point
-            dIN = np.array([chord[0] * da, chord[1] * da])
-
-            # derivative of the distance we are maximizing or minimizing
-            PI = self.camber.getValue(s)
-            IN = self._findChordProj(PI)
-            dd = ((PI[0] - IN[0]) * (dPI[0] - dIN[0]) + (PI[1] - IN[1]) * (dPI[1] - dIN[1])) / np.linalg.norm(PI - IN)
-
-            return factor * dd
+            return factor * self._chordProjDerivative(s)
 
         if maximum:
             factor = -1
