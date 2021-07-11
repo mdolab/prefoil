@@ -13,7 +13,7 @@
 """
 
 import numpy as np
-import pyspline as pySpline
+from pyspline import Curve
 from scipy.optimize import brentq, newton, bisect, minimize
 from pyfoil import sampling
 
@@ -396,7 +396,7 @@ class Airfoil(object):
             The coordinate pairs to compute the airfoil spline from
 
         """
-        self.spline = pySpline.Curve(X=coords, k=self.spline_order)
+        self.spline = Curve(X=coords, k=self.spline_order)
         self.reorder()
 
         self.TE = self.getTE()
@@ -407,9 +407,9 @@ class Airfoil(object):
         self.sampled_pts = None
 
         camber_pts = self.getCDistribution(100)
-        self.camber = pySpline.Curve(X=camber_pts, k=3)
-        self.british_thickness = pySpline.Curve(X=self.getThickness(100, "british"), k=3)
-        self.american_thickness = pySpline.Curve(X=self.getThickness(100, "american"), k=3)
+        self.camber = Curve(X=camber_pts, k=3)
+        self.british_thickness = Curve(X=self.getThickness(100, "british"), k=3)
+        self.american_thickness = Curve(X=self.getThickness(100, "american"), k=3)
 
     def reorder(self):
         """
@@ -622,7 +622,7 @@ class Airfoil(object):
 
         # Compute the chord
         chord_pts = np.vstack([self.LE, self.TE])
-        chord = pySpline.Curve(X=chord_pts, k=2)
+        chord = Curve(X=chord_pts, k=2)
 
         # Sampling along airfoil for camber points
         lin_sampling = np.linspace(0, 1, nPts - 1, endpoint=False)[1:]
@@ -640,7 +640,7 @@ class Airfoil(object):
             top = chord_pts[j, :] + 1 * self.chord * direction
             bottom = chord_pts[j, :] - 1 * self.chord * direction
             temp = np.vstack((top, bottom))
-            normal = pySpline.Curve(X=temp, k=2)
+            normal = Curve(X=temp, k=2)
 
             # Determine the intersection of this ray with both the upper and lower surfaces
             s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
@@ -696,7 +696,7 @@ class Airfoil(object):
             # create a ray through the upper and lower surfaces from given direction
             top = self.camber.getValue(s[j]) + 10 * self.chord * direction
             bottom = self.camber.getValue(s[j]) - 10 * self.chord * direction
-            normal = pySpline.Curve(X=np.vstack([top, bottom]), k=2)
+            normal = Curve(X=np.vstack([top, bottom]), k=2)
 
             # Find upper and lower intersections
             s_top, _, d1 = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=0, t=0.5)
@@ -1080,7 +1080,7 @@ class Airfoil(object):
             coeff[2] = self.TE
 
         ## make the TE curve
-        te_curve = pySpline.Curve(t=t, k=k, coef=coeff)
+        te_curve = Curve(t=t, k=k, coef=coeff)
 
         # ----- combine the TE curve with the spline curve -----
         upper_curve, lower_curve = te_curve.splitCurve(0.5)
