@@ -14,7 +14,8 @@ from __future__ import division
 
 import warnings
 import numpy as np
-import pyspline as pySpline
+from pyspline import Curve
+from pyspline.utils import line
 from scipy.optimize import fsolve, brentq, newton, bisect
 from pyfoil import sampling
 import os
@@ -204,7 +205,7 @@ class Airfoil(object):
             self.normalizeChord()
 
     def recompute(self, coords):
-        self.spline = pySpline.Curve(X=coords, k=self.spline_order)
+        self.spline = Curve(X=coords, k=self.spline_order)
         self.reorder()
 
         self.TE = self.getTE()
@@ -329,7 +330,7 @@ class Airfoil(object):
 
         # Compute the chord
         chord_pts = np.vstack([self.LE,self.TE])
-        chord = pySpline.line(chord_pts)
+        chord = line(chord_pts)
 
         cos_sampling = np.linspace(0,1,num_chord_pts+1,endpoint=False)[1:]
         #cos_sampling = smp.conical(num_chord_pts+2,coeff=1)[1:-1]
@@ -343,7 +344,7 @@ class Airfoil(object):
             top = chord_pts[j,:] + 0.5*self.chord * direction
             bottom = chord_pts[j,:] - 0.5*self.chord * direction
             temp = np.vstack((top,bottom))
-            normal = pySpline.line(temp)
+            normal = line(temp)
             s_top,t_top,D = self.top.projectCurve(normal,nIter=5000,eps=1e-16)
             s_bottom,t_bottom,D = self.bottom.projectCurve(normal,nIter=5000,eps=1e-16)
             intersect_top = self.top.getValue(s_top)
@@ -533,7 +534,7 @@ class Airfoil(object):
             coeff[2] = self.TE
 
         ## make the TE curve
-        te_curve = pySpline.Curve(t=t,k=k,coef=coeff)
+        te_curve = Curve(t=t,k=k,coef=coeff)
 
         ## sample the curve
         pts = self.spline.getValue(np.linspace(0, 1, 300))
