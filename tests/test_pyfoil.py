@@ -306,11 +306,6 @@ class TestFFD(unittest.TestCase):
 class TestCamber(unittest.TestCase):
     def setUp(self):
         self.foil = Airfoil(readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat")))
-        self.symmetric = Airfoil(readCoordFile(os.path.join(baseDir, "airfoils/naca0012.dat")))
-
-    def test_chordProjDerivative_basic(self):
-        dd = self.symmetric._chordProjDerivative(0.5)
-        self.assertAlmostEqual(0, dd)
 
     def test_rae2822_thickness(self):
         maxThickness = self.foil.getMaxThickness("british")

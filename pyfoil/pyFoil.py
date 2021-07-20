@@ -633,7 +633,7 @@ class Airfoil(object):
         # At each point we are looking for the camber
         for j in range(chord_pts.shape[0]):
             # Get the direction normal to the chord line
-            direction = np.array([np.cos(np.pi / 2 - self.twist), np.sin(np.pi / 2 - self.twist)])
+            direction = np.array([np.cos(np.pi / 2 + np.deg2rad(self.twist)), np.sin(np.pi / 2 + np.deg2rad(self.twist))])
             direction = direction / np.linalg.norm(direction)
 
             # Draw a ray through the airfoil in the given direction
@@ -649,7 +649,7 @@ class Airfoil(object):
             intersect_bottom = bottom_surf.getValue(s_bottom)
 
             # Compute the camber
-            camber_pts[j, :] = (intersect_top + intersect_bottom) / 2 - chord_pts[j, 1]
+            camber_pts[j, :] = (intersect_top + intersect_bottom) / 2
 
         # Add TE and LE to the camber points.
         camber_pts = np.vstack((self.LE, camber_pts, self.TE))
@@ -686,7 +686,7 @@ class Airfoil(object):
         for j in range(len(s)):
             # If british we project a ray normal to chordline
             if tType == "british":
-                direction = np.array([np.cos(np.pi / 2 - self.twist), np.sin(np.pi / 2 - self.twist)])
+                direction = np.array([np.cos(np.pi / 2 - np.deg2rad(self.twist)), np.sin(np.pi / 2 - np.deg2rad(self.twist))])
             # If american we project a ray normal to camberline
             else:
                 dx = self.camber.getDerivative(s[j])
@@ -804,25 +804,6 @@ class Airfoil(object):
 
         return self.TE + s * chord
 
-    def _chordProjDerivative(self, s):
-        # Derivative of camber point with respect to spline parameter (point of interest)
-        dPI = self.camber.getDerivative(s)
-
-        # Derivative of chord parameter from _getChordProj
-        chord = self.LE - self.TE
-        da = (chord[0] * dPI[0] + chord[1] * dPI[1]) / np.linalg.norm(chord)**2
-
-        # Derivative of intersection point
-        dIN = np.array([chord[0] * da, chord[1] * da])
-
-        # derivative of the distance we are maximizing or minimizing
-        PI = self.camber.getValue(s)
-        IN = self._findChordProj(PI)
-        dd = ((PI[0] - IN[0]) * (dPI[0] - dIN[0]) + (PI[1] - IN[1]) * (dPI[1] - dIN[1])) / np.linalg.norm(PI - IN)
-
-        return dd
-        
-
     def _MaxCamberOptimize(self, maximum):
         """
         Used to compute the most negative and most positive cambers of an airfoil
@@ -843,18 +824,25 @@ class Airfoil(object):
         """
 
         def f(s, factor):
-            chordProj = self._findChordProj(self.camber.getValue(s))
-            return factor * np.linalg.norm(self.camber.getValue(s) - chordProj)
+            # Find the perpindicular project onto the chord line
+            pointInterest = self.camber.getValue(s)
+            chordProj = self._findChordProj(pointInterest)
 
-        def df(s, factor):
-            return factor * self._chordProjDerivative(s)
+            # Determine if distance is +/- with cross product
+            chord = self.LE - self.TE
+            chord /= np.linalg.norm(chord)
+            direction = pointInterest - chordProj
+            direction /= np.linalg.norm(direction)
+            cross = direction[0]*chord[1] - direction[1]*chord[0]
+
+            return cross * factor * np.linalg.norm(pointInterest - chordProj)
 
         if maximum:
             factor = -1
         else:
             factor = 1
 
-        opt = minimize(lambda s: f(s, factor), 0.5, method="SLSQP", jac=lambda s: df(s, factor), bounds=[(0, 1)])
+        opt = minimize(lambda s: f(s, factor), 0.5, method="SLSQP", bounds=[(0, 1)])
 
         if not opt.success:
             if maximum:
@@ -865,11 +853,17 @@ class Airfoil(object):
         opt_point = self.camber.getValue(opt.x)
 
         opt_int = self._findChordProj(opt_point)
+    
+        import matplotlib.pyplot as plt
+        fig = self.plot(camber=True)
+        plt.plot(opt_point[0], opt_point[1], 'o', label='opt_point')
+        plt.plot(opt_int[0], opt_int[1], 'o', label='opt_int')
+        plt.legend()
+        fig.savefig("test.pdf")
 
-        print(opt_point)
         # convert to airfoil coordinates
         x = np.linalg.norm(opt_int - self.LE) / np.linalg.norm(self.LE - self.TE)
-        c = -factor * np.linalg.norm(opt_point - opt_int) / np.linalg.norm(self.LE - self.TE)
+        c = factor * f(opt.x, factor) / np.linalg.norm(self.LE - self.TE)
 
         return x, c
 
