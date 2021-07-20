@@ -407,9 +407,9 @@ class Airfoil(object):
         self.sampled_pts = None
 
         camber_pts = self.getCDistribution(coords.size)
-        self.camber = pySpline.Curve(X=camber_pts, k=3)
-        self.british_thickness = pySpline.Curve(X=self.getThickness(coords.size, "british"), k=3)
-        self.american_thickness = pySpline.Curve(X=self.getThickness(coords.size, "american"), k=3)
+        self.camber = Curve(X=camber_pts, k=3)
+        self.british_thickness = Curve(X=self.getThickness(coords.size, "british"), k=3)
+        self.american_thickness = Curve(X=self.getThickness(coords.size, "american"), k=3)
 
     def reorder(self):
         """
