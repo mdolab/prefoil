@@ -406,10 +406,10 @@ class Airfoil(object):
         self.closedCurve = (self.spline.getValue(0) == self.spline.getValue(1)).all()
         self.sampled_pts = None
 
-        camber_pts = self.getCDistribution(100)
+        camber_pts = self.getCDistribution(coords.size)
         self.camber = pySpline.Curve(X=camber_pts, k=3)
-        self.british_thickness = pySpline.Curve(X=self.getThickness(100, "british"), k=3)
-        self.american_thickness = pySpline.Curve(X=self.getThickness(100, "american"), k=3)
+        self.british_thickness = pySpline.Curve(X=self.getThickness(coords.size, "british"), k=3)
+        self.american_thickness = pySpline.Curve(X=self.getThickness(coords.size, "american"), k=3)
 
     def reorder(self):
         """

@@ -313,22 +313,22 @@ class TestCamber(unittest.TestCase):
 
     def test_rae2822_camber(self):
         maxCamber = self.foil.getMaxCamber()
-        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.19)
+        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.1)
 
     def test_rae2822_camber_scale(self):
         self.foil.scale(1.5)
         maxCamber = self.foil.getMaxCamber()
-        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.19)
+        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.1)
 
     def test_rae2822_camber_translate(self):
         self.foil.translate([0.2, -0.23])
         maxCamber = self.foil.getMaxCamber()
-        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.19)
+        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.1)
 
     def test_rae2822_camber_rot(self):
         self.foil.rotate(-30)
         maxCamber = self.foil.getMaxCamber()
-        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.19)
+        assert_allclose(maxCamber, [0.757, 0.013], rtol=0.1)
 
 
 class TestFileWriting(unittest.TestCase):
