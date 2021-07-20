@@ -633,7 +633,9 @@ class Airfoil(object):
         # At each point we are looking for the camber
         for j in range(chord_pts.shape[0]):
             # Get the direction normal to the chord line
-            direction = np.array([np.cos(np.pi / 2 + np.deg2rad(self.twist)), np.sin(np.pi / 2 + np.deg2rad(self.twist))])
+            direction = np.array(
+                [np.cos(np.pi / 2 + np.deg2rad(self.twist)), np.sin(np.pi / 2 + np.deg2rad(self.twist))]
+            )
             direction = direction / np.linalg.norm(direction)
 
             # Draw a ray through the airfoil in the given direction
@@ -686,7 +688,9 @@ class Airfoil(object):
         for j in range(len(s)):
             # If british we project a ray normal to chordline
             if tType == "british":
-                direction = np.array([np.cos(np.pi / 2 - np.deg2rad(self.twist)), np.sin(np.pi / 2 - np.deg2rad(self.twist))])
+                direction = np.array(
+                    [np.cos(np.pi / 2 - np.deg2rad(self.twist)), np.sin(np.pi / 2 - np.deg2rad(self.twist))]
+                )
             # If american we project a ray normal to camberline
             else:
                 dx = self.camber.getDerivative(s[j])
@@ -833,7 +837,7 @@ class Airfoil(object):
             chord /= np.linalg.norm(chord)
             direction = pointInterest - chordProj
             direction /= np.linalg.norm(direction)
-            cross = direction[0]*chord[1] - direction[1]*chord[0]
+            cross = direction[0] * chord[1] - direction[1] * chord[0]
 
             return cross * factor * np.linalg.norm(pointInterest - chordProj)
 
@@ -853,11 +857,12 @@ class Airfoil(object):
         opt_point = self.camber.getValue(opt.x)
 
         opt_int = self._findChordProj(opt_point)
-    
+
         import matplotlib.pyplot as plt
+
         fig = self.plot(camber=True)
-        plt.plot(opt_point[0], opt_point[1], 'o', label='opt_point')
-        plt.plot(opt_int[0], opt_int[1], 'o', label='opt_int')
+        plt.plot(opt_point[0], opt_point[1], "o", label="opt_point")
+        plt.plot(opt_int[0], opt_int[1], "o", label="opt_int")
         plt.legend()
         fig.savefig("test.pdf")
 
