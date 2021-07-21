@@ -858,14 +858,6 @@ class Airfoil(object):
 
         opt_int = self._findChordProj(opt_point)
 
-        import matplotlib.pyplot as plt
-
-        fig = self.plot(camber=True)
-        plt.plot(opt_point[0], opt_point[1], "o", label="opt_point")
-        plt.plot(opt_int[0], opt_int[1], "o", label="opt_int")
-        plt.legend()
-        fig.savefig("test.pdf")
-
         # convert to airfoil coordinates
         x = np.linalg.norm(opt_int - self.LE) / np.linalg.norm(self.LE - self.TE)
         c = factor * f(opt.x, factor) / np.linalg.norm(self.LE - self.TE)
