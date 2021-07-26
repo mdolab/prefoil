@@ -1064,51 +1064,48 @@ class Airfoil(object):
         """
         # Find global coordinates of cut point
         xCut = self.LE + xCut * (self.TE - self.LE)
-        
+
         # The direction normal to the chordline
-        direction = np.array(
-            [np.cos(np.pi / 2 + np.deg2rad(self.twist)), np.sin(np.pi / 2 + np.deg2rad(self.twist))]
-        )
+        direction = np.array([np.cos(np.pi / 2 + np.deg2rad(self.twist)), np.sin(np.pi / 2 + np.deg2rad(self.twist))])
         direction = direction / np.linalg.norm(direction)
 
         # ray to intersect upper and lower surfaces
-        ray = [xCut - 2 * direction, xCut + 2 * direction]
+        ray = [xCut - 2 * direction * self.getChord(), xCut + 2 * direction * self.getChord()]
         top_surf, bottom_surf = self.splitAirfoil()
-        normal = Curve(x=ray, k=2)
+        normal = Curve(X=ray, k=2)
 
         # Get intersections
         s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
         s_bottom, t_bottom, D = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
-        
+
         # Get all the coordinates that will not be cut off
         coords = [top_surf.getValue(s_top)]
         chord = self.LE - self.TE
         for x in self.getSplinePts():
             # dot product test checks for positive projection onto chord
             current_direction = x - xCut
-            if chord[0]*current_direction[0] + chord[1]*current_direction[1] > 0:
+            if chord[0] * current_direction[0] + chord[1] * current_direction[1] > 0:
                 coords.append(np.array(x))
-        
+
         coords.append(np.array(bottom_surf.getValue(s_bottom)))
-        self.recompute(coords)
+        self.recompute(np.array(coords))
 
     def sharpenTE(self, xCut=0.98):
         """
         this method creates a sharp trailing edge **from a blunt one** by projecting straight lines from the upper and lower surfacs of a blunt trailing edge.
-        
+
         Parameters
         ----------
         xCut : float
             x location **as a percentage of chord** to cut off the current trailing edge if it is not already blunt.
         """
-        if xCut >=1.0 and xCut <=0:
+        if xCut >= 1.0 and xCut <= 0:
             raise Error("xCut must be between 0 and 1.")
 
         if not self.closedCurve:
             self.makeBluntTE(xCut)
-        
+
         # the line created by the upper surface slope
-        
 
     def roundTE(self, xCut=0.98, k=4, nPts=20):
         """

@@ -205,10 +205,10 @@ class TestGeoModification(unittest.TestCase):
         self.assertTrue(self.foil.closedCurve)
 
     def test_blunt_TE(self):
-        self.foil.makeBluntTE()
-        refTE = np.array([0.97065494, 0.00352594])
+        self.foil.makeBluntTE(0.1)
+        refTE = np.array([0.1, 0.0])
         newTE = self.foil.TE
-        assert_allclose(refTE, newTE, atol=1e-8)
+        assert_allclose(refTE, newTE, atol=1e-4, rtol=1)
         self.assertFalse(self.foil.closedCurve)
 
 
