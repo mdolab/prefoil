@@ -14,7 +14,7 @@
 
 import numpy as np
 from pyspline import Curve
-from scipy.optimize import brentq, newton, bisect, minimize
+from scipy.optimize import brentq, newton, minimize
 from pyfoil import sampling
 
 EPS = np.finfo(np.float64).eps
