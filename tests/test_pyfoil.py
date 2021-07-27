@@ -211,6 +211,13 @@ class TestGeoModification(unittest.TestCase):
         assert_allclose(refTE, newTE, atol=1e-4, rtol=1)
         self.assertFalse(self.foil.closedCurve)
 
+    def test_sharpen_TE(self):
+        self.foil.sharpenTE()
+        refTE = np.array([9.977862e-01, 6.486199e-04])
+        newTE = self.foil.TE
+        assert_allclose(refTE, newTE, atol=1e-8)
+        self.assertTrue(self.foil.closedCurve)
+
 
 class TestFFD(unittest.TestCase):
     def setUp(self):

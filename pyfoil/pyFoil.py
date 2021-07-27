@@ -1105,7 +1105,34 @@ class Airfoil(object):
         if not self.closedCurve:
             self.makeBluntTE(xCut)
 
-        # the line created by the upper surface slope
+        # Value of blunt TE point on upper surface
+        val_u = self.spline.getValue(0)
+        # derivative of blunt TE point of upper surface wrt parametric parameter
+        ds_u = self.spline.getDerivative(0)
+        # slope of blunt TE point of upper surface
+        dx_u = ds_u[1] / ds_u[0]
+
+        # Value of blunt TE point on lower surface
+        val_l = self.spline.getValue(1)
+        # derivative of blunt TE point of lower surface wrt parameteric parameter
+        ds_l = self.spline.getDerivative(1)
+        # slope of blunt TE point of lower surface
+        dx_l = ds_l[1] / ds_l[0]
+
+        # make sure that the slope of the lower surface is greater than the upper, ensuring the points will intersect
+        if dx_u == dx_l:
+            raise Error("Slopes at blunt TE are parallel, no intersection point for a sharp TE.")
+        elif dx_u > dx_l:
+            raise Error("Slopes at blunt TE indicate an intersection towards the LE of the airfoil.")
+
+        # calculate the x location of the intersection
+        x = (val_l[1] - val_u[1] - val_l[0] * dx_l + val_u[0] * dx_u) / (dx_u - dx_l)
+        # calculate the y location of the intersection
+        y = val_l[1] + dx_l * (x - val_l[0])
+
+        # add intersection points and then recompute the airfoil
+        coords = np.vstack(([x, y], self.spline.X, [x, y]))
+        self.recompute(coords)
 
     def roundTE(self, xCut=0.98, k=4, nPts=20):
         """
