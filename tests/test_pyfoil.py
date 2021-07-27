@@ -199,7 +199,7 @@ class TestGeoModification(unittest.TestCase):
 
     def test_round_TE(self):
         self.foil.roundTE(k=4)
-        refTE = np.array([0.990393, 0.0013401])
+        refTE = np.array([0.972227, 0.003466])
         newTE = self.foil.TE
         assert_allclose(refTE, newTE, atol=1e-6)
         self.assertTrue(self.foil.closedCurve)
