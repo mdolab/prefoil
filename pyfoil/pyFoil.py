@@ -1193,6 +1193,7 @@ class Airfoil(object):
         self.recompute(coords)
 
         import matplotlib.pyplot as plt
+
         fig = self.plot()
         fig.savefig("test.pdf")
 
