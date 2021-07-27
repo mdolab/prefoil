@@ -583,7 +583,7 @@ class Airfoil(object):
         """
         top = self.spline.getValue(0)
         bottom = self.spline.getValue(1)
-        TE_thickness = np.sqrt((top[0] - bottom[0])**2 + (top[1] - bottom[1])**2)
+        TE_thickness = np.sqrt((top[0] - bottom[0]) ** 2 + (top[1] - bottom[1]) ** 2)
         return TE_thickness
 
     def getLERadius(self):
@@ -1185,17 +1185,18 @@ class Airfoil(object):
         upper_curve, lower_curve = te_curve.splitCurve(0.5)
         upper_pts = upper_curve.getValue(np.linspace(1, 0, nPts))
         lower_pts = lower_curve.getValue(np.linspace(1, 0, nPts))
-        
+
         import matplotlib.pyplot as plt
+
         fig = plt.figure()
-        plt.plot(coeff[:, 0], coeff[:, 1], 's', label='cp')
-        plt.plot(upper_pts[:, 0], upper_pts[:, 1], '-o', label='upper')
-        plt.plot(lower_pts[:, 0], lower_pts[:, 1], '-o', label='lower')
-        plt.plot(self.spline.X[:, 0], self.spline.X[:, 1], '-o', label='airfoil')
+        plt.plot(coeff[:, 0], coeff[:, 1], "s", label="cp")
+        plt.plot(upper_pts[:, 0], upper_pts[:, 1], "-o", label="upper")
+        plt.plot(lower_pts[:, 0], lower_pts[:, 1], "-o", label="lower")
+        plt.plot(self.spline.X[:, 0], self.spline.X[:, 1], "-o", label="airfoil")
         plt.legend()
-        plt.xlim((0.965, .985))
-        plt.ylim((-0.02, .02))
-        fig.savefig('points.pdf') 
+        plt.xlim((0.965, 0.985))
+        plt.ylim((-0.02, 0.02))
+        fig.savefig("points.pdf")
 
         coords = np.vstack((upper_pts[:-1], self.spline.X, lower_pts[1:]))
 
