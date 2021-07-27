@@ -1147,7 +1147,7 @@ class Airfoil(object):
         nPts : int
             Number of trailing edge points to add to the airfoil spline
         dist : float
-            The number of TE thicknesses away from the blunt TE to put the rounded TE point
+            Arbitrary factor that specifies how long to make the added TE. Larger dist corresponds to longer addition to the end
 
         """
         if xCut >= 1.0 and xCut <= 0:
@@ -1183,8 +1183,8 @@ class Airfoil(object):
 
         # ----- combine the TE curve with the spline curve -----
         upper_curve, lower_curve = te_curve.splitCurve(0.5)
-        upper_pts = upper_curve.getValue(np.linspace(1, 0, nPts))
-        lower_pts = lower_curve.getValue(np.linspace(1, 0, nPts))
+        upper_pts = upper_curve.getValue(np.linspace(1, 0, nPts // 2))
+        lower_pts = lower_curve.getValue(np.linspace(1, 0, nPts // 2))
 
         import matplotlib.pyplot as plt
 
