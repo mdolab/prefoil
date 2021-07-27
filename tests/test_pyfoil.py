@@ -89,7 +89,7 @@ class TestBasic(unittest.TestCase):
         self.foil.rotate(45)
         self.foil.derotate()
         coords = self.foil.getSplinePts()
-        assert_allclose(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+        assert_allclose(coords, np.array([[1, 0], [0, 0], [1, 0]]), atol=1e-14)
         self.assertAlmostEqual(self.chord, self.foil.getChord())
         self.assertAlmostEqual(self.twist, self.foil.getTwist())
 

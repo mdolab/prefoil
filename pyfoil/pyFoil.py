@@ -1134,23 +1134,33 @@ class Airfoil(object):
         coords = np.vstack(([x, y], self.spline.X, [x, y]))
         self.recompute(coords)
 
-    def roundTE(self, xCut=0.98, k=4, nPts=20):
+    def roundTE(self, xCut=0.98, k=4, nPts=20, dist=1.5):
         """
-        this method creates a smooth round trailing edge **from a blunt one** using a spline
+        this method creates a smooth round trailing edge **from a blunt one** using a spline. If the trailing edge is not already blunt xCut specifies the location of the cut
 
         Parameters
         ----------
         xCut : float
-            x location of the cut **as a percentage of the chord**
+            x location of the cut **as a percentage of the chord**. Will not do anything if the TE is already blunt.
         k: int (3 or 4)
             order of the spline used to make the rounded trailing edge of the airfoil.
         nPts : int
             Number of trailing edge points to add to the airfoil spline
+        dist : float
+            The number of TE thicknesses away from the blunt TE to put the rounded TE point
 
         """
-        # convert the xCut loctation from a percentage to an abs value
-        xCut = self.LE[0] + xCut * (self.TE[0] - self.LE[0])
-        dx = self.TE[0] - xCut
+        if xCut >= 1.0 and xCut <= 0:
+            raise Error("xCut must be between 0 and 1.")
+
+        if not self.closedCurve:
+            self.makeBluntTE(xCut)
+
+        # find position of TE point
+        dx = self.getTEThickness()
+        chord = self.TE - self.LE
+        # put the TE at 1.5 TE thicknesses down chord from blunt TE
+        dx = dist * dx * chord / np.linalg.norm(chord) + self.TE
 
         # create the knot vector for the spline
         t = [0] * k + [0.5] + [1] * k
@@ -1159,16 +1169,15 @@ class Airfoil(object):
         coeff = np.zeros((k + 1, 2))
 
         for ii in [0, -1]:
-            coeff[ii], s = self.findPt(xCut, s_0=np.abs(ii))
-            # coeff[-1], s_lower  = self.findPt(xCut, s_0=1)
-            dX_ds = self.spline.getDerivative(s)
+            coeff[ii] = self.spline.getValue(np.abs(ii))
+            dX_ds = self.spline.getDerivative(np.abs(ii))
             dy_dx = dX_ds[0] ** -1 * dX_ds[1]
 
             # the indexing here is a bit confusing.ii = 0 -> coeff[1] and ii = -1 -> coef[-2]
-            coeff[3 * ii + 1] = np.array([self.TE[0], coeff[ii, 1] + dy_dx * dx])
+            coeff[3 * ii + 1] = np.array([self.TE[0] + dx[0], coeff[ii, 1] + dy_dx * (dx[1] - self.TE[1])])
 
         if k == 4:
-            coeff[2] = self.TE
+            coeff[2] = dx
 
         ## make the TE curve
         te_curve = Curve(t=t, k=k, coef=coeff)
@@ -1177,16 +1186,15 @@ class Airfoil(object):
         upper_curve, lower_curve = te_curve.splitCurve(0.5)
         upper_pts = upper_curve.getValue(np.linspace(0, 1, nPts))
         lower_pts = lower_curve.getValue(np.linspace(0, 1, nPts))
-        # remove the replaced pts
-        mask = []
-        for ii in range(self.spline.X.shape[0]):
-            if xCut > self.spline.X[ii, 0]:
-                mask.append(ii)
 
-        coords = np.vstack((upper_pts[::-1], self.spline.X[mask], lower_pts[::-1]))
+        coords = np.vstack((upper_pts[::-1], self.spline.X, lower_pts[::-1]))
 
         # ---- recompute with new TE ---
         self.recompute(coords)
+
+        import matplotlib.pyplot as plt
+        fig = self.plot()
+        fig.savefig("test.pdf")
 
     def removeTE(self, tol=0.3, xtol=0.9):
         """
