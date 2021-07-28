@@ -1086,7 +1086,7 @@ class Airfoil(object):
             current_direction = x - xCut
             if chord[0] * current_direction[0] + chord[1] * current_direction[1] > 0:
                 coords.append(np.array(x))
-
+        
         coords.append(np.array(bottom_surf.getValue(s_bottom)))
         self.recompute(np.array(coords))
 
@@ -1171,7 +1171,7 @@ class Airfoil(object):
             dy_dx = dX_ds[1] / dX_ds[0]
 
             # the indexing here is a bit confusing.ii = 0 -> coeff[1] and ii = -1 -> coef[-2]
-            coeff[3 * ii + 1] = np.array([coeff[ii, 0] + dx * 0.7, coeff[ii, 1] + dy_dx * dx * 0.7])
+            coeff[3 * ii + 1] = np.array([coeff[ii, 0] + dx * 0.5, coeff[ii, 1] + dy_dx * dx * 0.5])
 
         if k == 4:
             chord = self.TE - self.LE
@@ -1186,27 +1186,10 @@ class Airfoil(object):
         upper_pts = upper_curve.getValue(np.linspace(1, 0, nPts // 2))
         lower_pts = lower_curve.getValue(np.linspace(1, 0, nPts // 2))
 
-        import matplotlib.pyplot as plt
-
-        fig = plt.figure()
-        plt.plot(coeff[:, 0], coeff[:, 1], "s", label="cp")
-        plt.plot(upper_pts[:, 0], upper_pts[:, 1], "-o", label="upper")
-        plt.plot(lower_pts[:, 0], lower_pts[:, 1], "-o", label="lower")
-        plt.plot(self.spline.X[:, 0], self.spline.X[:, 1], "-o", label="airfoil")
-        plt.legend()
-        plt.xlim((0.965, 0.985))
-        plt.ylim((-0.02, 0.02))
-        fig.savefig("points.pdf")
-
         coords = np.vstack((upper_pts[:-1], self.spline.X, lower_pts[1:]))
 
         # ---- recompute with new TE ---
         self.recompute(coords)
-
-        import matplotlib.pyplot as plt
-
-        fig = self.plot()
-        fig.savefig("test.pdf")
 
     def removeTE(self, tol=0.3, xtol=0.9):
         """

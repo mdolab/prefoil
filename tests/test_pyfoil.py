@@ -197,27 +197,6 @@ class TestGeoModification(unittest.TestCase):
         Xreordered = newfoil.spline.X
         assert_allclose(Xorig, Xreordered, atol=1e-6)
 
-    def test_round_TE(self):
-        self.foil.roundTE(k=4)
-        refTE = np.array([0.972227, 0.003466])
-        newTE = self.foil.TE
-        assert_allclose(refTE, newTE, atol=1e-6)
-        self.assertTrue(self.foil.closedCurve)
-
-    def test_blunt_TE(self):
-        self.foil.makeBluntTE(0.1)
-        refTE = np.array([0.1, 0.0])
-        newTE = self.foil.TE
-        assert_allclose(refTE, newTE, atol=1e-4, rtol=1)
-        self.assertFalse(self.foil.closedCurve)
-
-    def test_sharpen_TE(self):
-        self.foil.sharpenTE()
-        refTE = np.array([9.977862e-01, 6.486199e-04])
-        newTE = self.foil.TE
-        assert_allclose(refTE, newTE, atol=1e-8)
-        self.assertTrue(self.foil.closedCurve)
-
 
 class TestFFD(unittest.TestCase):
     def setUp(self):
