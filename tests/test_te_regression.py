@@ -73,4 +73,3 @@ class TestTEModification(unittest.TestCase):
             self.foil.sharpenTE()
             handler.root_add_val("test_sharpenTE_rotated - Spline Coords:", self.foil.spline.X, tol=1e-10)
             self.assertTrue(self.foil.closedCurve)
-

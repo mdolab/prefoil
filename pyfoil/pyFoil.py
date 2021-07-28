@@ -1086,7 +1086,7 @@ class Airfoil(object):
             current_direction = x - xCut
             if chord[0] * current_direction[0] + chord[1] * current_direction[1] > 0:
                 coords.append(np.array(x))
-        
+
         coords.append(np.array(bottom_surf.getValue(s_bottom)))
         self.recompute(np.array(coords))
 
