@@ -1099,7 +1099,7 @@ class Airfoil(object):
         xCut : float
             x location **as a percentage of chord** to cut off the current trailing edge if it is not already blunt.
         """
-        if xCut >= 1.0 and xCut <= 0:
+        if xCut >= 1.0 or xCut <= 0:
             raise Error("xCut must be between 0 and 1.")
 
         if not self.closedCurve:
@@ -1150,7 +1150,7 @@ class Airfoil(object):
             Arbitrary factor that specifies how long to make the added TE. Larger dist corresponds to longer addition to the end
 
         """
-        if xCut >= 1.0 and xCut <= 0:
+        if xCut >= 1.0 or xCut <= 0:
             raise Error("xCut must be between 0 and 1.")
 
         if not self.closedCurve:
