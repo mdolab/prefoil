@@ -7,7 +7,7 @@ from scipy import optimize
 
 def cosine(start, end, n, m=np.pi):
     """
-    Sampling function based on cosine spacing. Check :meth:`pyfoil.sampling.conical()` for more implementation information.
+    Sampling function based on cosine spacing. Check :meth:`prefoil.sampling.conical()` for more implementation information.
 
     Parameters
     ----------

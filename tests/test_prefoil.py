@@ -3,8 +3,8 @@ from baseclasses import BaseRegTest
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal
 import os
-from pyfoil.pyFoil import readCoordFile, Airfoil, _getClosestY
-from pyfoil import sampling
+from prefoil.preFoil import readCoordFile, Airfoil, _getClosestY
+from prefoil import sampling
 
 baseDir = os.path.dirname(os.path.abspath(__file__))
 

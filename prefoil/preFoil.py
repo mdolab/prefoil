@@ -1,21 +1,17 @@
 """
 
-..    pyFoil
+..    preFoil
     --------
 
     Contains a class for creating, modifying and exporting airfoils.
 
-
-    Questions:
-    - Modes?!? Should we provide any functionality for that?
-    - Do we want twist in deg or rad?
 
 """
 
 import numpy as np
 from pyspline import Curve
 from scipy.optimize import brentq, newton, minimize
-from pyfoil import sampling
+from prefoil import sampling
 
 EPS = np.finfo(np.float64).eps
 
@@ -27,7 +23,7 @@ class Error(Exception):
     """
 
     def __init__(self, message):
-        msg = "\n+" + "-" * 78 + "+" + "\n" + "| pyFoil Error: "
+        msg = "\n+" + "-" * 78 + "+" + "\n" + "| preFoil Error: "
         i = 17
         for word in message.split():
             if len(word) + i + 1 > 78:  # Finish line and start new one

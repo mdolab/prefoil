@@ -1,11 +1,11 @@
-.. _pyFoil_API:
+.. _preFoil_API:
 
-pyFoil API
+preFoil API
 ----------
-.. currentmodule:: pyfoil.pyFoil
+.. currentmodule:: prefoil.preFoil
 
-.. automodule:: pyfoil.pyFoil
+.. automodule:: prefoil.preFoil
     :members: readCoordFile, writeFFD
 
-.. autoclass:: pyfoil.pyFoil.Airfoil
+.. autoclass:: prefoil.preFoil.Airfoil
    :members:
