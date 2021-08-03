@@ -14,7 +14,7 @@
 
 import numpy as np
 from pyspline import Curve
-from scipy.optimize import brentq, newton, bisect, minimize
+from scipy.optimize import brentq, newton, minimize
 from pyfoil import sampling
 
 EPS = np.finfo(np.float64).eps
@@ -583,7 +583,7 @@ class Airfoil(object):
         """
         top = self.spline.getValue(0)
         bottom = self.spline.getValue(1)
-        TE_thickness = np.array([(top[0] + bottom[0]) / 2, top[1] - bottom[1]])
+        TE_thickness = np.sqrt((top[0] - bottom[0]) ** 2 + (top[1] - bottom[1]) ** 2)
         return TE_thickness
 
     def getLERadius(self):
@@ -716,7 +716,7 @@ class Airfoil(object):
                 thickness_pts[j, 1] = np.linalg.norm(x_top - x_bottom)
 
         # Add the trailing and leading edge points when we return
-        return np.vstack([[self.LE[0], 0], thickness_pts, self.getTEThickness()])
+        return np.vstack([[self.LE[0], 0], thickness_pts, [self.TE[0], self.getTEThickness()]])
 
     def getTEAngle(self):
         """
@@ -1053,53 +1053,111 @@ class Airfoil(object):
             if normalize:
                 self.normalizeChord()
 
-    def makeBluntTE(self, start=0.01, end=None):
+    def makeBluntTE(self, xCut=0.98):
         """
-        This cuts the upper and lower surfaces to creates a blunt trailing edge between the two cut points.
-
-        Parameters
-        ----------
-        start : float
-            the parametric value at which to cut the upper surface
-
-        end : float
-            the parameteric value at which to cut the lower surface. If end is not provided,
-            then the cut is made on the upper surface and projected down to the lower surface along the y-axis.
-        """
-        if end is None:
-            xstart = self.spline.getValue(start)
-            # Make the trailing edge parallel with y-axis
-
-            def findEnd(s):
-                xend = self.spline.getValue(s)
-                return xend[0] - xstart[0]
-
-            end = bisect(findEnd, 0.9, 1.0)
-
-        newCurve = self.spline.windowCurve(start, end)
-        coords = newCurve.getValue(self.spline.gpts)
-        self.recompute(coords)
-
-    def sharpenTE(self):
-        pass
-
-    def roundTE(self, xCut=0.98, k=4, nPts=20):
-        """
-        this method creates a smooth round trailing edge **from a blunt one** using a spline
+        This cuts the upper and lower surfaces to creates a blunt trailing edge perpendicular to the chord line.
 
         Parameters
         ----------
         xCut : float
-            x location of the cut **as a percentage of the chord**
+            the location to cut the blunt TE **as a percentage of the chord**
+        """
+        # Find global coordinates of cut point
+        xCut = self.LE + xCut * (self.TE - self.LE)
+
+        # The direction normal to the chordline
+        direction = np.array([np.cos(np.pi / 2 + np.deg2rad(self.twist)), np.sin(np.pi / 2 + np.deg2rad(self.twist))])
+        direction = direction / np.linalg.norm(direction)
+
+        # ray to intersect upper and lower surfaces
+        ray = [xCut - 2 * direction * self.getChord(), xCut + 2 * direction * self.getChord()]
+        top_surf, bottom_surf = self.splitAirfoil()
+        normal = Curve(X=ray, k=2)
+
+        # Get intersections
+        s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
+        s_bottom, t_bottom, D = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
+
+        # Get all the coordinates that will not be cut off
+        coords = [top_surf.getValue(s_top)]
+        chord = self.LE - self.TE
+        for x in self.getSplinePts():
+            # dot product test checks for positive projection onto chord
+            current_direction = x - xCut
+            if chord[0] * current_direction[0] + chord[1] * current_direction[1] > 0:
+                coords.append(np.array(x))
+
+        coords.append(np.array(bottom_surf.getValue(s_bottom)))
+        self.recompute(np.array(coords))
+
+    def sharpenTE(self, xCut=0.98):
+        """
+        this method creates a sharp trailing edge **from a blunt one** by projecting straight lines from the upper and lower surfacs of a blunt trailing edge.
+
+        Parameters
+        ----------
+        xCut : float
+            x location **as a percentage of chord** to cut off the current trailing edge if it is not already blunt.
+        """
+        if xCut >= 1.0 or xCut <= 0:
+            raise Error("xCut must be between 0 and 1.")
+
+        if not self.closedCurve:
+            self.makeBluntTE(xCut)
+
+        # Value of blunt TE point on upper surface
+        val_u = self.spline.getValue(0)
+        # derivative of blunt TE point of upper surface wrt parametric parameter
+        ds_u = self.spline.getDerivative(0)
+        # slope of blunt TE point of upper surface
+        dx_u = ds_u[1] / ds_u[0]
+
+        # Value of blunt TE point on lower surface
+        val_l = self.spline.getValue(1)
+        # derivative of blunt TE point of lower surface wrt parameteric parameter
+        ds_l = self.spline.getDerivative(1)
+        # slope of blunt TE point of lower surface
+        dx_l = ds_l[1] / ds_l[0]
+
+        # make sure that the slope of the lower surface is greater than the upper, ensuring the points will intersect
+        if dx_u == dx_l:
+            raise Error("Slopes at blunt TE are parallel, no intersection point for a sharp TE.")
+        elif dx_u > dx_l:
+            raise Error("Slopes at blunt TE indicate an intersection towards the LE of the airfoil.")
+
+        # calculate the x location of the intersection
+        x = (val_l[1] - val_u[1] - val_l[0] * dx_l + val_u[0] * dx_u) / (dx_u - dx_l)
+        # calculate the y location of the intersection
+        y = val_l[1] + dx_l * (x - val_l[0])
+
+        # add intersection points and then recompute the airfoil
+        coords = np.vstack(([x, y], self.spline.X, [x, y]))
+        self.recompute(coords)
+
+    def roundTE(self, xCut=0.98, k=4, nPts=20, dist=0.4):
+        """
+        this method creates a smooth round trailing edge **from a blunt one** using a spline. If the trailing edge is not already blunt xCut specifies the location of the cut
+
+        Parameters
+        ----------
+        xCut : float
+            x location of the cut **as a percentage of the chord**. Will not do anything if the TE is already blunt.
         k: int (3 or 4)
             order of the spline used to make the rounded trailing edge of the airfoil.
         nPts : int
             Number of trailing edge points to add to the airfoil spline
+        dist : float
+            Arbitrary factor that specifies how long to make the added TE. Larger dist corresponds to longer addition to the end
 
         """
-        # convert the xCut loctation from a percentage to an abs value
-        xCut = self.LE[0] + xCut * (self.TE[0] - self.LE[0])
-        dx = self.TE[0] - xCut
+        if xCut >= 1.0 or xCut <= 0:
+            raise Error("xCut must be between 0 and 1.")
+
+        if not self.closedCurve:
+            self.makeBluntTE(xCut)
+
+        # unit length for making rounded TE
+        dx = self.getTEThickness() * dist
 
         # create the knot vector for the spline
         t = [0] * k + [0.5] + [1] * k
@@ -1108,31 +1166,27 @@ class Airfoil(object):
         coeff = np.zeros((k + 1, 2))
 
         for ii in [0, -1]:
-            coeff[ii], s = self.findPt(xCut, s_0=np.abs(ii))
-            # coeff[-1], s_lower  = self.findPt(xCut, s_0=1)
-            dX_ds = self.spline.getDerivative(s)
-            dy_dx = dX_ds[0] ** -1 * dX_ds[1]
+            coeff[ii] = self.spline.getValue(np.abs(ii))
+            dX_ds = self.spline.getDerivative(np.abs(ii))
+            dy_dx = dX_ds[1] / dX_ds[0]
 
             # the indexing here is a bit confusing.ii = 0 -> coeff[1] and ii = -1 -> coef[-2]
-            coeff[3 * ii + 1] = np.array([self.TE[0], coeff[ii, 1] + dy_dx * dx])
+            coeff[3 * ii + 1] = np.array([coeff[ii, 0] + dx * 0.5, coeff[ii, 1] + dy_dx * dx * 0.5])
 
         if k == 4:
-            coeff[2] = self.TE
+            chord = self.TE - self.LE
+            chord /= np.linalg.norm(chord)
+            coeff[2] = np.array([self.TE[0] + chord[0] * dx, self.TE[1] + chord[1] * dx])
 
         ## make the TE curve
         te_curve = Curve(t=t, k=k, coef=coeff)
 
         # ----- combine the TE curve with the spline curve -----
         upper_curve, lower_curve = te_curve.splitCurve(0.5)
-        upper_pts = upper_curve.getValue(np.linspace(0, 1, nPts))
-        lower_pts = lower_curve.getValue(np.linspace(0, 1, nPts))
-        # remove the replaced pts
-        mask = []
-        for ii in range(self.spline.X.shape[0]):
-            if xCut > self.spline.X[ii, 0]:
-                mask.append(ii)
+        upper_pts = upper_curve.getValue(np.linspace(1, 0, nPts // 2))
+        lower_pts = lower_curve.getValue(np.linspace(1, 0, nPts // 2))
 
-        coords = np.vstack((upper_pts[::-1], self.spline.X[mask], lower_pts[::-1]))
+        coords = np.vstack((upper_pts[:-1], self.spline.X, lower_pts[1:]))
 
         # ---- recompute with new TE ---
         self.recompute(coords)

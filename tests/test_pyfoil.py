@@ -89,7 +89,7 @@ class TestBasic(unittest.TestCase):
         self.foil.rotate(45)
         self.foil.derotate()
         coords = self.foil.getSplinePts()
-        assert_array_equal(coords, np.array([[1, 0], [0, 0], [1, 0]]))
+        assert_allclose(coords, np.array([[1, 0], [0, 0], [1, 0]]), atol=1e-14)
         self.assertAlmostEqual(self.chord, self.foil.getChord())
         self.assertAlmostEqual(self.twist, self.foil.getTwist())
 
@@ -196,20 +196,6 @@ class TestGeoModification(unittest.TestCase):
         newfoil = Airfoil(Xorig[::-1, :])
         Xreordered = newfoil.spline.X
         assert_allclose(Xorig, Xreordered, atol=1e-6)
-
-    def test_round_TE(self):
-        self.foil.roundTE(k=4)
-        refTE = np.array([0.990393, 0.0013401])
-        newTE = self.foil.TE
-        assert_allclose(refTE, newTE, atol=1e-6)
-        self.assertTrue(self.foil.closedCurve)
-
-    def test_blunt_TE(self):
-        self.foil.makeBluntTE()
-        refTE = np.array([0.97065494, 0.00352594])
-        newTE = self.foil.TE
-        assert_allclose(refTE, newTE, atol=1e-8)
-        self.assertFalse(self.foil.closedCurve)
 
 
 class TestFFD(unittest.TestCase):
