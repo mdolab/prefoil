@@ -16,7 +16,7 @@ class TestTEModification(unittest.TestCase):
 
     def test_bluntTE(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_bluntTE.ref")
-        with BaseRegTest(ref_file, True) as handler:
+        with BaseRegTest(ref_file, train) as handler:
             self.foil.makeBluntTE(0.75)
             handler.root_add_val("test_bluntTE - Spline Coords:", self.foil.spline.X, tol=1e-10)
             self.assertFalse(self.foil.closedCurve)
@@ -26,7 +26,7 @@ class TestTEModification(unittest.TestCase):
 
     def test_bluntTE_rotated(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_bluntTE_rotated.ref")
-        with BaseRegTest(ref_file, True) as handler:
+        with BaseRegTest(ref_file, train) as handler:
             self.foil.rotate(-30)
             self.foil.makeBluntTE(0.75)
             handler.root_add_val("test_bluntTE_rotated - Spline Coords:", self.foil.spline.X, tol=1e-10)
@@ -37,7 +37,7 @@ class TestTEModification(unittest.TestCase):
 
     def test_roundTE(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_roundTE.ref")
-        with BaseRegTest(ref_file, True) as handler:
+        with BaseRegTest(ref_file, train) as handler:
             self.foil.roundTE(k=4)
             handler.root_add_val("test_roundTE - Spline Coords:", self.foil.spline.X, tol=1e-10)
             self.assertTrue(self.foil.closedCurve)
@@ -47,7 +47,7 @@ class TestTEModification(unittest.TestCase):
 
     def test_roundTE_rotated(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_roundTE_rotated.ref")
-        with BaseRegTest(ref_file, True) as handler:
+        with BaseRegTest(ref_file, train) as handler:
             self.foil.rotate(-20)
             self.foil.roundTE(k=4)
             handler.root_add_val("test_roundTE_rotated - Spline Coords:", self.foil.spline.X, tol=1e-10)
@@ -58,7 +58,7 @@ class TestTEModification(unittest.TestCase):
 
     def test_sharpenTE(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_sharpenTE.ref")
-        with BaseRegTest(ref_file, True) as handler:
+        with BaseRegTest(ref_file, train) as handler:
             self.foil.sharpenTE()
             handler.root_add_val("test_sharpenTE - Spline Coords:", self.foil.spline.X, tol=1e-10)
             self.assertTrue(self.foil.closedCurve)
@@ -68,7 +68,7 @@ class TestTEModification(unittest.TestCase):
 
     def test_sharpenTE_rotated(self, train=False):
         ref_file = os.path.join(baseDir, "ref/test_sharpenTE_rotated.ref")
-        with BaseRegTest(ref_file, True) as handler:
+        with BaseRegTest(ref_file, train) as handler:
             self.foil.rotate(10)
             self.foil.sharpenTE()
             handler.root_add_val("test_sharpenTE_rotated - Spline Coords:", self.foil.spline.X, tol=1e-10)
