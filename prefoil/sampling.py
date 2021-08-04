@@ -238,7 +238,6 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
         sys.exit()
 
     # Find best spacing to get smooth distribution
-    # print('Finding optimal bigeometric spacing...')
     left = int(np.round(n * 0.01))
     right = int(n * 0.49)
     checkleft = findSpacing(left)
@@ -248,13 +247,11 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
         print(checkleft, checkright, "Try decreasing spacings")
         sys.exit()
     elif checkleft > 0 > checkright:
-        # print('Bisection method')
-        na = optimize.bisect(findSpacing, left, right, (True), xtol=1e-4, maxiter=100, disp=False)
+        na = optimize.bisect(findSpacing, left, right, xtol=1e-4, maxiter=100, disp=False)
     elif checkleft > 0 and checkright > 0:
-        # print('Minimize method')
         x0 = np.array([float(left)])
         opt = optimize.minimize(
-            findSpacing, x0, (True), method="tnc", bounds=[(left, right)], tol=1e-2, options={"maxiter": 1000}
+            findSpacing, x0, method="tnc", bounds=[(left, right)], tol=1e-2, options={"maxiter": 1000}
         )
         na = opt.x
 
