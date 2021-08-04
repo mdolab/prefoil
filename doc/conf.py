@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.abspath("../"))
 
 
-project = "pyFoil"
+project = "preFoil"
 
 # mock import for autodoc
 autodoc_mock_imports = ["numpy", "pyspline", "scipy", "pygeo"]

@@ -2,7 +2,7 @@
 
 sampling API
 ------------
-.. currentmodule:: pyfoil.sampling
+.. currentmodule:: prefoil.sampling
 
-.. automodule:: pyfoil.sampling
+.. automodule:: prefoil.sampling
     :members:

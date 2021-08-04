@@ -1,16 +1,16 @@
-.. pyFoil documentation master file, created by
+.. preFoil documentation master file, created by
    sphinx-quickstart on Fri Oct 16 18:14:31 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-======
-pyFoil
-======
+=======
+preFoil
+=======
 
 Introduction
 ============
 
-pyFoil is a pySpline-based utility module that allows to flexibly handle airfoil geometries and enable rapid, custom surface mesh generation.
+preFoil is a pySpline-based utility module that allows to flexibly handle airfoil geometries and enable rapid, custom surface mesh generation.
 
 The user can:
 
@@ -19,13 +19,13 @@ The user can:
    - Compute some geometric parameters (e.g. thickness, camber)
    - Sample the point distribution along the airfoil with a range of built-in specific distributions
    - Output the files into different formats, for visualization purposes or further meshing with `pyHyp <https://github.com/mdolab/pyhyp>`_
+   - Generate FFD boxes to preform airfoil optimizations
 
-The tool is still incomplete but in a functional beta version, user contributions are welcome.
 
 .. toctree::
    :maxdepth: 1
 
    install
-   pyFoil
+   preFoil
    sampling
    examples

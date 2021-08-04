@@ -1,23 +1,20 @@
 """
 
-..    pyFoil
-    --------
+..    preFoil
+      -------
 
     Contains a class for creating, modifying and exporting airfoils.
 
-
-    Questions:
-    - Modes?!? Should we provide any functionality for that?
-    - Do we want twist in deg or rad?
 
 """
 
 import numpy as np
 from pyspline import Curve
 from scipy.optimize import brentq, newton, minimize
-from pyfoil import sampling
+from prefoil import sampling
 
 EPS = np.finfo(np.float64).eps
+ZEROS_2 = np.zeros(2)
 
 
 class Error(Exception):
@@ -27,7 +24,7 @@ class Error(Exception):
     """
 
     def __init__(self, message):
-        msg = "\n+" + "-" * 78 + "+" + "\n" + "| pyFoil Error: "
+        msg = "\n+" + "-" * 78 + "+" + "\n" + "| preFoil Error: "
         i = 17
         for word in message.split():
             if len(word) + i + 1 > 78:  # Finish line and start new one
@@ -38,7 +35,7 @@ class Error(Exception):
                 i += len(word) + 1
         msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
         print(msg)
-        Exception.__init__()
+        super().__init__(msg)
 
 
 def readCoordFile(filename, headerlines=0):
@@ -60,23 +57,20 @@ def readCoordFile(filename, headerlines=0):
     X : Ndarray [N,2]
         The coordinates read from the file
     """
-    f = open(filename, "r")
-    line = f.readline()  # Read (and ignore) the first line
-    r = []
-    try:
-        r.append([float(s) for s in line.split()])
-    except:  # noqa
+    with open(filename, "r") as f:
+        for _i in range(headerlines):
+            f.readline()
         r = []
+        while True:
+            line = f.readline()
+            if not line:
+                break  # end of file
+            if line.isspace():
+                break  # blank line
+            r.append([float(s) for s in line.split()])
 
-    while True:
-        line = f.readline()
-        if not line:
-            break  # end of file
-        if line.isspace():
-            break  # blank line
-        r.append([float(s) for s in line.split()])
+            X = np.array(r)
 
-    X = np.array(r)
     return X
 
 
@@ -153,11 +147,11 @@ def _writeDat(filename, x, y):
     filename += ".dat"
 
     with open(filename, "w") as f:
-        for i in range(0, len(x)):
+        for i in range(len(x)):
             f.write(str(round(x[i], 12)) + "\t\t" + str(round(y[i], 12)) + "\n")
 
 
-def writeFFD(FFDbox, filename):
+def _writeFFD(FFDbox, filename):
     """
     This function writes out an FFD in plot3D format from an FFDbox.
 
@@ -324,7 +318,6 @@ def _getClosestY(coords, x):
     yl : float
         The y value of the closest coordinate on the lower surface
     """
-    # TODO should this be modified to use the spline from the airfoil?
 
     top = coords[: len(coords + 1) // 2 + 1, :]
     bottom = coords[len(coords + 1) // 2 :, :]
@@ -341,7 +334,7 @@ def _getClosestY(coords, x):
     return yu, yl
 
 
-class Airfoil(object):
+class Airfoil:
     """
     A class for manipulating airfoil geometry.
 
@@ -482,8 +475,6 @@ class Airfoil(object):
         s_LE : float
             the parametric position of the leading edge
         """
-
-        # TODO Use a Newton solver, employing 2nd derivative information and use 0.5 as the initial guess.
 
         def dellds(s, spline, TE):
             pt = spline.getValue(s)
@@ -645,8 +636,8 @@ class Airfoil(object):
             normal = Curve(X=temp, k=2)
 
             # Determine the intersection of this ray with both the upper and lower surfaces
-            s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
-            s_bottom, t_bottom, D = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
+            s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
+            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
             intersect_top = top_surf.getValue(s_top)
             intersect_bottom = bottom_surf.getValue(s_bottom)
 
@@ -703,8 +694,8 @@ class Airfoil(object):
             normal = Curve(X=np.vstack([top, bottom]), k=2)
 
             # Find upper and lower intersections
-            s_top, _, d1 = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=0, t=0.5)
-            s_bottom, _, d2 = bottom_surf.projectCurve(normal, nIter=100, eps=EPS, s=1, t=0.5)
+            s_top, _, _ = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=0, t=0.5)
+            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=100, eps=EPS, s=1, t=0.5)
 
             # Compute the thickness
             thickness_pts[j, 0] = self.camber.getValue(s[j])[0]
@@ -733,8 +724,8 @@ class Airfoil(object):
         bottom = self.spline.getDerivative(1)
         bottom = bottom / np.linalg.norm(bottom)
         # print(np.dot(top,bottom))
-        self.TE_angle = np.pi - np.arccos(np.dot(top, bottom))
-        return np.rad2deg(self.TE_angle)
+        TE_angle = np.pi - np.arccos(np.dot(top, bottom))
+        return np.rad2deg(TE_angle)
 
     def getMaxThickness(self, tType):
         """
@@ -851,8 +842,7 @@ class Airfoil(object):
         if not opt.success:
             if maximum:
                 raise Error("Could not determine maximum camber.")
-            else:
-                raise Error("Could not determine minimum camber.")
+            raise Error("Could not determine minimum camber.")
 
         opt_point = self.camber.getValue(opt.x)
 
@@ -899,14 +889,10 @@ class Airfoil(object):
         reflexive : bool
             True if reflexive
         """
-        # TODO this has not been tested
         if self.camber is None:
             self.getCamber()
 
-        if self.camber.getDerivative(1)[1] > 0:
-            return True
-        else:
-            return False
+        return self.camber.getDerivative(1)[1] > 0
 
     def isSymmetric(self, tol=1e-6):
         """
@@ -932,7 +918,7 @@ class Airfoil(object):
     # Geometry Modification
     # ==============================================================================
 
-    def rotate(self, angle, origin=np.zeros(2)):
+    def rotate(self, angle, origin=ZEROS_2):
         """
         rotates the airfoil about the specified origin
 
@@ -948,7 +934,7 @@ class Airfoil(object):
 
         self.recompute(new_coords)
 
-    def derotate(self, origin=np.zeros(2)):
+    def derotate(self, origin=ZEROS_2):
         """
         derotates the airfoil about the origin by the twist
 
@@ -959,7 +945,7 @@ class Airfoil(object):
         """
         self.rotate(-1.0 * self.twist, origin=origin)
 
-    def scale(self, factor, origin=np.zeros(2)):
+    def scale(self, factor, origin=ZEROS_2):
         """
         Scale the airfoil by factor about the origin
 
@@ -975,7 +961,7 @@ class Airfoil(object):
         new_coords = _scaleCoords(self.spline.X, factor, origin)
         self.recompute(new_coords)
 
-    def normalizeChord(self, origin=np.zeros(2)):
+    def normalizeChord(self, origin=ZEROS_2):
         """
         Set the chord to 1 by scaling the airfoil about the given origin
 
@@ -1006,7 +992,7 @@ class Airfoil(object):
         Move the airfoil so that the leading edge is at the origin
         """
 
-        if not np.all(self.LE == np.zeros(2)):
+        if not np.all(self.LE == ZEROS_2):
             self.translate(-1.0 * self.LE)
 
     def splitAirfoil(self):
@@ -1075,8 +1061,8 @@ class Airfoil(object):
         normal = Curve(X=ray, k=2)
 
         # Get intersections
-        s_top, t_top, D = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
-        s_bottom, t_bottom, D = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
+        s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
+        s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
 
         # Get all the coordinates that will not be cut off
         coords = [top_surf.getValue(s_top)]
@@ -1122,7 +1108,7 @@ class Airfoil(object):
         # make sure that the slope of the lower surface is greater than the upper, ensuring the points will intersect
         if dx_u == dx_l:
             raise Error("Slopes at blunt TE are parallel, no intersection point for a sharp TE.")
-        elif dx_u > dx_l:
+        if dx_u > dx_l:
             raise Error("Slopes at blunt TE indicate an intersection towards the LE of the airfoil.")
 
         # calculate the x location of the intersection
@@ -1234,7 +1220,7 @@ class Airfoil(object):
         return coords[list(set(TE_mask))]
 
     ## Sampling
-    def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args={}, nTEPts=0, TE_knot=False):
+    def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args=None, nTEPts=0, TE_knot=False):
         """
         This function defines the point sampling along airfoil surface. The
         coordinates are given as a closed curve (i.e. the first and last point
@@ -1282,18 +1268,6 @@ class Airfoil(object):
         if not self.closedCurve:
             sampled_coords = np.vstack((sampled_coords, sampled_coords[0]))
 
-        # TODO
-        # - reintagrate cell check
-
-        # if cell_check is True:
-        #     checkCellRatio(coords)
-        # self.sampled_X = coords
-
-        # # To be updated later on if new point add/remove operations are included
-        # # x.size-1 because of the last point added for "closure"
-        # if single_distr is True and x.size-1 != points_init:
-        #     print('WARNING: The number of sampling points has been changed \n'
-        #             '\t\tCurrent points number: %i' % (x.size))
         self.sampled_pts = sampled_coords
 
         return sampled_coords
@@ -1379,7 +1353,7 @@ class Airfoil(object):
         return FFDbox
 
     ## Output
-    def writeCoords(self, filename, coords=None, spline_coords=False, format="plot3d"):
+    def writeCoords(self, filename, coords=None, spline_coords=False, file_format="plot3d"):
         """
         Writes out a set of airfoil coordinates. By default, the most recently sampled coordinates are written out.
         If there are no recently sampled coordinates and none are passed in this will fail.
@@ -1395,7 +1369,7 @@ class Airfoil(object):
         spline_coords : bool
             If true it will write out the underlying spline coordinates and the value of `coords` will be ignored. Useful if only geometric modifications to coordinates are being preformed.
 
-        format : str
+        file_format : str
             the file format to write, can be `plot3d` or `dat`
         """
 
@@ -1408,12 +1382,12 @@ class Airfoil(object):
             else:
                 raise Error("No coordinates to write!")
 
-        if format == "plot3d":
+        if file_format == "plot3d":
             _writePlot3D(filename, coords[:, 0], coords[:, 1])
-        elif format == "dat":
+        elif file_format == "dat":
             _writeDat(filename, coords[:, 0], coords[:, 1])
         else:
-            raise Error(format + " is not a supported output format!")
+            raise Error(file_format + " is not a supported output format!")
 
     def generateFFD(
         self, nffd, filename, fitted=True, xmargin=0.001, ymarginu=0.02, ymarginl=0.02, xslice=None, coords=None
@@ -1459,7 +1433,7 @@ class Airfoil(object):
 
         FFDbox = self._buildFFD(nffd, fitted, xmargin, ymarginu, ymarginl, xslice, coords)
 
-        writeFFD(FFDbox, filename)
+        _writeFFD(FFDbox, filename)
 
     ## Utils
     # maybe remove and put into a separate location?

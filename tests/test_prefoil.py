@@ -3,8 +3,8 @@ from baseclasses import BaseRegTest
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal
 import os
-from pyfoil.pyFoil import readCoordFile, Airfoil, _getClosestY
-from pyfoil import sampling
+from prefoil.preFoil import readCoordFile, Airfoil, _getClosestY
+from prefoil import sampling
 
 baseDir = os.path.dirname(os.path.abspath(__file__))
 
@@ -335,7 +335,7 @@ class TestFileWriting(unittest.TestCase):
                 self.assertEqual(ref_lines[i], actual_lines[i])
 
     def test_writeP3D(self):
-        self.foil.writeCoords(self.temp_p3d, spline_coords=True, format="plot3d")
+        self.foil.writeCoords(self.temp_p3d, spline_coords=True, file_format="plot3d")
         self.temp_p3d += ".xyz"
         with open(os.path.join(baseDir, "ref/rae2822_p3d.xyz"), "r") as ref, open(self.temp_p3d, "r") as actual:
             ref_lines = list(ref)
@@ -345,7 +345,7 @@ class TestFileWriting(unittest.TestCase):
                 self.assertEqual(ref_lines[i], actual_lines[i])
 
     def test_writeDat(self):
-        self.foil.writeCoords(self.temp_dat, spline_coords=True, format="dat")
+        self.foil.writeCoords(self.temp_dat, spline_coords=True, file_format="dat")
         self.temp_dat += ".dat"
         with open(os.path.join(baseDir, "ref/rae2822_dat.dat"), "r") as ref, open(self.temp_dat, "r") as actual:
             ref_lines = list(ref)
