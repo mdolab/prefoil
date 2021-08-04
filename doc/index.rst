@@ -19,8 +19,8 @@ The user can:
    - Compute some geometric parameters (e.g. thickness, camber)
    - Sample the point distribution along the airfoil with a range of built-in specific distributions
    - Output the files into different formats, for visualization purposes or further meshing with `pyHyp <https://github.com/mdolab/pyhyp>`_
+   - Generate FFD boxes to preform airfoil optimizations
 
-The tool is still incomplete but in a functional beta version, user contributions are welcome.
 
 .. toctree::
    :maxdepth: 1
