@@ -14,7 +14,7 @@ from scipy.optimize import brentq, newton, minimize
 from prefoil import sampling
 
 EPS = np.finfo(np.float64).eps
-ZEROS2 = np.zeros(2)
+ZEROS_2 = np.zeros(2)
 
 
 class Error(Exception):
@@ -918,7 +918,7 @@ class Airfoil:
     # Geometry Modification
     # ==============================================================================
 
-    def rotate(self, angle, origin=ZEROS2):
+    def rotate(self, angle, origin=ZEROS_2):
         """
         rotates the airfoil about the specified origin
 
@@ -934,7 +934,7 @@ class Airfoil:
 
         self.recompute(new_coords)
 
-    def derotate(self, origin=ZEROS2):
+    def derotate(self, origin=ZEROS_2):
         """
         derotates the airfoil about the origin by the twist
 
@@ -945,7 +945,7 @@ class Airfoil:
         """
         self.rotate(-1.0 * self.twist, origin=origin)
 
-    def scale(self, factor, origin=ZEROS2):
+    def scale(self, factor, origin=ZEROS_2):
         """
         Scale the airfoil by factor about the origin
 
@@ -961,7 +961,7 @@ class Airfoil:
         new_coords = _scaleCoords(self.spline.X, factor, origin)
         self.recompute(new_coords)
 
-    def normalizeChord(self, origin=ZEROS2):
+    def normalizeChord(self, origin=ZEROS_2):
         """
         Set the chord to 1 by scaling the airfoil about the given origin
 
@@ -992,7 +992,7 @@ class Airfoil:
         Move the airfoil so that the leading edge is at the origin
         """
 
-        if not np.all(self.LE == ZEROS2):
+        if not np.all(self.LE == ZEROS_2):
             self.translate(-1.0 * self.LE)
 
     def splitAirfoil(self):
