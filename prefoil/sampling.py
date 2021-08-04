@@ -212,7 +212,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     s = np.zeros(n)
     s[n - 1] = 1.0
 
-    def findSpacing(na, search=False):
+    def findSpacing(na):
         a_na = a1 * ra ** na
         nb = np.log(a_na / b1) / np.log(rb)
         nb = np.round(nb)
