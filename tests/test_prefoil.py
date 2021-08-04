@@ -335,7 +335,7 @@ class TestFileWriting(unittest.TestCase):
                 self.assertEqual(ref_lines[i], actual_lines[i])
 
     def test_writeP3D(self):
-        self.foil.writeCoords(self.temp_p3d, spline_coords=True, form="plot3d")
+        self.foil.writeCoords(self.temp_p3d, spline_coords=True, file_format="plot3d")
         self.temp_p3d += ".xyz"
         with open(os.path.join(baseDir, "ref/rae2822_p3d.xyz"), "r") as ref, open(self.temp_p3d, "r") as actual:
             ref_lines = list(ref)
@@ -345,7 +345,7 @@ class TestFileWriting(unittest.TestCase):
                 self.assertEqual(ref_lines[i], actual_lines[i])
 
     def test_writeDat(self):
-        self.foil.writeCoords(self.temp_dat, spline_coords=True, form="dat")
+        self.foil.writeCoords(self.temp_dat, spline_coords=True, file_format="dat")
         self.temp_dat += ".dat"
         with open(os.path.join(baseDir, "ref/rae2822_dat.dat"), "r") as ref, open(self.temp_dat, "r") as actual:
             ref_lines = list(ref)
