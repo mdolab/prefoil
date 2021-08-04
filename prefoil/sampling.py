@@ -157,14 +157,14 @@ def polynomial(start, end, n, m=np.pi, order=5):
         The parametric spline locations that define the sampling
     """
 
-    def poly(x):
-        return np.abs(x) ** order + np.tan(ang) * x - 1
+    def poly(x, angle):
+        return np.abs(x) ** order + np.tan(angle) * x - 1
 
     angles = np.linspace(m, 0, n)
 
     s = np.array([])
     for ang in angles:
-        s = np.append(s, optimize.fsolve(poly, np.cos(ang))[0])
+        s = np.append(s, optimize.fsolve(lambda x: poly(x, ang), np.cos(ang))[0])
 
     return (s / 2 + 0.5) * (end - start) + start
 
@@ -215,7 +215,6 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
         a_na = a1 * ra ** na
         nb = np.log(a_na / b1) / np.log(rb)
         nb = np.round(nb)
-        b_nb = b1 * rb ** nb  # noqa
         da = a1 * (1 - ra ** na) / (1 - ra)
         db = b1 * (1 - rb ** nb) / (1 - rb)
 
@@ -226,11 +225,8 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
         deltac = dc / (nc + 1)
 
         score = deltac / a_na - 1
-        if search:
-            # print(na, nc, nb, a_na, b_nb, deltac)
-            return score
-        else:
-            return score
+
+        return score
 
     # Check to make sure spacing is not too large
     dc = 1.0 - a1 - b1
@@ -238,7 +234,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     deltac = dc / (nc - 1)
     if deltac < a1 or deltac < b1:
         print("Too many nodes. Decrease initial spacing.")
-        exit()
+        sys.exit()
 
     # Find best spacing to get smooth distribution
     # print('Finding optimal bigeometric spacing...')
@@ -249,8 +245,8 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
 
     if checkleft < 0 and checkright < 0:
         print(checkleft, checkright, "Try decreasing spacings")
-        exit()
-    elif checkleft > 0 and checkright < 0:
+        sys.exit()
+    elif checkleft > 0 > checkright:
         # print('Bisection method')
         na = optimize.bisect(findSpacing, left, right, (True), xtol=1e-4, maxiter=100, disp=False)
     elif checkleft > 0 and checkright > 0:
@@ -266,7 +262,6 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     a_na = a1 * ra ** na
     nb = np.log(a_na / b1) / np.log(rb)
     nb = int(np.round(nb))
-    b_nb = b1 * rb ** nb  # noqa
     da = a1 * (1 - ra ** na) / (1 - ra)
     db = b1 * (1 - rb ** nb) / (1 - rb)
 
@@ -275,7 +270,6 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     dc = s_nb - s_na
     nc = n - (2 + na + nb)
     deltac = dc / (nc + 1)
-    # print('Score:', deltac/a_na, deltac/b_nb)
 
     for i in range(1, n - 1):
         if i <= na:
@@ -290,7 +284,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     return s
 
 
-def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
+def joinedSpacing(n, spacingFunc=polynomial, func_args=None, s_LE=0.5):
     """
     Function that returns two point distributions joined at ``s_LE``.
     If it is desired to specify different spacing functions for the top and the bottom,
@@ -325,6 +319,8 @@ def joinedSpacing(n, spacingFunc=polynomial, func_args={}, s_LE=0.5):
     s : Ndarray [N]
         The parametric spline locations that define the sampling
     """
+    if func_args is None:
+        func_args = {}
     if callable(spacingFunc):
         spacingFunc = [spacingFunc] * 2
     if isinstance(func_args, dict):
