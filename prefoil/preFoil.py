@@ -35,6 +35,7 @@ class Error(Exception):
                 i += len(word) + 1
         msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
         print(msg)
+        super().__init__(msg)
 
 
 def readCoordFile(filename, headerlines=0):
@@ -150,7 +151,7 @@ def _writeDat(filename, x, y):
             f.write(str(round(x[i], 12)) + "\t\t" + str(round(y[i], 12)) + "\n")
 
 
-def writeFFD(FFDbox, filename):
+def _writeFFD(FFDbox, filename):
     """
     This function writes out an FFD in plot3D format from an FFDbox.
 
@@ -1352,7 +1353,7 @@ class Airfoil:
         return FFDbox
 
     ## Output
-    def writeCoords(self, filename, coords=None, spline_coords=False, form="plot3d"):
+    def writeCoords(self, filename, coords=None, spline_coords=False, file_format="plot3d"):
         """
         Writes out a set of airfoil coordinates. By default, the most recently sampled coordinates are written out.
         If there are no recently sampled coordinates and none are passed in this will fail.
@@ -1368,7 +1369,7 @@ class Airfoil:
         spline_coords : bool
             If true it will write out the underlying spline coordinates and the value of `coords` will be ignored. Useful if only geometric modifications to coordinates are being preformed.
 
-        form : str
+        file_format : str
             the file format to write, can be `plot3d` or `dat`
         """
 
@@ -1381,12 +1382,12 @@ class Airfoil:
             else:
                 raise Error("No coordinates to write!")
 
-        if form == "plot3d":
+        if file_format == "plot3d":
             _writePlot3D(filename, coords[:, 0], coords[:, 1])
-        elif form == "dat":
+        elif file_format == "dat":
             _writeDat(filename, coords[:, 0], coords[:, 1])
         else:
-            raise Error(form + " is not a supported output format!")
+            raise Error(file_format + " is not a supported output format!")
 
     def generateFFD(
         self, nffd, filename, fitted=True, xmargin=0.001, ymarginu=0.02, ymarginl=0.02, xslice=None, coords=None
@@ -1432,7 +1433,7 @@ class Airfoil:
 
         FFDbox = self._buildFFD(nffd, fitted, xmargin, ymarginu, ymarginl, xslice, coords)
 
-        writeFFD(FFDbox, filename)
+        _writeFFD(FFDbox, filename)
 
     ## Utils
     # maybe remove and put into a separate location?

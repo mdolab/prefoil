@@ -5,7 +5,7 @@ preFoil API
 .. currentmodule:: prefoil.preFoil
 
 .. automodule:: prefoil.preFoil
-    :members: readCoordFile, writeFFD
+    :members: readCoordFile
 
 .. autoclass:: prefoil.preFoil.Airfoil
    :members:
