@@ -364,7 +364,7 @@ class Airfoil:
 
     """
 
-    def __init__(self, coords, spline_order=3, normalize=False):
+    def __init__(self, coords, spline_order=3, normalize=False, nCtl=None):
 
         self.spline_order = spline_order
         self.sampled_pts = None
@@ -372,6 +372,7 @@ class Airfoil:
         self.camber = None
         self.british_thickness = None
         self.american_thickness = None
+        self.nCtl = nCtl
 
         # Initialize geometric information
         self.recompute(coords)
@@ -389,7 +390,7 @@ class Airfoil:
             The coordinate pairs to compute the airfoil spline from
 
         """
-        self.spline = Curve(X=coords, k=self.spline_order)
+        self.spline = Curve(X=coords, k=self.spline_order, nCtl=self.nCtl)
         self.reorder()
 
         self.TE = self.getTE()
