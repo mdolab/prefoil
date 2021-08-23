@@ -393,7 +393,11 @@ class Airfoil:
             The coordinate pairs to compute the airfoil spline from
 
         """
-        self.spline = Curve(X=coords, k=self.spline_order, nCtl=self.nCtl)
+        if self.nCtl:
+            self.spline = Curve(X=coords, k=self.spline_order, nCtl=self.nCtl)
+        else:
+            self.spline = Curve(X=coords, k=self.spline_order)
+            
         self.reorder()
 
         self.TE = self.getTE()
