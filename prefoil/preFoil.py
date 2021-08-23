@@ -362,6 +362,9 @@ class Airfoil:
     normalize : bool
         True to normalize the chord of the airfoil, set to zero angle of attack, and move the leading edge to the origin
 
+    nCtl : int
+        If this is set to an integer the underlying airfoil spline will be created using least mean squares (LMS) instead of interpolation. The number of control points used in the LMS will be equal to nCtl.
+
     """
 
     def __init__(self, coords, spline_order=3, normalize=False, nCtl=None):
@@ -1253,7 +1256,7 @@ class Airfoil:
         coords : Ndarray [N, 2]
             Coordinates array, anticlockwise, from trailing edge
         """
-        s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args)
+        s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args, s_LE=self.s_LE)
         sampled_coords = self.spline.getValue(s)
         if not self.closedCurve and TE_knot:
             sampled_coords = np.vstack((sampled_coords, sampled_coords[-1]))
