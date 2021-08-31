@@ -87,7 +87,7 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
         The number of points to sample from the defintion of the NACA airfoil, half will be sampled on the top and half on the bottom
 
     spacingFunc : callable
-        The spacing function to use for determining the sampling point locations of the camber line
+        The spacing function to use for determining the sampling point locations of the x coordinates of the camber line
 
     func_args : dict
         Arguments to pass to the sampling function when it is called
