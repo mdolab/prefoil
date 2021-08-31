@@ -145,7 +145,10 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
                     - 0.1015 * camber_x[i] ** 4
                 )
             )
-            theta = np.arctan((camber_y[i + 1] - camber_y[i - 1]) / (camber_x[i + 1] - camber_x[i - 1]))
+            if camber_x[i] < p:
+                theta = np.arctan(m / p ** 2 * (2 * p - 2 * camber_x[i]))
+            else:
+                theta = np.arctan(m / (1 - p) ** 2 * (2 * p - 2 * camber_x[i]))
             upper_x[i] = camber_x[i] - thick_y * np.sin(theta)
             lower_x[i] = camber_x[i] + thick_y * np.sin(theta)
             upper_y[i] = camber_y[i] + thick_y * np.cos(theta)
