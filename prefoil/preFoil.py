@@ -73,6 +73,7 @@ def readCoordFile(filename, headerlines=0):
 
     return X
 
+
 def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
     """
     This function generates an `Airfoil` object based off the analytical definition of the NACA airfoils. It currently only supports 4 digit series airfoils.
@@ -108,7 +109,7 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
     upper_x = np.zeros((len(camber_x), 1))
     lower_x = np.zeros((len(camber_x), 1))
     upper_y = np.zeros((len(camber_x), 1))
-    lower_y = np.zeros((len(camber_x),1))
+    lower_y = np.zeros((len(camber_x), 1))
 
     m = int(code[0]) * 0.01
     p = int(code[1]) * 0.1
@@ -119,7 +120,7 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
             camber_y[i] = m / p ** 2 * (2 * p * camber_x[i] - camber_x[i] ** 2)
         else:
             camber_y[i] = m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * camber_x[i] - camber_x[i] ** 2)
-     
+
     for i in range(len(camber_x)):
         # edge cases
         if i == 0:
@@ -133,16 +134,29 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
             upper_y[i] = 0
             lower_y[i] = 0
         else:
-            thick_y = t / 0.2 * (0.2969 * np.sqrt(camber_x[i]) - 0.126 * camber_x[i] - 0.3516 * camber_x[i] ** 2 + 0.2843 * camber_x[i] ** 3 - 0.1015 * camber_x[i] ** 4)
-            theta = np.arctan((camber_y[i+1] - camber_y[i-1]) / (camber_x[i+1] - camber_x[i-1]))
-            upper_x[i] = camber_x[i] - thick_y*np.sin(theta)
-            lower_x[i] = camber_x[i] + thick_y*np.sin(theta)
-            upper_y[i] = camber_y[i] + thick_y*np.cos(theta)
-            lower_y[i] = camber_y[i] - thick_y*np.cos(theta)
-            
-    coords = np.hstack((np.concatenate((np.flip(upper_x), lower_x[1:])), np.concatenate((np.flip(upper_y), lower_y[1:]))))
+            thick_y = (
+                t
+                / 0.2
+                * (
+                    0.2969 * np.sqrt(camber_x[i])
+                    - 0.126 * camber_x[i]
+                    - 0.3516 * camber_x[i] ** 2
+                    + 0.2843 * camber_x[i] ** 3
+                    - 0.1015 * camber_x[i] ** 4
+                )
+            )
+            theta = np.arctan((camber_y[i + 1] - camber_y[i - 1]) / (camber_x[i + 1] - camber_x[i - 1]))
+            upper_x[i] = camber_x[i] - thick_y * np.sin(theta)
+            lower_x[i] = camber_x[i] + thick_y * np.sin(theta)
+            upper_y[i] = camber_y[i] + thick_y * np.cos(theta)
+            lower_y[i] = camber_y[i] - thick_y * np.cos(theta)
+
+    coords = np.hstack(
+        (np.concatenate((np.flip(upper_x), lower_x[1:])), np.concatenate((np.flip(upper_y), lower_y[1:])))
+    )
 
     return Airfoil(coords)
+
 
 def _cleanup_pts(X):
     """

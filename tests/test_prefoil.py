@@ -122,14 +122,14 @@ class TestBasic(unittest.TestCase):
     def test_generateNACA_0012(self):
         af = generateNACA("0012", 200)
         self.assertTrue(af.closedCurve)
-        assert_allclose(np.array([0., 0.]), af.LE, atol=1e-12)
-        assert_allclose(np.array([1., 0.]), af.TE, atol=1e-12)
+        assert_allclose(np.array([0.0, 0.0]), af.LE, atol=1e-12)
+        assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-12)
         self.assertTrue(af.isSymmetric())
 
     def test_generateNACA_6412(self):
         af = generateNACA("6412", 200)
         self.assertTrue(af.closedCurve)
-        assert_allclose(np.array([1., 0.]), af.TE, atol=1e-12)
+        assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-12)
         self.assertFalse(af.isSymmetric)
 
     def test_generateNACA_code(self):
@@ -137,8 +137,9 @@ class TestBasic(unittest.TestCase):
         try:
             af = generateNACA("90111", 200)
         except Error:
-           caught = True
+            caught = True
         self.assertTrue(caught)
+
 
 class TestSampling(unittest.TestCase):
     def setUp(self):
