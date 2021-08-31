@@ -130,7 +130,7 @@ class TestBasic(unittest.TestCase):
         af = generateNACA("6412", 200)
         self.assertTrue(af.closedCurve)
         assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-12)
-        self.assertFalse(af.isSymmetric)
+        self.assertFalse(af.isSymmetric())
 
     def test_generateNACA_code(self):
         caught = False
