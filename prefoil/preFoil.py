@@ -781,8 +781,12 @@ class Airfoil:
             normal = Curve(X=np.vstack([top, bottom]), k=2)
 
             # Find upper and lower intersections
-            s_top, _, _ = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=0, t=0.5)
-            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=100, eps=EPS, s=1, t=0.5)
+            s_top, _, _ = top_surf.projectCurve(
+                normal, nIter=100, eps=EPS, s=(1 - (normal.getValue(0.5)[0] - self.LE[0])), t=0.5
+            )
+            s_bottom, _, _ = bottom_surf.projectCurve(
+                normal, nIter=100, eps=EPS, s=(normal.getValue(0.5)[0] - self.LE[0]), t=0.5
+            )
 
             # Compute the thickness
             thickness_pts[j, 0] = self.camber.getValue(s[j])[0]

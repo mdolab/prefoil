@@ -125,20 +125,19 @@ class TestBasic(unittest.TestCase):
         assert_allclose(np.array([0.0, 0.0]), af.LE, atol=1e-12)
         assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-12)
         self.assertTrue(af.isSymmetric())
+        assert_allclose((0.30, 0.12), af.getMaxThickness("american"), atol=1e-4)
 
     def test_generateNACA_6412(self):
         af = generateNACA("6412", 200)
         self.assertTrue(af.closedCurve)
         assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-12)
         self.assertFalse(af.isSymmetric())
+        assert_allclose((0.30, 0.12), af.getMaxThickness("american"), atol=1e-4)
+        assert_allclose((0.396, 0.06), af.getMaxCamber())
 
     def test_generateNACA_code(self):
-        caught = False
-        try:
-            af = generateNACA("90111", 200)
-        except Error:
-            caught = True
-        self.assertTrue(caught)
+        with self.assertRaises(Error):
+            generateNACA("90111", 200)
 
 
 class TestSampling(unittest.TestCase):
