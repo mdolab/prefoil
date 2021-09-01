@@ -101,15 +101,18 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
     if len(code) != 4:
         raise Error("Expected a NACA 4 digit code, but got %.d digits." % len(code))
 
+    if not code.isdigit():
+        raise Error("The NACA code provided was not made up of only digits.")
+
     if not func_args:
         func_args = {}
 
     camber_x = spacingFunc(0.0, 1.0, nPts // 2, **func_args)
-    camber_y = np.zeros(len(camber_x))
-    upper_x = np.zeros((len(camber_x), 1))
-    lower_x = np.zeros((len(camber_x), 1))
-    upper_y = np.zeros((len(camber_x), 1))
-    lower_y = np.zeros((len(camber_x), 1))
+    camber_y = np.zeros_like(camber_x)
+    upper_x = np.zeros((nPts // 2, 1))
+    lower_x = np.zeros_like(upper_x)
+    upper_y = np.zeros_like(upper_x)
+    lower_y = np.zeros_like(upper_x)
 
     m = int(code[0]) * 0.01
     p = int(code[1]) * 0.1

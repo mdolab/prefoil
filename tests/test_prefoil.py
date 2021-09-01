@@ -139,6 +139,10 @@ class TestBasic(unittest.TestCase):
         with self.assertRaises(Error):
             generateNACA("90111", 200)
 
+    def test_generateNACA_code_digit(self):
+        with self.assertRaises(Error):
+            generateNACA("9s11", 200)
+
 
 class TestSampling(unittest.TestCase):
     def setUp(self):
