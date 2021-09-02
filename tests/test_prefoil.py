@@ -128,7 +128,7 @@ class TestBasic(unittest.TestCase):
         assert_allclose((0.30, 0.12), af.getMaxThickness("american"), atol=1e-4)
 
     def test_generateNACA_6412(self):
-        af = generateNACA("6412", 200)
+        af = generateNACA("6412", 1000)
         self.assertTrue(af.closedCurve)
         assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-12)
         self.assertFalse(af.isSymmetric())
