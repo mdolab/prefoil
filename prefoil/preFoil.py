@@ -158,10 +158,10 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
             lower_y[i] = camber_y[i] - thick_y * np.cos(theta)
 
     coords = np.hstack(
-        (np.concatenate((np.flip(upper_x), lower_x[1:])), np.concatenate((np.flip(upper_y), lower_y[1:])))
+        (np.concatenate((np.flip(upper_x)[1:], lower_x[1:-1])), np.concatenate((np.flip(upper_y)[1:], lower_y[1:-1])))
     )
 
-    return Airfoil(coords)
+    return Airfoil(coords, normalize=True)
 
 
 def _cleanup_pts(X):
@@ -783,13 +783,21 @@ class Airfoil:
             bottom = self.camber.getValue(s[j]) - 10 * self.chord * direction
             normal = Curve(X=np.vstack([top, bottom]), k=2)
 
+            s_guess = normal.getValue(0.5)[0] - self.LE[0]
+
+            top_guess = 1 - s_guess
+            bottom_guess = s_guess
+
+            if s_guess > 1:
+                top_guess = 0
+                bottom_guess = 1
+            elif s_guess < 0:
+                top_guess = 1
+                bottom_guess = 0
+
             # Find upper and lower intersections
-            s_top, _, _ = top_surf.projectCurve(
-                normal, nIter=100, eps=EPS, s=(1 - (normal.getValue(0.5)[0] - self.LE[0])), t=0.5
-            )
-            s_bottom, _, _ = bottom_surf.projectCurve(
-                normal, nIter=100, eps=EPS, s=(normal.getValue(0.5)[0] - self.LE[0]), t=0.5
-            )
+            s_top, _, _ = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=top_guess, t=0.5)
+            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=100, eps=EPS, s=bottom_guess, t=0.5)
 
             # Compute the thickness
             thickness_pts[j, 0] = self.camber.getValue(s[j])[0]

@@ -121,7 +121,7 @@ class TestBasic(unittest.TestCase):
 
     def test_generateNACA_0012(self):
         af = generateNACA("0012", 200)
-        self.assertTrue(af.closedCurve)
+        self.assertFalse(af.closedCurve)
         assert_allclose(np.array([0.0, 0.0]), af.LE, atol=1e-12)
         assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-12)
         self.assertTrue(af.isSymmetric())
@@ -129,11 +129,11 @@ class TestBasic(unittest.TestCase):
 
     def test_generateNACA_6412(self):
         af = generateNACA("6412", 1000)
-        self.assertTrue(af.closedCurve)
-        assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-12)
+        self.assertFalse(af.closedCurve)
+        assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-5)
         self.assertFalse(af.isSymmetric())
-        assert_allclose((0.30, 0.12), af.getMaxThickness("american"), atol=1e-4)
-        assert_allclose((0.396, 0.06), af.getMaxCamber())
+        assert_allclose((0.30, 0.12), af.getMaxThickness("american"), atol=1e-3)
+        assert_allclose((0.396, 0.06), af.getMaxCamber(), atol=3e-2)
 
     def test_generateNACA_code(self):
         with self.assertRaises(Error):
