@@ -161,7 +161,7 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
         (np.concatenate((np.flip(upper_x)[1:], lower_x[1:-1])), np.concatenate((np.flip(upper_y)[1:], lower_y[1:-1])))
     )
 
-    return Airfoil(coords, normalize=True)
+    return Airfoil(coords)
 
 
 def _cleanup_pts(X):
