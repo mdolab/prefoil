@@ -783,11 +783,14 @@ class Airfoil:
             bottom = self.camber.getValue(s[j]) - 10 * self.chord * direction
             normal = Curve(X=np.vstack([top, bottom]), k=2)
 
-            s_guess = normal.getValue(0.5)[0] - self.LE[0]
+            # approximate location of the intersection as a percentage of the chord
+            s_guess = (normal.getValue(0.5)[0] - self.LE[0]) / self.chord
 
+            # top surf goes from 0 at TE to 1 at LE, so parameter needs to be reversed
             top_guess = 1 - s_guess
             bottom_guess = s_guess
 
+            # Keep guesses within the bounds of the spline
             if s_guess > 1:
                 top_guess = 0
                 bottom_guess = 1
