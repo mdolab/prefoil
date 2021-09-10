@@ -74,6 +74,96 @@ def readCoordFile(filename, headerlines=0):
     return X
 
 
+def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
+    """
+    This function generates an `Airfoil` object based off the analytical definition of the NACA airfoils. It currently only supports 4 digit series airfoils.
+
+    Parameters
+    ----------
+    code : str
+        The 4 digit code, this is expected to be a length four string
+
+    nPts : int
+        The number of points to sample from the defintion of the NACA airfoil, half will be sampled on the top and half on the bottom
+
+    spacingFunc : callable
+        The spacing function to use for determining the sampling point locations of the x coordinates of the camber line
+
+    func_args : dict
+        Arguments to pass to the sampling function when it is called
+
+    Returns
+    -------
+    af : prefoil.preFoil.Airfoil
+        An airfoil object created by the coordinates that were sampled from the NACA code
+    """
+
+    if len(code) != 4:
+        raise Error("Expected a NACA 4 digit code, but got %.d digits." % len(code))
+
+    if not code.isdigit():
+        raise Error("The NACA code provided was not made up of only digits.")
+
+    if not func_args:
+        func_args = {}
+
+    camber_x = spacingFunc(0.0, 1.0, nPts // 2, **func_args)
+    camber_y = np.zeros_like(camber_x)
+    upper_x = np.zeros((nPts // 2, 1))
+    lower_x = np.zeros_like(upper_x)
+    upper_y = np.zeros_like(upper_x)
+    lower_y = np.zeros_like(upper_x)
+
+    m = int(code[0]) * 0.01
+    p = int(code[1]) * 0.1
+    t = int(code[2:]) * 0.01
+
+    for i in range(len(camber_x)):
+        if camber_x[i] < p:
+            camber_y[i] = m / p ** 2 * (2 * p * camber_x[i] - camber_x[i] ** 2)
+        else:
+            camber_y[i] = m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * camber_x[i] - camber_x[i] ** 2)
+
+    for i in range(len(camber_x)):
+        # edge cases
+        if i == 0:
+            upper_x[i] = 0
+            lower_x[i] = 0
+            upper_y[i] = 0
+            lower_y[i] = 0
+        elif i == len(camber_x) - 1:
+            upper_x[i] = 1
+            lower_x[i] = 1
+            upper_y[i] = 0
+            lower_y[i] = 0
+        else:
+            thick_y = (
+                t
+                / 0.2
+                * (
+                    0.2969 * np.sqrt(camber_x[i])
+                    - 0.126 * camber_x[i]
+                    - 0.3516 * camber_x[i] ** 2
+                    + 0.2843 * camber_x[i] ** 3
+                    - 0.1015 * camber_x[i] ** 4
+                )
+            )
+            if camber_x[i] < p:
+                theta = np.arctan(m / p ** 2 * (2 * p - 2 * camber_x[i]))
+            else:
+                theta = np.arctan(m / (1 - p) ** 2 * (2 * p - 2 * camber_x[i]))
+            upper_x[i] = camber_x[i] - thick_y * np.sin(theta)
+            lower_x[i] = camber_x[i] + thick_y * np.sin(theta)
+            upper_y[i] = camber_y[i] + thick_y * np.cos(theta)
+            lower_y[i] = camber_y[i] - thick_y * np.cos(theta)
+
+    coords = np.hstack(
+        (np.concatenate((np.flip(upper_x)[1:], lower_x[1:-1])), np.concatenate((np.flip(upper_y)[1:], lower_y[1:-1])))
+    )
+
+    return Airfoil(coords)
+
+
 def _cleanup_pts(X):
     """
     DO NOT USE THIS, IT CURRENTLY DOES NOT WORK
@@ -693,9 +783,24 @@ class Airfoil:
             bottom = self.camber.getValue(s[j]) - 10 * self.chord * direction
             normal = Curve(X=np.vstack([top, bottom]), k=2)
 
+            # approximate location of the intersection as a percentage of the chord
+            s_guess = (normal.getValue(0.5)[0] - self.LE[0]) / self.chord
+
+            # top surf goes from 0 at TE to 1 at LE, so parameter needs to be reversed
+            top_guess = 1 - s_guess
+            bottom_guess = s_guess
+
+            # Keep guesses within the bounds of the spline
+            if s_guess > 1:
+                top_guess = 0
+                bottom_guess = 1
+            elif s_guess < 0:
+                top_guess = 1
+                bottom_guess = 0
+
             # Find upper and lower intersections
-            s_top, _, _ = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=0, t=0.5)
-            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=100, eps=EPS, s=1, t=0.5)
+            s_top, _, _ = top_surf.projectCurve(normal, nIter=100, eps=EPS, s=top_guess, t=0.5)
+            s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=100, eps=EPS, s=bottom_guess, t=0.5)
 
             # Compute the thickness
             thickness_pts[j, 0] = self.camber.getValue(s[j])[0]
