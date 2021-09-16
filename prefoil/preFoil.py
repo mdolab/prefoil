@@ -446,8 +446,8 @@ class Airfoil:
     coords : ndarray[N,3]
         Full array of airfoil coordinates
 
-    spline_order : int
-        Order of the spline
+    spline_order : {4, 2, 3}
+        Order of the spline. n order implies :math:`C^{n-2}` continuity
 
     normalize : bool
         True to normalize the chord of the airfoil, set to zero angle of attack, and move the leading edge to the origin
@@ -457,7 +457,7 @@ class Airfoil:
 
     """
 
-    def __init__(self, coords, spline_order=3, normalize=False, nCtl=None):
+    def __init__(self, coords, spline_order=4, normalize=False, nCtl=None):
 
         self.spline_order = spline_order
         self.sampled_pts = None
