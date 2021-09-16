@@ -487,7 +487,7 @@ class Airfoil:
             self.spline = Curve(X=coords, k=self.spline_order, nCtl=self.nCtl)
         else:
             self.spline = Curve(X=coords, k=self.spline_order)
-            
+
         self.reorder()
 
         self.TE = self.getTE()
