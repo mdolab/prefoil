@@ -21,4 +21,6 @@ autodoc_mock_imports = ["numpy", "pyspline", "scipy", "pygeo"]
 intersphinx_mapping = {
     "adflow": (f"https://mdolab-adflow.readthedocs-hosted.com/en/latest", None),
     "mach-aero": (f"https://mdolab-mach-aero.readthedocs-hosted.com/en/latest", None),
+    "pyspline": (f"https://mdolab-pyspline.readthedocs-hosted.com/en/latest", None),
+
 }

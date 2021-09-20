@@ -441,7 +441,7 @@ class Airfoil:
     surface of the trailing edge and end at the lower surface of the trailing
     edge.
 
-    See documentation on :doc:`pySpline <pyspline:pyCurve>` for information on the spline representation
+    See documentation on :doc:`pySpline <pyspline:API/curve>` for information on the spline representation
 
     Parameters
     ----------
@@ -485,7 +485,10 @@ class Airfoil:
             The coordinate pairs to compute the airfoil spline from
 
         """
-        self.spline = Curve(X=coords, k=self.spline_order, nCtl=self.nCtl)
+        if self.nCtl:
+            self.spline = Curve(X=coords, k=self.spline_order, nCtl=self.nCtl)
+        else:
+            self.spline = Curve(X=coords, k=self.spline_order)
 
         self.reorder()
 
