@@ -6,8 +6,7 @@ preFoil is a simple set of tools to support airfoil manipulation and mesh genera
 
 Please see the [documentation](https://mdolab-pyfoil.readthedocs-hosted.com/en/latest/) for further details and API documentation.
 
-Copyright (c) 2021 University of Michigan\
-Additional copyright (c) TODO\
+Copyright (c) 2021 University of Michigan
 All rights reserved.
 ______________________________________________________________________________
 
