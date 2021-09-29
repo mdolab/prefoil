@@ -449,7 +449,7 @@ class Airfoil:
         Full array of airfoil coordinates
 
     spline_order : {4, 2, 3}
-        Order of the spline. n order implies :math:`C^{n-2}` continuity
+        Order of the spline. :math:`n` order implies :math:`C^{n-2}` continuity
 
     normalize : bool
         True to normalize the chord of the airfoil, set to zero angle of attack, and move the leading edge to the origin
