@@ -441,20 +441,25 @@ class Airfoil:
     surface of the trailing edge and end at the lower surface of the trailing
     edge.
 
+    See documentation on :doc:`pySpline <pyspline:API/curve>` for information on the spline representation
+
     Parameters
     ----------
     coords : ndarray[N,3]
         Full array of airfoil coordinates
 
-    spline_order : int
-        Order of the spline
+    spline_order : {4, 2, 3}
+        Order of the spline. :math:`n` order implies :math:`C^{n-2}` continuity
 
     normalize : bool
         True to normalize the chord of the airfoil, set to zero angle of attack, and move the leading edge to the origin
 
+    nCtl : int
+        If this is set to an integer the underlying airfoil spline will be created using least mean squares (LMS) instead of interpolation. The number of control points used in the LMS will be equal to nCtl.
+
     """
 
-    def __init__(self, coords, spline_order=3, normalize=False):
+    def __init__(self, coords, spline_order=4, normalize=False, nCtl=None):
 
         self.spline_order = spline_order
         self.sampled_pts = None
@@ -462,6 +467,7 @@ class Airfoil:
         self.camber = None
         self.british_thickness = None
         self.american_thickness = None
+        self.nCtl = nCtl
 
         # Initialize geometric information
         self.recompute(coords)
@@ -479,7 +485,11 @@ class Airfoil:
             The coordinate pairs to compute the airfoil spline from
 
         """
-        self.spline = Curve(X=coords, k=self.spline_order)
+        if self.nCtl:
+            self.spline = Curve(X=coords, k=self.spline_order, nCtl=self.nCtl)
+        else:
+            self.spline = Curve(X=coords, k=self.spline_order)
+
         self.reorder()
 
         self.TE = self.getTE()
@@ -1357,7 +1367,7 @@ class Airfoil:
         coords : Ndarray [N, 2]
             Coordinates array, anticlockwise, from trailing edge
         """
-        s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args)
+        s = sampling.joinedSpacing(nPts, spacingFunc=spacingFunc, func_args=func_args, s_LE=self.s_LE)
         sampled_coords = self.spline.getValue(s)
         if not self.closedCurve and TE_knot:
             sampled_coords = np.vstack((sampled_coords, sampled_coords[-1]))

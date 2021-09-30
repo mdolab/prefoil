@@ -18,7 +18,7 @@ The user can:
    - Modify some of the airfoil characteristics, such as the trailing edge type
    - Compute some geometric parameters (e.g. thickness, camber)
    - Sample the point distribution along the airfoil with a range of built-in specific distributions
-   - Output the files into different formats, for visualization purposes or further meshing with `pyHyp <https://github.com/mdolab/pyhyp>`_
+   - Output the files into different formats, for visualization purposes or further meshing with :doc:`pyHyp <pyhyp:index>`
    - Generate FFD boxes to preform airfoil optimizations
 
 

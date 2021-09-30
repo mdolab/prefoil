@@ -16,9 +16,3 @@ project = "preFoil"
 
 # mock import for autodoc
 autodoc_mock_imports = ["numpy", "pyspline", "scipy", "pygeo"]
-
-# intersphinx
-intersphinx_mapping = {
-    "adflow": (f"https://mdolab-adflow.readthedocs-hosted.com/en/latest", None),
-    "mach-aero": (f"https://mdolab-mach-aero.readthedocs-hosted.com/en/latest", None),
-}
