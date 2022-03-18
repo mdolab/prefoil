@@ -1335,7 +1335,9 @@ class Airfoil:
         return coords[list(set(TE_mask))]
 
     ## Sampling
-    def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args=None, nTEPts=0, TE_knot=False):
+    def getSampledPts(
+        self, nPts, spacingFunc=sampling.polynomial, func_args=None, nTEPts=0, TE_knot=False, openTE=False
+    ):
         """
         This function defines the point sampling along airfoil surface. The
         coordinates are given as a closed curve (i.e. the first and last point
@@ -1372,7 +1374,7 @@ class Airfoil:
         if not self.closedCurve and TE_knot:
             sampled_coords = np.vstack((sampled_coords, sampled_coords[-1]))
 
-        if nTEPts:
+        if nTEPts and not openTE:
             coords_TE = np.zeros((nTEPts + 2, sampled_coords.shape[1]))
             for idim in range(sampled_coords.shape[1]):
                 val1 = self.spline.getValue(1)[idim]
@@ -1380,8 +1382,10 @@ class Airfoil:
                 coords_TE[:, idim] = np.linspace(val1, val2, nTEPts + 2)
             sampled_coords = np.vstack((sampled_coords, coords_TE[1:-1]))
 
-        if not self.closedCurve:
+        if not self.closedCurve and not openTE:
             sampled_coords = np.vstack((sampled_coords, sampled_coords[0]))
+        # if openTE:
+        #     sampled_coords = sampled_coords[:-1].copy()
 
         self.sampled_pts = sampled_coords
 
