@@ -1339,30 +1339,20 @@ class Airfoil:
         self, nPts, spacingFunc=sampling.polynomial, func_args=None, nTEPts=0, TE_knot=False, openTE=False
     ):
         """
-        This function defines the point sampling along airfoil surface. The
-        coordinates are given as a closed curve (i.e. the first and last point
-        are the same, regardless of whether the spline is closed or open).
-        An example dictionary is reported below:
-
-        >>> sample_dict = {'coeff' : 1,
-        >>>        'bad_edge': False}
-
-        The point distribution currently implemented are:
-            - *Cosine*:
-            - *Conical*:
-            - *Parabolic*:
-            - *Polynomial*:
+        This function defines the point sampling along airfoil surface.
 
         Parameters
         ----------
-        upper: dictionary
-            Upper surface sampling dictionary
-        lower: dictionary
-            Lower surface sampling dictionary
+        spacingFunc: function
+            sampling function object, from the methods available in prefoil.sampling
+        func_args: dictionary
+            Dictionary of input arguments for the sampling function.
         nTEPts: float
             Number of points along the **blunt** trailing edge
         TE_knot: bool
             If True, add a duplicate point between the lower airfoil surface and the TE to indicate that a knot is present. If there is a sharp or round trailing edge then this does nothing.
+        openTE: bool
+            If True, the function returns a file with an open trailing edge - good to be used as Xfoil inputs
 
         Returns
         -------
@@ -1384,8 +1374,6 @@ class Airfoil:
 
         if not self.closedCurve and not openTE:
             sampled_coords = np.vstack((sampled_coords, sampled_coords[0]))
-        # if openTE:
-        #     sampled_coords = sampled_coords[:-1].copy()
 
         self.sampled_pts = sampled_coords
 
