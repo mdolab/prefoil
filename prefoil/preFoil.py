@@ -496,7 +496,7 @@ class Airfoil:
         self.LE, self.s_LE = self.getLE()
         self.chord = self.getChord()
         self.twist = self.getTwist()
-        self.closedCurve = (self.spline.getValue(0) == self.spline.getValue(1)).all()
+        self.closedCurve = (coords[0, :] == coords[-1, :]).all()
         self.sampled_pts = None
 
         camber_pts = self.getCDistribution(coords.size)
