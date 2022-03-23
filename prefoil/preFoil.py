@@ -1355,8 +1355,6 @@ class Airfoil:
             Number of points along the **blunt** trailing edge
         TE_knot: bool
             If True, add a duplicate point between the lower airfoil surface and the TE to indicate that a knot is present. If there is a sharp or round trailing edge then this does nothing.
-        openTE: bool
-            If True, the function returns a file with an open trailing edge - good to be used as Xfoil inputs
 
         Returns
         -------
@@ -1368,7 +1366,7 @@ class Airfoil:
         if not self.closedCurve and TE_knot:
             sampled_coords = np.vstack((sampled_coords, sampled_coords[-1]))
 
-        if nTEPts and not openTE:
+        if nTEPts and not self.closedCurve:
             coords_TE = np.zeros((nTEPts + 2, sampled_coords.shape[1]))
             for idim in range(sampled_coords.shape[1]):
                 val1 = self.spline.getValue(1)[idim]
@@ -1376,7 +1374,7 @@ class Airfoil:
                 coords_TE[:, idim] = np.linspace(val1, val2, nTEPts + 2)
             sampled_coords = np.vstack((sampled_coords, coords_TE[1:-1]))
 
-        if not self.closedCurve and not openTE:
+        if not self.closedCurve:
             sampled_coords = np.vstack((sampled_coords, sampled_coords[0]))
 
         self.sampled_pts = sampled_coords
