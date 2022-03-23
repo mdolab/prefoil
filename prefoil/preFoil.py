@@ -1344,7 +1344,7 @@ class Airfoil:
         Parameters
         ----------
         spacingFunc: function
-            sampling function object, from the methods available in prefoil.sampling
+            sampling function object. The methods available in prefoil.sampling are a good default example.
         func_args: dictionary
             Dictionary of input arguments for the sampling function.
         nTEPts: float
