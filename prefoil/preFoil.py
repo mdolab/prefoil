@@ -432,8 +432,10 @@ class Airfoil:
     this object: by passing in a set of points, or by reading in a coordinate
     file. The points must satisfy the following requirements:
 
-       - Ordered such that they form a continuous airfoil surface
-       - First and last points correspond to trailing edge
+        - Ordered such that they form a continuous airfoil surface
+        - First and last points correspond to trailing edge
+            - If the two points coincide, the airfoil will be considered sharp/round
+            - Otherwise, a blunt (open) TE will be assumed
 
     It is not necessary for the points to be in a counter-clockwise ordering. If
     they are not ordered counter-clockwise, the order will be reversed so that
@@ -1343,6 +1345,8 @@ class Airfoil:
 
         Parameters
         ----------
+        nPts: int
+            Number of points to be sampled
         spacingFunc: function
             sampling function object. The methods available in prefoil.sampling are a good default example.
         func_args: dictionary
