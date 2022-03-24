@@ -7,7 +7,7 @@ import sys
 
 
 def cosine(start, end, n, m=np.pi):
-    """
+    r"""
     Sampling function based on cosine spacing. Check :meth:`prefoil.sampling.conical()` for more implementation information.
 
     Parameters
@@ -23,7 +23,7 @@ def cosine(start, end, n, m=np.pi):
 
     m : float
         the maximum angle used for sampling the point distribution, starting from zero.
-        This implicitly defines the "frequency" of the refinement, e.g. m=pi refinement at LE and TE, :math:`m=2\pi` refinement at LE, TE, and mid-chord, etc
+        This implicitly defines the "frequency" of the refinement, e.g. :math:`m=\pi` refinement at LE and TE, :math:`m=2\pi` refinement at LE, TE, and mid-chord, etc
 
     Returns
     -------
@@ -114,7 +114,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
 
 
 def polynomial(start, end, n, m=np.pi, order=5):
-    """
+    r"""
     similar to cosine spacing but instead of a unit circle, a function of the form :math:`1 - x^{\mathrm{order}}` is used.
     This does a better job on not overly clustering points at the edges.
 
@@ -171,12 +171,12 @@ def polynomial(start, end, n, m=np.pi, order=5):
 
 
 def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
-    """
+    r"""
     This spacing function will create a distribution with a geometric sequence
     from both sides. It will try to find the optimal number of nodes to allocate
     to each sequence such that the middle region of constant spacings matches
     with the final spacing from each sequence. The default settings work well
-    for n~100 (200 on entire airfoil).
+    for :math:`n\sim\mathcal{O}(100)` (200 on entire airfoil).
 
     .. code-block:: text
 

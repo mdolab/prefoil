@@ -434,6 +434,7 @@ class Airfoil:
 
         - Ordered such that they form a continuous airfoil surface
         - First and last points correspond to trailing edge
+
             - If the two points coincide, the airfoil will be considered sharp/round
             - Otherwise, a blunt (open) TE will be assumed
 
@@ -443,7 +444,7 @@ class Airfoil:
     surface of the trailing edge and end at the lower surface of the trailing
     edge.
 
-    See documentation on :doc:`pySpline <pyspline:API/curve>` for information on the spline representation
+    See documentation in :class:`pySpline <pyspline:pyspline.pyCurve.Curve>` for information on the spline representation
 
     Parameters
     ----------
@@ -564,10 +565,6 @@ class Airfoil:
     def getLE(self):
         """
         Calculates the leading edge point on the spline, which is defined as the point furthest away from the TE. The spline is assumed to start at the TE. The routine uses a root-finding algorithm to compute the LE.
-        Let the TE be at point :math:`x_0, y_0`, then the Euclidean distance between the TE and any point on the airfoil spline is :math:`\ell(s) = \sqrt{\Delta x^2 + \Delta y^2}`, where :math:`\Delta x = x(s)-x_0` and :math:`\Delta y = y(s)-y_0`. We know near the LE, this quantity is concave. Therefore, to find its maximum, we differentiate and use a root-finding algorithm on its derivative.
-        :math:`\\frac{\mathrm{d}\ell}{\mathrm{d}s} = \\frac{\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}}{\ell}`
-
-        The function dellds computes the quantity :math:`\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}` which is then used by brentq to find its root, with an initial bracket at [0.3, 0.7].
 
         Returns
         -------
@@ -576,6 +573,14 @@ class Airfoil:
 
         s_LE : float
             the parametric position of the leading edge
+
+        Notes
+        -----
+        Let the TE be at point :math:`x_0, y_0`, then the Euclidean distance between the TE and any point on the airfoil spline is :math:`\ell(s) = \sqrt{\Delta x^2 + \Delta y^2}`, where :math:`\Delta x = x(s)-x_0` and :math:`\Delta y = y(s)-y_0`. We know near the LE, this quantity is concave. Therefore, to find its maximum, we differentiate and use a root-finding algorithm on its derivative.
+        :math:`\\frac{\mathrm{d}\ell}{\mathrm{d}s} = \\frac{\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}}{\ell}`
+
+        The function ``dellds`` computes the quantity :math:`\Delta x\\frac{\mathrm{d}x}{\mathrm{d}s} + \Delta y\\frac{\mathrm{d}y}{\mathrm{d}s}` which is then used by ``brentq`` to find its root, with an initial bracket at :math:`[0.3, 0.7]`.
+
         """
 
         def dellds(s, spline, TE):
