@@ -1,6 +1,5 @@
 import numpy as np
 from scipy import optimize
-import sys
 
 
 # for linear use linspace
@@ -234,8 +233,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     nc = n - 4
     deltac = dc / (nc - 1)
     if deltac < a1 or deltac < b1:
-        print("Too many nodes. Decrease initial spacing.")
-        sys.exit()
+        raise ValueError("Too many nodes. Decrease initial spacing.")
 
     # Find best spacing to get smooth distribution
     left = int(np.round(n * 0.01))
@@ -244,8 +242,8 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     checkright = findSpacing(right)
 
     if checkleft < 0 and checkright < 0:
-        print(checkleft, checkright, "Try decreasing spacings")
-        sys.exit()
+        print(checkleft, checkright)
+        raise ValueError("Try decreasing spacings")
     elif checkleft > 0 > checkright:
         na = optimize.bisect(findSpacing, left, right, xtol=1e-4, maxiter=100, disp=False)
     elif checkleft > 0 and checkright > 0:
