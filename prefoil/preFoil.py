@@ -1351,7 +1351,7 @@ class Airfoil:
         nPts: int
             Number of points to be sampled
         spacingFunc: function
-            sampling function object. The methods available in prefoil.sampling are a good default example.
+            sampling function object. The methods available in :mod:`prefoil.sampling` are a good default example.
         func_args: dictionary
             Dictionary of input arguments for the sampling function.
         nTEPts: float
