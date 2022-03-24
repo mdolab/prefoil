@@ -563,7 +563,7 @@ class Airfoil:
         return TE
 
     def getLE(self):
-        """
+        r"""
         Calculates the leading edge point on the spline, which is defined as the point furthest away from the TE. The spline is assumed to start at the TE. The routine uses a root-finding algorithm to compute the LE.
 
         Returns
@@ -1342,9 +1342,7 @@ class Airfoil:
         return coords[list(set(TE_mask))]
 
     ## Sampling
-    def getSampledPts(
-        self, nPts, spacingFunc=sampling.polynomial, func_args=None, nTEPts=0, TE_knot=False, openTE=False
-    ):
+    def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args=None, nTEPts=0, TE_knot=False):
         """
         This function defines the point sampling along airfoil surface.
 
