@@ -757,7 +757,7 @@ class Airfoil:
 
     def getThickness(self, nPts, tType):
         """
-        Computes the thicknesses at each x stations spaced linearly along airfoil
+        Computes the thicknesses at each x stations spaced linearly along the airfoil
 
         Parameters
         ----------
@@ -1344,7 +1344,7 @@ class Airfoil:
     ## Sampling
     def getSampledPts(self, nPts, spacingFunc=sampling.polynomial, func_args=None, nTEPts=0, TE_knot=False):
         """
-        This function defines the point sampling along airfoil surface.
+        This function defines the point sampling along the airfoil surface.
 
         Parameters
         ----------
