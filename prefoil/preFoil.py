@@ -11,7 +11,7 @@
 import numpy as np
 from pyspline import Curve
 from scipy.optimize import brentq, newton, minimize
-from prefoil import sampling
+from . import sampling
 
 EPS = np.finfo(np.float64).eps
 ZEROS_2 = np.zeros(2)
