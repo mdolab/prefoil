@@ -100,6 +100,7 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
 def checkCellRatio(X, ratio_tol=1.2):
     """
     Checks a set of coordinates for consecutive cell ratios that exceed a given tolerance
+
     Parameters
     ----------
     X : Ndarray [N,2]
