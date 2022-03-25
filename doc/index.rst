@@ -27,6 +27,5 @@ The user can:
 
    install
    airfoil
-   sampling
    utils
    examples
