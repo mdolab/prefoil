@@ -1,5 +1,5 @@
 __version__ = "2.0.0"
 
-from .preFoil import Airfoil, readCoordFile
+from .airfoil import Airfoil, generateNACA
 
-__all__ = ["Airfoil"]
+__all__ = ["Airfoil", "utils", "generateNACA"]

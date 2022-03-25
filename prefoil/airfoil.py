@@ -1,6 +1,6 @@
 """
 
-..    preFoil
+..    airfoil 
       -------
 
     Contains a class for creating, modifying and exporting airfoils.
@@ -12,86 +12,27 @@ import numpy as np
 from pyspline import Curve
 from scipy.optimize import brentq, newton, minimize
 from . import sampling
+from .utils.geom_ops import _translateCoords, _rotateCoords, _scaleCoords, _getClosestY
+from .utils.io import _writeDat, _writePlot3D, _writeFFD, Error
+
 
 EPS = np.finfo(np.float64).eps
 ZEROS_2 = np.zeros(2)
 
 
-class Error(Exception):
-    """
-    Format the error message in a box to make it clear this
-    was a explicitly raised exception.
-    """
-
-    def __init__(self, message):
-        msg = "\n+" + "-" * 78 + "+" + "\n" + "| preFoil Error: "
-        i = 17
-        for word in message.split():
-            if len(word) + i + 1 > 78:  # Finish line and start new one
-                msg += " " * (78 - i) + "|\n| " + word + " "
-                i = 1 + len(word) + 1
-            else:
-                msg += word + " "
-                i += len(word) + 1
-        msg += " " * (78 - i) + "|\n" + "+" + "-" * 78 + "+" + "\n"
-        print(msg)
-        super().__init__(msg)
-
-
-def readCoordFile(filename, headerlines=0):
-    """
-    This function reads in a '.dat' style airfoil coordinate file,
-    with each coordinate on a new line and each line containing an xy pair
-    separate by whitespace
-
-    Parameters
-    ----------
-    filename : str
-        the file to read from
-
-    headerlines : int
-        the number of lines to skip at the beginning of the file to reach the coordinates
-
-    Returns
-    -------
-    X : Ndarray [N,2]
-        The coordinates read from the file
-    """
-    with open(filename, "r") as f:
-        for _i in range(headerlines):
-            f.readline()
-        r = []
-        while True:
-            line = f.readline()
-            if not line:
-                break  # end of file
-            if line.isspace():
-                break  # blank line
-            r.append([float(s) for s in line.split()])
-
-            X = np.array(r)
-
-    return X
-
-
 def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
     """
     This function generates an `Airfoil` object based off the analytical definition of the NACA airfoils. It currently only supports 4 digit series airfoils.
-
     Parameters
     ----------
     code : str
         The 4 digit code, this is expected to be a length four string
-
     nPts : int
         The number of points to sample from the defintion of the NACA airfoil, half will be sampled on the top and half on the bottom
-
     spacingFunc : callable
         The spacing function to use for determining the sampling point locations of the x coordinates of the camber line
-
     func_args : dict
         Arguments to pass to the sampling function when it is called
-
     Returns
     -------
     af : prefoil.preFoil.Airfoil
@@ -162,266 +103,6 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
     )
 
     return Airfoil(coords)
-
-
-def _cleanup_pts(X):
-    """
-    DO NOT USE THIS, IT CURRENTLY DOES NOT WORK
-    For now this just removes points which are too close together. In the future we may need to add further
-    functionalities. This is just a generic cleanup tool which is called as part of preprocessing.
-    """
-    from pygeo.geo_utils import pointReduce
-
-    uniquePts, link = pointReduce(X, nodeTol=1e-12)
-    nUnique = len(uniquePts)
-
-    # Create the mask for the unique data:
-    mask = np.zeros(nUnique, "intc")
-    for i in range(len(link)):
-        mask[link[i]] = i
-
-    # De-duplicate the data
-    data = X[mask, :]
-    return data
-
-
-def _writePlot3D(filename, x, y):
-    """
-    This function writes out a 2D airfoil surface in 3D (one element in z direction)
-
-    Parameters
-    ----------
-    filename : str
-        filename to write out, not including the '.xyz' ending
-
-    x : Ndarray [N]
-        a list of all the x values of the coordinates
-
-    y : Ndarray [N]
-        a list of all the y values of the coordinates
-
-    """
-    filename += ".xyz"
-
-    with open(filename, "w") as f:
-        f.write("1\n")
-        f.write("%d %d %d\n" % (len(x), 2, 1))
-        for iDim in range(3):
-            for j in range(2):
-                for i in range(len(x)):
-                    if iDim == 0:
-                        f.write("%g\n" % x[i])
-                    elif iDim == 1:
-                        f.write("%g\n" % y[i])
-                    else:
-                        f.write("%g\n" % (float(j)))
-
-
-def _writeDat(filename, x, y):
-    """
-    This function writes out coordinates in a space delimited list
-
-    Parameters
-    ----------
-    filename : str
-        filename to write out, not including the '.dat' ending
-
-    x : Ndarray [N]
-        a list of all the x values of the coordinates
-
-    y : Ndarray [N]
-        a list of all the y values of the coordinates
-
-    """
-
-    filename += ".dat"
-
-    with open(filename, "w") as f:
-        for i in range(len(x)):
-            f.write(str(round(x[i], 12)) + "\t\t" + str(round(y[i], 12)) + "\n")
-
-
-def _writeFFD(FFDbox, filename):
-    """
-    This function writes out an FFD in plot3D format from an FFDbox.
-
-    Parameters
-    ----------
-    FFDBox : Ndarray [N,2,2,3]
-        FFD Box to write out
-
-    filename : str
-        filename to write out, not including the '.xyz' ending
-
-    """
-
-    nffd = FFDbox.shape[0]
-
-    # Write to file
-    with open(filename + ".xyz", "w") as f:
-        f.write("1\n")
-        f.write(str(nffd) + " 2 2\n")
-        for ell in range(3):
-            for k in range(2):
-                for j in range(2):
-                    for i in range(nffd):
-                        f.write("%.15f " % (FFDbox[i, j, k, ell]))
-                    f.write("\n")
-
-
-def _translateCoords(X, dX):
-    """
-    Translates the input coordinates
-
-    Parameters
-    ----------
-    X : Ndarray [N,2]
-        The x/y coordinate pairs that are being translated
-
-    dX : Ndarray [N,2]
-        The dx/dy amount to translate in each direction
-
-    Returns
-    -------
-    translated_X : Ndarray [N,2]
-        The translated coordinates
-    """
-    return X + dX
-
-
-def _rotateCoords(X, angle, origin):
-    """
-    Rotates coordinates about the specified origin by angle (in deg)
-
-    Parameters
-    ----------
-    X : Ndarray [N,2]
-        The x/y coordinate pairs that are being rotated
-
-    angle : float
-        The angle in radians to rotate the coordinates
-
-    origin : Ndarray [2]
-        The x/y coordinate pair specifying the rotation origin
-
-    Returns
-    -------
-    rotated_X : Ndarray[N,2]
-        The rotated coordinate pairs
-    """
-    c, s = np.cos(angle), np.sin(angle)
-    R = np.array(((c, -s), (s, c)))
-    shifted_X = X - origin
-    shifted_rotated_X = np.dot(shifted_X, R.T)
-    rotated_X = shifted_rotated_X + origin
-    return rotated_X
-
-
-def _scaleCoords(X, scale, origin):
-    """
-    Scales coordinates in both dimensions by the scaling factor from a given origin
-
-    Parameters
-    ----------
-    X : Ndarry [N,2]
-        The x/y coordinate pairs that are being scaled
-
-    scale : float
-        The scaling factor
-
-    origin : float
-        The location about which scaling occurs (This point will not change)
-
-    Returns
-    -------
-    scaled_X : Ndarray [N,2]
-        the scaled coordinate values
-    """
-    shifted_X = X - origin
-    shifted_scaled_X = shifted_X * scale
-    scaled_X = shifted_scaled_X + origin
-    return scaled_X
-
-
-def checkCellRatio(X, ratio_tol=1.2):
-    """
-    Checks a set of coordinates for consecutive cell ratios that exceed a given tolerance
-
-    Parameters
-    ----------
-    X : Ndarray [N,2]
-        The set of coordinates being checked
-
-    ratio_tol : float
-        The maximum cell ratio that is allowed
-
-    Returns
-    -------
-    cell_ratio : Ndarray [N]
-        the cell ratios for each cell
-
-    max_cell_ratio : float
-        the maximum cell ratio
-
-    avg_cell_ratio : float
-        the average cell ratio
-
-    exc : Ndarray
-        the cell indicies that exceed the ratio tolerance
-    """
-    X_diff = X[1:, :] - X[:-1, :]
-    cell_size = np.sqrt(X_diff[:, 0] ** 2 + X_diff[:, 1] ** 2)
-    crit_cell_size = np.flatnonzero(cell_size < 1e-10)
-    for i in crit_cell_size:
-        print("critical I", i)
-    cell_ratio = cell_size[1:] / cell_size[:-1]
-    exc = np.flatnonzero(cell_ratio > ratio_tol)
-
-    if exc.size > 0:
-        print("WARNING: There are ", exc.size, " elements which exceed " "suggested cell ratio: ", exc)
-
-    max_cell_ratio = np.max(cell_ratio, 0)
-    avg_cell_ratio = np.average(cell_ratio, 0)
-    print("Max cell ratio: ", max_cell_ratio)
-    print("Average cell ratio", avg_cell_ratio)
-
-    return cell_ratio, max_cell_ratio, avg_cell_ratio, exc
-
-
-def _getClosestY(coords, x):
-    """
-    Gets the closest y value on the upper and lower point to an x value
-
-    Parameters
-    ----------
-    coords : Ndarray [N,2]
-        coordinates defining the airfoil
-
-    x : float
-        The x value to find the closest point for
-
-    Returns
-    -------
-    yu : float
-        The y value of the closest coordinate on the upper surface
-
-    yl : float
-        The y value of the closest coordinate on the lower surface
-    """
-
-    top = coords[: len(coords + 1) // 2 + 1, :]
-    bottom = coords[len(coords + 1) // 2 :, :]
-
-    x_top = np.ones(len(top))
-    for i in range(len(top)):
-        x_top[i] = abs(top[i, 0] - x)
-    yu = top[np.argmin(x_top), 1]
-    x_bottom = np.ones(len(bottom))
-    for i in range(len(bottom)):
-        x_bottom[i] = abs(bottom[i, 0] - x)
-    yl = bottom[np.argmin(x_bottom), 1]
-
-    return yu, yl
 
 
 class Airfoil:
