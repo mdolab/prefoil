@@ -1,6 +1,6 @@
 """
 
-..    airfoil 
+..    airfoil
       -------
 
     Contains a class for creating, modifying and exporting airfoils.

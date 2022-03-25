@@ -3,9 +3,8 @@ from baseclasses import BaseRegTest
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal
 import os
-from prefoil import Airfoil, generateNACA
-from prefoil.utils import sampling
-from prefoil.utils import readCoordFile, Error
+from prefoil import Airfoil
+from prefoil.utils import readCoordFile, Error, generateNACA, sampling
 from prefoil.utils.geom_ops import _getClosestY
 
 baseDir = os.path.dirname(os.path.abspath(__file__))
@@ -121,7 +120,7 @@ class TestBasic(unittest.TestCase):
         assert_allclose(np.array([3 / 8, -np.sqrt(3) / 8]), val, atol=1e-12)
 
     def test_generateNACA_0012(self):
-        af = generateNACA("0012", 200)
+        af = Airfoil(generateNACA("0012", 200))
         self.assertFalse(af.closedCurve)
         assert_allclose(np.array([0.0, 0.0]), af.LE, atol=1e-12)
         assert_allclose(np.array([1.0, 0.0]), af.TE, atol=3e-3)
@@ -129,7 +128,7 @@ class TestBasic(unittest.TestCase):
         assert_allclose((0.30, 0.12), af.getMaxThickness("american"), atol=1e-4)
 
     def test_generateNACA_6412(self):
-        af = generateNACA("6412", 1000)
+        af = Airfoil(generateNACA("6412", 1000))
         self.assertFalse(af.closedCurve)
         assert_allclose(np.array([1.0, 0.0]), af.TE, atol=1e-4)
         self.assertFalse(af.isSymmetric())

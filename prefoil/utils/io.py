@@ -1,9 +1,9 @@
 """
 
-.. 		io
-		--
+..      io
+        --
 
-	Contains helper functions for file and user I/O
+    Contains helper functions for file and user I/O
 
 """
 
