@@ -12,8 +12,7 @@ import numpy as np
 
 class Error(Exception):
     """
-    Format the error message in a box to make it clear this
-    was a explicitly raised exception.
+    Formats error messages to make it clear that it was explicitly raised by prefoil.
     """
 
     def __init__(self, message):
