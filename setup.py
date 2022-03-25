@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import re
 
 __version__ = re.findall(
@@ -13,9 +13,7 @@ setup(
     author="",
     author_email="",
     url="https://github.com/mdolab/prefoil",
-    packages=[
-        "prefoil",
-    ],
+    packages=find_packages(),
     install_requires=["numpy>=1.16", "scipy>=1.2" "pygeo>=1.2.0", "pyspline>=1.1.0"],
     extra_require={"testing": ["mdolab-baseclasses>=1.4", "testflo"]},
     classifiers=["Operating System :: OS Independent", "Programming Language :: Python"],

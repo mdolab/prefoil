@@ -1,7 +1,7 @@
 import unittest
 from baseclasses import BaseRegTest
 import os
-from prefoil import sampling
+from prefoil.utils import sampling
 
 baseDir = os.path.dirname(os.path.abspath(__file__))
 
