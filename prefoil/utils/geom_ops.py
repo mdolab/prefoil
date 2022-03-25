@@ -25,6 +25,7 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
         The spacing function to use for determining the sampling point locations of the x coordinates of the camber line
     func_args : dict
         Arguments to pass to the sampling function when it is called
+
     Returns
     -------
     af : Ndarray [N,2]
@@ -107,6 +108,7 @@ def checkCellRatio(X, ratio_tol=1.2):
         The set of coordinates being checked
     ratio_tol : float
         The maximum cell ratio that is allowed
+
     Returns
     -------
     cell_ratio : Ndarray [N]
