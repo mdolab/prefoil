@@ -1,8 +1,8 @@
 .. _sampling_API:
 
-sampling API
-------------
-.. currentmodule:: prefoil.sampling
+Sampling Functions
+------------------
+.. currentmodule:: prefoil.utils.sampling
 
-.. automodule:: prefoil.sampling
+.. automodule:: prefoil.utils.sampling
     :members:

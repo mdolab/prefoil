@@ -26,6 +26,7 @@ The user can:
    :maxdepth: 1
 
    install
-   preFoil
+   airfoil
    sampling
+   utils
    examples
