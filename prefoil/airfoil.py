@@ -1160,8 +1160,10 @@ class Airfoil:
         fig : matplotlib.pyplot.Figure
             The figure with the plotted airfoil
         """
-
-        import matplotlib.pyplot as plt
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError as e:
+            raise ImportError("matplotlib is needed for the plotting functionality") from e
 
         if self.sampled_pts is None:
             coords = self.getSplinePts()

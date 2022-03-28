@@ -6,6 +6,9 @@ __version__ = re.findall(
     open("prefoil/__init__.py").read(),
 )[0]
 
+with open("doc/requirements.txt") as f:
+    docs_require = f.read().splitlines()
+
 setup(
     name="prefoil",
     version=__version__,
@@ -15,6 +18,10 @@ setup(
     url="https://github.com/mdolab/prefoil",
     packages=find_packages(),
     install_requires=["numpy>=1.16", "scipy>=1.2", "pyspline>=1.1.0"],
-    extra_require={"testing": ["mdolab-baseclasses>=1.4", "testflo"]},
+    extras_require={
+        "plotting": ["matplotlib"],
+        "testing": ["mdolab-baseclasses>=1.4", "testflo"],
+        "docs": docs_require,
+    },
     classifiers=["Operating System :: OS Independent", "Programming Language :: Python"],
 )
