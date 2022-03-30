@@ -3,8 +3,8 @@ Sample usage script showing some use cases, and how the API should work.
 """
 
 # rst IMPORTS start
-from prefoil import Airfoil
-from prefoil.utils import readCoordFile, sampling
+from prefoil import Airfoil, sampling
+from prefoil.utils import readCoordFile
 import matplotlib.pyplot as plt
 
 # rst IMPORTS end

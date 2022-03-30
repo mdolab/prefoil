@@ -8,7 +8,8 @@
 """
 
 import numpy as np
-from . import sampling, Error
+from .. import sampling
+from . import Error
 
 
 def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
@@ -54,7 +55,7 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
 
     for i in range(len(camber_x)):
         if camber_x[i] < p:
-            camber_y[i] = m / p ** 2 * (2 * p * camber_x[i] - camber_x[i] ** 2)
+            camber_y[i] = m / p**2 * (2 * p * camber_x[i] - camber_x[i] ** 2)
         else:
             camber_y[i] = m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * camber_x[i] - camber_x[i] ** 2)
 
@@ -83,7 +84,7 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
                 )
             )
             if camber_x[i] < p:
-                theta = np.arctan(m / p ** 2 * (2 * p - 2 * camber_x[i]))
+                theta = np.arctan(m / p**2 * (2 * p - 2 * camber_x[i]))
             else:
                 theta = np.arctan(m / (1 - p) ** 2 * (2 * p - 2 * camber_x[i]))
             upper_x[i] = camber_x[i] - thick_y * np.sin(theta)

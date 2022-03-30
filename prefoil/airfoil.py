@@ -11,7 +11,7 @@
 import numpy as np
 from pyspline import Curve
 from scipy.optimize import brentq, newton, minimize
-from .utils import sampling
+from . import sampling
 from .utils.geom_ops import _translateCoords, _rotateCoords, _scaleCoords, _getClosestY
 from .utils.io import _writeDat, _writePlot3D, _writeFFD, Error
 
