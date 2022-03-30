@@ -1,7 +1,8 @@
 import unittest
 from baseclasses import BaseRegTest
 import os
-from prefoil.preFoil import Airfoil, readCoordFile
+from prefoil import Airfoil
+from prefoil.utils import readCoordFile
 
 baseDir = os.path.dirname(os.path.abspath(__file__))
 

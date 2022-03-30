@@ -1,13 +1,12 @@
 import numpy as np
 from scipy import optimize
-import sys
 
 
 # for linear use linspace
 
 
 def cosine(start, end, n, m=np.pi):
-    """
+    r"""
     Sampling function based on cosine spacing. Check :meth:`prefoil.sampling.conical()` for more implementation information.
 
     Parameters
@@ -23,7 +22,7 @@ def cosine(start, end, n, m=np.pi):
 
     m : float
         the maximum angle used for sampling the point distribution, starting from zero.
-        This implicitly defines the "frequency" of the refinement, e.g. m=pi refinement at LE and TE, :math:`m=2\pi` refinement at LE, TE, and mid-chord, etc
+        This implicitly defines the "frequency" of the refinement, e.g. :math:`m=\pi` refinement at LE and TE, :math:`m=2\pi` refinement at LE, TE, and mid-chord, etc
 
     Returns
     -------
@@ -105,7 +104,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
     else:
         x = np.linspace(m, 0, n)
     if b >= 1:
-        s = (1 + 1 / np.sqrt(np.cos(x) ** 2 + np.sin(x) ** 2 / b ** 2) * np.cos(x)) * 0.5
+        s = (1 + 1 / np.sqrt(np.cos(x) ** 2 + np.sin(x) ** 2 / b**2) * np.cos(x)) * 0.5
     else:
         cos = np.cos(x)
         s = ((cos + 1) / 2 - x[::-1] / np.pi) * b + x[::-1] / np.pi
@@ -114,7 +113,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
 
 
 def polynomial(start, end, n, m=np.pi, order=5):
-    """
+    r"""
     similar to cosine spacing but instead of a unit circle, a function of the form :math:`1 - x^{\mathrm{order}}` is used.
     This does a better job on not overly clustering points at the edges.
 
@@ -171,12 +170,12 @@ def polynomial(start, end, n, m=np.pi, order=5):
 
 
 def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
-    """
+    r"""
     This spacing function will create a distribution with a geometric sequence
     from both sides. It will try to find the optimal number of nodes to allocate
     to each sequence such that the middle region of constant spacings matches
     with the final spacing from each sequence. The default settings work well
-    for n~100 (200 on entire airfoil).
+    for :math:`n\sim\mathcal{O}(100)` (200 on entire airfoil).
 
     .. code-block:: text
 
@@ -213,11 +212,11 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     s[n - 1] = 1.0
 
     def findSpacing(na):
-        a_na = a1 * ra ** na
+        a_na = a1 * ra**na
         nb = np.log(a_na / b1) / np.log(rb)
         nb = np.round(nb)
-        da = a1 * (1 - ra ** na) / (1 - ra)
-        db = b1 * (1 - rb ** nb) / (1 - rb)
+        da = a1 * (1 - ra**na) / (1 - ra)
+        db = b1 * (1 - rb**nb) / (1 - rb)
 
         s_na = da
         s_nb = 1 - db
@@ -234,8 +233,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     nc = n - 4
     deltac = dc / (nc - 1)
     if deltac < a1 or deltac < b1:
-        print("Too many nodes. Decrease initial spacing.")
-        sys.exit()
+        raise ValueError("Too many nodes. Decrease initial spacing.")
 
     # Find best spacing to get smooth distribution
     left = int(np.round(n * 0.01))
@@ -244,8 +242,8 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     checkright = findSpacing(right)
 
     if checkleft < 0 and checkright < 0:
-        print(checkleft, checkright, "Try decreasing spacings")
-        sys.exit()
+        print(checkleft, checkright)
+        raise ValueError("Try decreasing spacings")
     elif checkleft > 0 > checkright:
         na = optimize.bisect(findSpacing, left, right, xtol=1e-4, maxiter=100, disp=False)
     elif checkleft > 0 and checkright > 0:
@@ -257,11 +255,11 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
 
     # Compute final distribution
     na = int(np.round(na))
-    a_na = a1 * ra ** na
+    a_na = a1 * ra**na
     nb = np.log(a_na / b1) / np.log(rb)
     nb = int(np.round(nb))
-    da = a1 * (1 - ra ** na) / (1 - ra)
-    db = b1 * (1 - rb ** nb) / (1 - rb)
+    da = a1 * (1 - ra**na) / (1 - ra)
+    db = b1 * (1 - rb**nb) / (1 - rb)
 
     s_na = da
     s_nb = 1 - db
@@ -276,7 +274,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
             s[i] = s[i - 1] + deltac
         else:
             j = n - i - 1
-            s[i] = 1 - b1 * (1 - rb ** j) / (1 - rb)
+            s[i] = 1 - b1 * (1 - rb**j) / (1 - rb)
 
     s = s * (end - start) + start
     return s

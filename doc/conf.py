@@ -15,4 +15,4 @@ sys.path.insert(0, os.path.abspath("../"))
 project = "preFoil"
 
 # mock import for autodoc
-autodoc_mock_imports = ["numpy", "pyspline", "scipy", "pygeo"]
+autodoc_mock_imports = ["numpy", "pyspline", "scipy"]

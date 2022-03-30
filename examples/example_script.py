@@ -3,8 +3,8 @@ Sample usage script showing some use cases, and how the API should work.
 """
 
 # rst IMPORTS start
-from prefoil.preFoil import Airfoil, readCoordFile
-from prefoil import sampling
+from prefoil import Airfoil, sampling
+from prefoil.utils import readCoordFile
 import matplotlib.pyplot as plt
 
 # rst IMPORTS end
@@ -16,7 +16,7 @@ cleanup, and then sample it with a particular distribution.
 
 # rst PLOT start
 # Read the Coordinate file
-filename = "../tests/rae2822.dat"
+filename = "../tests/airfoils/rae2822.dat"
 coords = readCoordFile(filename)
 airfoil = Airfoil(coords)
 
@@ -71,7 +71,7 @@ framework to run an optimization.
 
 # rst OPTSETUP start
 # Write surface mesh
-airfoil.writeCoords("rae2822", format="plot3d")
+airfoil.writeCoords("rae2822", file_format="plot3d")
 
 # Write a fitted FFD with 10 chordwise points
 airfoil.generateFFD(10, "ffd")
