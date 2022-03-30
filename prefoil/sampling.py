@@ -104,7 +104,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
     else:
         x = np.linspace(m, 0, n)
     if b >= 1:
-        s = (1 + 1 / np.sqrt(np.cos(x) ** 2 + np.sin(x) ** 2 / b ** 2) * np.cos(x)) * 0.5
+        s = (1 + 1 / np.sqrt(np.cos(x) ** 2 + np.sin(x) ** 2 / b**2) * np.cos(x)) * 0.5
     else:
         cos = np.cos(x)
         s = ((cos + 1) / 2 - x[::-1] / np.pi) * b + x[::-1] / np.pi
@@ -212,11 +212,11 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     s[n - 1] = 1.0
 
     def findSpacing(na):
-        a_na = a1 * ra ** na
+        a_na = a1 * ra**na
         nb = np.log(a_na / b1) / np.log(rb)
         nb = np.round(nb)
-        da = a1 * (1 - ra ** na) / (1 - ra)
-        db = b1 * (1 - rb ** nb) / (1 - rb)
+        da = a1 * (1 - ra**na) / (1 - ra)
+        db = b1 * (1 - rb**nb) / (1 - rb)
 
         s_na = da
         s_nb = 1 - db
@@ -255,11 +255,11 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
 
     # Compute final distribution
     na = int(np.round(na))
-    a_na = a1 * ra ** na
+    a_na = a1 * ra**na
     nb = np.log(a_na / b1) / np.log(rb)
     nb = int(np.round(nb))
-    da = a1 * (1 - ra ** na) / (1 - ra)
-    db = b1 * (1 - rb ** nb) / (1 - rb)
+    da = a1 * (1 - ra**na) / (1 - ra)
+    db = b1 * (1 - rb**nb) / (1 - rb)
 
     s_na = da
     s_nb = 1 - db
@@ -274,7 +274,7 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
             s[i] = s[i - 1] + deltac
         else:
             j = n - i - 1
-            s[i] = 1 - b1 * (1 - rb ** j) / (1 - rb)
+            s[i] = 1 - b1 * (1 - rb**j) / (1 - rb)
 
     s = s * (end - start) + start
     return s
