@@ -13,7 +13,7 @@ Import Libraries
 
 These are the typical imports for using preFoil.
 :class:`prefoil.airfoil.Airfoil` and :meth:`prefoil.utils.io.readCoordFile` are always needed to use preFoil.
-``sampling`` gives access some :ref:`sampling functions <sampling_API>` that can be used to create surface meshes.
+``sampling`` gives access some :mod:`sampling functions <prefoil.sampling>` that can be used to create surface meshes.
 ``matplotlib`` is imported to visualize airfoils with built-in plotting tools, however this is not necessary for scripts that generate surface meshes.
 
 Plotting an Airfoil
@@ -47,7 +47,7 @@ After sampling an airfoil, the :meth:`prefoil.airfoil.Airfoil.plot` function sho
 .. note:: Sampling points does not change the underlying spline in the :class:`prefoil.airfoil.Airfoil`. That is only changed by :meth:`prefoil.airfoil.Airfoil.removeTE` or any of the geometry modification functions (:meth:`prefoil.airfoil.Airfoil.scale`, :meth:`prefoil.airfoil.Airfoil.rotate`, etc.).
 
 Both sets of sampled points containing 50 points.
-When using the :meth:`prefoil.utils.sampling.conical` sampling function, higher coefficents result in more nodes clustered near the ends of the airfoil.
+When using the :meth:`prefoil.sampling.conical` sampling function, higher coefficents result in more nodes clustered near the ends of the airfoil.
 
 .. literalinclude:: ../examples/example_script.py
    :start-after: # rst ULSAMPLING start

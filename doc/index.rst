@@ -26,6 +26,5 @@ The user can:
    :maxdepth: 1
 
    install
-   airfoil
-   utils
+   API
    examples
