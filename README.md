@@ -1,6 +1,6 @@
 # preFoil
-[![Build Status](https://dev.azure.com/mdolab/Private/_apis/build/status/mdolab.prefoil?repoName=mdolab%2Fprefoil&branchName=main)](https://dev.azure.com/mdolab/Private/_build/latest?definitionId=41&repoName=mdolab%2Fprefoil&branchName=main)
-[![Documentation Status](https://readthedocs.com/projects/mdolab-prefoil/badge/?version=latest&token=553be800f2c177d891aad7cca9bb6c0b6a3d66cede14118083e226a79157a579)](https://mdolab-prefoil.readthedocs-hosted.com/en/latest/?badge=latest)
+[![Build Status](https://dev.azure.com/mdolab/Public/_apis/build/status/mdolab.prefoil?repoName=mdolab%2Fprefoil&branchName=main)](https://dev.azure.com/mdolab/Public/_build/latest?definitionId=44&repoName=mdolab%2Fprefoil&branchName=main)
+[![Documentation Status](https://readthedocs.com/projects/mdolab-prefoil/badge/?version=latest)](https://mdolab-prefoil.readthedocs-hosted.com/en/latest/?badge=latest)
 
 
 preFoil is a simple set of tools to support airfoil manipulation and mesh generation. This repo is functional but many features are still experimental.
