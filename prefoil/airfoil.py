@@ -806,7 +806,7 @@ class Airfoil:
         if xCut >= 1.0 or xCut <= 0:
             raise Error("xCut must be between 0 and 1.")
 
-        if not self.closedCurve:
+        if self.closedCurve:
             self.makeBluntTE(xCut)
 
         # Value of blunt TE point on upper surface
