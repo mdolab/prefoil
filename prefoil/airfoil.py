@@ -59,7 +59,6 @@ class Airfoil:
     """
 
     def __init__(self, coords, spline_order=4, normalize=False, nCtl=None):
-
         self.spline_order = spline_order
         self.sampled_pts = None
         self.closedCurve = None
@@ -488,7 +487,6 @@ class Airfoil:
             opt = minimize(british_f, 0.5, method="SLSQP", jac=british_df, bounds=[(0, 1)])
 
             if not opt.success:
-
                 raise Error("Could not determine the maximum thickness.")
 
             opt_point = self.british_thickness.getValue(opt.x)
@@ -920,7 +918,6 @@ class Airfoil:
         airfoil_mask = []
         TE_mask = []
         for ii in range(coords.shape[0] - 1):  # loop over each element
-
             if coords[ii, 0] >= (self.LE + chord_vec * xtol)[0]:
                 delta = coords[ii + 1] - coords[ii]
                 unit_delta = delta / np.linalg.norm(delta)
