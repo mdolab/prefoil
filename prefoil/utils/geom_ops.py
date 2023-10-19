@@ -21,7 +21,8 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
     code : str
         The 4 digit code, this is expected to be a length four string
     nPts : int
-        The number of points to sample from the defintion of the NACA airfoil, half will be sampled on the top and half on the bottom
+        The number of points to sample from the defintion of the NACA airfoil, half will be sampled on the top and half on the bottom.
+        This must be an even number.
     spacingFunc : callable
         The spacing function to use for determining the sampling point locations of the x coordinates of the camber line
     func_args : dict
@@ -41,6 +42,9 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
 
     if not func_args:
         func_args = {}
+
+    if nPts % 2 != 0:
+        raise ValueError("nPts must be an even number.")
 
     camber_x = spacingFunc(0.0, 1.0, nPts // 2, **func_args)
     camber_y = np.zeros_like(camber_x)
