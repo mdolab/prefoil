@@ -21,7 +21,8 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
     code : str
         The 4 digit code, this is expected to be a length four string
     nPts : int
-        The number of points to sample from the defintion of the NACA airfoil, half will be sampled on the top and half on the bottom
+        The number of points to sample from the defintion of the NACA airfoil, half will be sampled on the top and half on the bottom.
+        This must be an even number.
     spacingFunc : callable
         The spacing function to use for determining the sampling point locations of the x coordinates of the camber line
     func_args : dict
@@ -42,6 +43,9 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
     if not func_args:
         func_args = {}
 
+    if nPts % 2 != 0:
+        raise ValueError("nPts must be an even number.")
+
     camber_x = spacingFunc(0.0, 1.0, nPts // 2, **func_args)
     camber_y = np.zeros_like(camber_x)
     upper_x = np.zeros((nPts // 2, 1))
@@ -60,40 +64,28 @@ def generateNACA(code, nPts, spacingFunc=sampling.cosine, func_args=None):
             camber_y[i] = m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * camber_x[i] - camber_x[i] ** 2)
 
     for i in range(len(camber_x)):
-        # edge cases
-        if i == 0:
-            upper_x[i] = 0
-            lower_x[i] = 0
-            upper_y[i] = 0
-            lower_y[i] = 0
-        elif i == len(camber_x) - 1:
-            upper_x[i] = 1
-            lower_x[i] = 1
-            upper_y[i] = 0
-            lower_y[i] = 0
-        else:
-            thick_y = (
-                t
-                / 0.2
-                * (
-                    0.2969 * np.sqrt(camber_x[i])
-                    - 0.126 * camber_x[i]
-                    - 0.3516 * camber_x[i] ** 2
-                    + 0.2843 * camber_x[i] ** 3
-                    - 0.1015 * camber_x[i] ** 4
-                )
+        thick_y = (
+            t
+            / 0.2
+            * (
+                0.2969 * np.sqrt(camber_x[i])
+                - 0.126 * camber_x[i]
+                - 0.3516 * camber_x[i] ** 2
+                + 0.2843 * camber_x[i] ** 3
+                - 0.1015 * camber_x[i] ** 4
             )
-            if camber_x[i] < p:
-                theta = np.arctan(m / p**2 * (2 * p - 2 * camber_x[i]))
-            else:
-                theta = np.arctan(m / (1 - p) ** 2 * (2 * p - 2 * camber_x[i]))
-            upper_x[i] = camber_x[i] - thick_y * np.sin(theta)
-            lower_x[i] = camber_x[i] + thick_y * np.sin(theta)
-            upper_y[i] = camber_y[i] + thick_y * np.cos(theta)
-            lower_y[i] = camber_y[i] - thick_y * np.cos(theta)
+        )
+        if camber_x[i] < p:
+            theta = np.arctan(m / p**2 * (2 * p - 2 * camber_x[i]))
+        else:
+            theta = np.arctan(m / (1 - p) ** 2 * (2 * p - 2 * camber_x[i]))
+        upper_x[i] = camber_x[i] - thick_y * np.sin(theta)
+        lower_x[i] = camber_x[i] + thick_y * np.sin(theta)
+        upper_y[i] = camber_y[i] + thick_y * np.cos(theta)
+        lower_y[i] = camber_y[i] - thick_y * np.cos(theta)
 
     coords = np.hstack(
-        (np.concatenate((np.flip(upper_x)[1:], lower_x[1:-1])), np.concatenate((np.flip(upper_y)[1:], lower_y[1:-1])))
+        (np.concatenate((np.flip(upper_x[1:]), lower_x)), np.concatenate((np.flip(upper_y[1:]), lower_y)))
     )
 
     return coords
