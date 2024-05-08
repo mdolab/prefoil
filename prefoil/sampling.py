@@ -280,6 +280,54 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     return s
 
 
+def tanh_distribution(start, end, n, s0, s1):
+    """
+    Hyperbolic tangent distribution based on:
+    https://www.cfd-online.com/Wiki/Structured_mesh_generation
+
+    The original paper is:
+    Marcel Vinokur. "On One-Dimensional Stretching Functions for Finite-Difference Calculations."
+    Journal of Computational and Physics (1983)
+    https://doi.org/10.1016/0021-9991(83)90065-7
+
+    Parameters
+    ----------
+    start : float
+        The location to start sampling at
+
+    end : float
+        The location to stop sampling at
+
+    n : int
+        The number of points to sample
+
+    s0 : float
+        The desired spacing at the start location
+
+    s1 : float
+        The desired spacing at the end location
+
+    """
+    A = np.sqrt(s1 / s0)
+    B = 1 / np.sqrt(s1 * s0)
+
+    def func(delta):
+        return B - np.sinh(delta) / delta
+
+    delta = optimize.fsolve(func, 100)
+
+    residual = B - np.sinh(delta) / delta
+
+    if residual > 1e-4:
+        raise ValueError("fsolve failed to converge.")
+
+    xi = np.linspace(0, 1, n)
+    u = 1 / 2 + np.tanh(delta * (xi - 1 / 2)) / (2 * np.tanh(delta / 2))
+    dist = u / (A + (1 - A) * u) * (end - start) + start
+
+    return dist
+
+
 def joinedSpacing(n, spacingFunc=polynomial, func_args=None, s_LE=0.5):
     """
     Function that returns two point distributions joined at ``s_LE``.
