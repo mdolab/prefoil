@@ -42,3 +42,12 @@ class TestBasic(unittest.TestCase):
         with BaseRegTest(ref_file, train) as handler:
             s = sampling.bigeometric(0, 1, 100)
             handler.root_add_val("test_bigeometric - Sample from Bigeometric:", s, tol=1e-10)
+
+    def train_tanh(self):
+        self.test_tanh(True)
+
+    def test_tanh(self, train=False):
+        ref_file = os.path.join(baseDir, "ref/test_tanh.ref")
+        with BaseRegTest(ref_file, train) as handler:
+            s = sampling.tanh_distribution(0, 1, 100, s0=1e-2, s1=1e-3)
+            handler.root_add_val("test_tanh - Sample from tanh_distribution:", s, tol=1e-10)
