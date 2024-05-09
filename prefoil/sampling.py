@@ -280,10 +280,11 @@ def bigeometric(start, end, n, a1=0.001, b1=0.001, ra=1.1, rb=1.1):
     return s
 
 
-def tanh_distribution(start, end, n, s0, s1):
+def tanh_distribution(start, end, n, s0=None, s1=None):
     """
     Hyperbolic tangent distribution based on:
     https://www.cfd-online.com/Wiki/Structured_mesh_generation
+    (Retrieved May 9, 2024)
 
     The original paper is:
     Marcel Vinokur. "On One-Dimensional Stretching Functions for Finite-Difference Calculations."
@@ -307,7 +308,16 @@ def tanh_distribution(start, end, n, s0, s1):
     s1 : float
         The desired spacing at the end location
 
+    Returns
+    -------
+    dist : Ndarray [N]
+        The parametric coordinates that define the distribution
+
     """
+
+    if s0 is None or s1 is None:
+        raise ValueError("s0 and s1 must be defined.")
+
     A = np.sqrt(s1 / s0)
     B = 1 / np.sqrt(s1 * s0)
 
