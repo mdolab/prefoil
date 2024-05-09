@@ -316,7 +316,7 @@ def tanh_distribution(start, end, n, s0=None, s1=None):
     """
 
     if s0 is None or s1 is None:
-        raise ValueError("s0 and s1 must be defined.")
+        raise TypeError("s0 and s1 must be defined.")
 
     A = np.sqrt(s1 / s0)
     B = 1 / np.sqrt(s1 * s0)
