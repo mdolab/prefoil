@@ -17,7 +17,7 @@ setup(
     author_email="",
     url="https://github.com/mdolab/prefoil",
     packages=find_packages(),
-    install_requires=["numpy>=1.16", "scipy>=1.2", "pyspline>=1.1.0"],
+    install_requires=["numpy>=1.21", "scipy>=1.7", "pyspline>=1.1.0"],
     extras_require={
         "plotting": ["matplotlib"],
         "testing": ["mdolab-baseclasses>=1.4", "testflo"],
