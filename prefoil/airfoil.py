@@ -24,9 +24,8 @@ class Airfoil:
     """
     A class for manipulating airfoil geometry.
 
-    Create an instance of an airfoil. There are two ways of instantiating
-    this object: by passing in a set of points, or by reading in a coordinate
-    file. The points must satisfy the following requirements:
+    Create an instance of an airfoil by passing in a set of points.
+    The points must satisfy the following requirements:
 
         - Ordered such that they form a continuous airfoil surface
         - First and last points correspond to trailing edge
@@ -44,8 +43,8 @@ class Airfoil:
 
     Parameters
     ----------
-    coords : ndarray[N,3]
-        Full array of airfoil coordinates
+    coords : ndarray [N,2]
+        The coordinate pairs defining the airfoil
 
     spline_order : {4, 2, 3}
         Order of the spline. :math:`n` order implies :math:`C^{n-2}` continuity
