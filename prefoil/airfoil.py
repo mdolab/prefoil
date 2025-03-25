@@ -149,7 +149,7 @@ class Airfoil:
 
         Returns
         -------
-        TE : 2darry [2]
+        TE : ndarray [2]
             The coordinate of the trailing edge of the airfoil
         """
 
@@ -500,12 +500,12 @@ class Airfoil:
 
         Parameters
         ----------
-        coord : 2darray
+        coord : ndarray [2]
             The point of interest we wish to project onto the chordline.
 
         Returns
         -------
-        point : 2darray
+        point : ndarray [2]
             The coordinate that is the perpendicular projection of `coord` onto the chordline
         """
         # vector defines the chord
