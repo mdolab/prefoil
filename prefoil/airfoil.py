@@ -24,9 +24,8 @@ class Airfoil:
     """
     A class for manipulating airfoil geometry.
 
-    Create an instance of an airfoil. There are two ways of instantiating
-    this object: by passing in a set of points, or by reading in a coordinate
-    file. The points must satisfy the following requirements:
+    Create an instance of an airfoil by passing in a set of points.
+    The points must satisfy the following requirements:
 
         - Ordered such that they form a continuous airfoil surface
         - First and last points correspond to trailing edge
@@ -44,8 +43,8 @@ class Airfoil:
 
     Parameters
     ----------
-    coords : ndarray[N,3]
-        Full array of airfoil coordinates
+    coords : ndarray [N,2]
+        The coordinate pairs defining the airfoil
 
     spline_order : {4, 2, 3}
         Order of the spline. :math:`n` order implies :math:`C^{n-2}` continuity
@@ -150,7 +149,7 @@ class Airfoil:
 
         Returns
         -------
-        TE : 2darry [2]
+        TE : ndarray [2]
             The coordinate of the trailing edge of the airfoil
         """
 
@@ -501,12 +500,12 @@ class Airfoil:
 
         Parameters
         ----------
-        coord : 2darray
+        coord : ndarray [2]
             The point of interest we wish to project onto the chordline.
 
         Returns
         -------
-        point : 2darray
+        point : ndarray [2]
             The coordinate that is the perpendicular projection of `coord` onto the chordline
         """
         # vector defines the chord
