@@ -103,30 +103,20 @@ class Airfoil:
 
     def reorder(self):
         """
-        This function orients the points counterclockwise and sets the start point to the TE
+        This function orients the points counter-clockwise
         """
 
-        # Check to make sure spline ends at TE (For now assume this is True)
-
-        # Make sure oriented in counter-clockwise direction.
         coords = self.spline.X
         N = coords.shape[0]
 
-        orientation = 0
-        for i in range(1, N - 1):
-            v = coords[i + 1] - coords[i]
-            r = coords[i + 1] - coords[i - 1]
-            # skip duplicate points
-            if np.linalg.norm(r) < EPS:
-                continue
-            s = (coords[i, 0] * r[0] + coords[i, 1] * r[1]) / np.linalg.norm(r)
-            n = coords[i] - r * s
-            if np.linalg.norm(n) > EPS:
-                n = n / np.linalg.norm(n)
-            orientation += n[0] * v[1] - n[1] * v[0]
+        # Accumulate the signed area under each line segment connecting adjacent points
+        # If the total area is positive, the points are oriented clockwise
+        area = 0
+        for i in range(N):
+            area += (coords[i, 0] - coords[i - 1, 0]) * (coords[i, 1] + coords[i - 1, 1])
 
-        if orientation < 0:
-            # Flipping orientation to counter-clockwise
+        if area > 0:
+            # Flip orientation to counter-clockwise
             self.recompute(self.spline.X[::-1, :])
 
     ## Geometry Information
