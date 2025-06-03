@@ -770,27 +770,27 @@ class Airfoil:
             the location to cut the blunt TE **as a percentage of the chord**
         """
         # Find global coordinates of cut point
-        xCut = self.LE + xCut * (self.TE - self.LE)
+        xCut_global = self.LE + xCut * (self.TE - self.LE)
 
         # The direction normal to the chordline
         direction = np.array([np.cos(np.pi / 2 + np.deg2rad(self.twist)), np.sin(np.pi / 2 + np.deg2rad(self.twist))])
         direction = direction / np.linalg.norm(direction)
 
         # ray to intersect upper and lower surfaces
-        ray = [xCut - 2 * direction * self.getChord(), xCut + 2 * direction * self.getChord()]
+        ray = [xCut_global - 2 * direction * self.getChord(), xCut_global + 2 * direction * self.getChord()]
         top_surf, bottom_surf = self.splitAirfoil()
         normal = Curve(X=ray, k=2)
 
         # Get intersections
-        s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
-        s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
+        s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS, s=1 - xCut, t=0.0)
+        s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS, s=xCut, t=0.0)
 
         # Get all the coordinates that will not be cut off
         coords = [top_surf.getValue(s_top)]
         chord = self.LE - self.TE
         for x in self.getSplinePts():
             # dot product test checks for positive projection onto chord
-            current_direction = x - xCut
+            current_direction = x - xCut_global
             if chord[0] * current_direction[0] + chord[1] * current_direction[1] > 0:
                 coords.append(np.array(x))
 
