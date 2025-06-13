@@ -782,8 +782,8 @@ class Airfoil:
         normal = Curve(X=ray, k=2)
 
         # Get intersections
-        s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS, s=1 - xCut, t=0.0)
-        s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS, s=xCut, t=0.0)
+        s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS, s=1 - xCut, t=0.5)
+        s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS, s=xCut, t=0.5)
 
         # Get all the coordinates that will not be cut off
         coords = [top_surf.getValue(s_top)]
