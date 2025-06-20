@@ -243,7 +243,7 @@ class Airfoil:
             the axis the plane will intersect 0 for x and 1 for y
 
         s_0 : float
-            an initial guess for the parameteric position of the solution
+            an initial guess for the parametric position of the solution
 
         Returns
         -------
@@ -770,10 +770,10 @@ class Airfoil:
             the location to cut the blunt TE **as a percentage of the chord**
 
         top_guess : float, optional
-            The parameteric location guess for the top surface intersection
+            The parametric location guess for the top surface intersection
 
         bottom_guess : float, optional
-            The parameteric location guess for the bottom surface intersection
+            The parametric location guess for the bottom surface intersection
 
         """
         # Find global coordinates of cut point
@@ -832,7 +832,7 @@ class Airfoil:
 
         # Value of blunt TE point on lower surface
         val_l = self.spline.getValue(1)
-        # derivative of blunt TE point of lower surface wrt parameteric parameter
+        # derivative of blunt TE point of lower surface wrt parametric parameter
         ds_l = self.spline.getDerivative(1)
         # slope of blunt TE point of lower surface
         dx_l = ds_l[1] / ds_l[0]
