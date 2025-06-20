@@ -760,14 +760,21 @@ class Airfoil:
             if normalize:
                 self.normalizeChord()
 
-    def makeBluntTE(self, xCut=0.98):
+    def makeBluntTE(self, xCut=0.98, top_guess=None, bottom_guess=None):
         """
         This cuts the upper and lower surfaces to creates a blunt trailing edge perpendicular to the chord line.
 
         Parameters
         ----------
-        xCut : float
+        xCut : float, optional
             the location to cut the blunt TE **as a percentage of the chord**
+
+        top_guess : float, optional
+            The parameteric location guess for the top surface intersection
+
+        bottom_guess : float, optional
+            The parameteric location guess for the bottom surface intersection
+
         """
         # Find global coordinates of cut point
         xCut_global = self.LE + xCut * (self.TE - self.LE)
@@ -782,8 +789,12 @@ class Airfoil:
         normal = Curve(X=ray, k=2)
 
         # Get intersections
-        s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS, s=1 - xCut, t=0.5)
-        s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS, s=xCut, t=0.5)
+        if top_guess is None:
+            top_guess = 1 - xCut
+        if bottom_guess is None:
+            bottom_guess = xCut
+        s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS, s=top_guess, t=0.5)
+        s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS, s=bottom_guess, t=0.5)
 
         # Get all the coordinates that will not be cut off
         coords = [top_surf.getValue(s_top)]
