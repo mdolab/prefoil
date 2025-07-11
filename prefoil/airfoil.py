@@ -8,6 +8,7 @@
 
 """
 
+import warnings
 import numpy as np
 from pyspline import Curve
 from scipy.optimize import brentq, newton, minimize
@@ -750,7 +751,7 @@ class Airfoil:
             if normalize:
                 self.normalizeChord()
 
-    def makeBluntTE(self, xCut=0.98, top_guess=None, bottom_guess=None):
+    def makeBluntTE(self, xCut=0.98, top_guess=0.5, bottom_guess=0.5):
         """
         This cuts the upper and lower surfaces to creates a blunt trailing edge perpendicular to the chord line.
 
@@ -779,12 +780,13 @@ class Airfoil:
         normal = Curve(X=ray, k=2)
 
         # Get intersections
-        if top_guess is None:
-            top_guess = 1 - xCut
-        if bottom_guess is None:
-            bottom_guess = xCut
         s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS, s=top_guess, t=0.5)
         s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS, s=bottom_guess, t=0.5)
+
+        if s_top == 0.0:
+            warnings.warn("makeBluntTE did not cut the top surface. Try again with a different top_guess.")
+        if s_bottom == 1.0:
+            warnings.warn("makeBluntTE did not cut the bottom surface. Try again with a different bottom_guess.")
 
         # Get all the coordinates that will not be cut off
         coords = [top_surf.getValue(s_top)]
