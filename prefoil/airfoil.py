@@ -784,9 +784,13 @@ class Airfoil:
         s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS, s=bottom_guess, t=0.5)
 
         if s_top == 0.0:
-            warnings.warn("makeBluntTE did not cut the top surface. Try again with a different top_guess.")
+            warnings.warn(
+                "makeBluntTE did not cut the top surface. Try again with a different top_guess.", stacklevel=2
+            )
         if s_bottom == 1.0:
-            warnings.warn("makeBluntTE did not cut the bottom surface. Try again with a different bottom_guess.")
+            warnings.warn(
+                "makeBluntTE did not cut the bottom surface. Try again with a different bottom_guess.", stacklevel=2
+            )
 
         # Get all the coordinates that will not be cut off
         coords = [top_surf.getValue(s_top)]
