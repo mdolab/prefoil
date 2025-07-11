@@ -213,15 +213,17 @@ class TestSamplingTE(unittest.TestCase):
 
 
 class TestGeoModification(unittest.TestCase):
-    def setUp(self):
+    def test_reorder_rae2822(self):
         X = readCoordFile(os.path.join(baseDir, "airfoils/rae2822.dat"))
-        self.foil = Airfoil(X)
+        new_foil = Airfoil(X[::-1, :])
+        X_reordered = new_foil.spline.X
+        assert_allclose(X, X_reordered, atol=1e-12)
 
-    def test_reorder(self):
-        Xorig = self.foil.spline.X
-        newfoil = Airfoil(Xorig[::-1, :])
-        Xreordered = newfoil.spline.X
-        assert_allclose(Xorig, Xreordered, atol=1e-6)
+    def test_reorder_twisted_blade(self):
+        X = readCoordFile(os.path.join(baseDir, "airfoils/twisted_blade_section.dat"))
+        new_foil = Airfoil(X[::-1, :])
+        X_reordered = new_foil.spline.X
+        assert_allclose(X, X_reordered, atol=1e-12)
 
 
 class TestFFD(unittest.TestCase):
