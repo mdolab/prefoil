@@ -8,6 +8,7 @@
 
 """
 
+import warnings
 import numpy as np
 from pyspline import Curve
 from scipy.optimize import brentq, newton, minimize
@@ -233,7 +234,7 @@ class Airfoil:
             the axis the plane will intersect 0 for x and 1 for y
 
         s_0 : float
-            an initial guess for the parameteric position of the solution
+            an initial guess for the parametric position of the solution
 
         Returns
         -------
@@ -750,37 +751,53 @@ class Airfoil:
             if normalize:
                 self.normalizeChord()
 
-    def makeBluntTE(self, xCut=0.98):
+    def makeBluntTE(self, xCut=0.98, top_guess=0.5, bottom_guess=0.5):
         """
         This cuts the upper and lower surfaces to creates a blunt trailing edge perpendicular to the chord line.
 
         Parameters
         ----------
-        xCut : float
+        xCut : float, optional
             the location to cut the blunt TE **as a percentage of the chord**
+
+        top_guess : float, optional
+            The parametric location guess for the top surface intersection
+
+        bottom_guess : float, optional
+            The parametric location guess for the bottom surface intersection
+
         """
         # Find global coordinates of cut point
-        xCut = self.LE + xCut * (self.TE - self.LE)
+        xCut_global = self.LE + xCut * (self.TE - self.LE)
 
         # The direction normal to the chordline
         direction = np.array([np.cos(np.pi / 2 + np.deg2rad(self.twist)), np.sin(np.pi / 2 + np.deg2rad(self.twist))])
         direction = direction / np.linalg.norm(direction)
 
         # ray to intersect upper and lower surfaces
-        ray = [xCut - 2 * direction * self.getChord(), xCut + 2 * direction * self.getChord()]
+        ray = [xCut_global - 2 * direction * self.getChord(), xCut_global + 2 * direction * self.getChord()]
         top_surf, bottom_surf = self.splitAirfoil()
         normal = Curve(X=ray, k=2)
 
         # Get intersections
-        s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS)
-        s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS)
+        s_top, _, _ = top_surf.projectCurve(normal, nIter=5000, eps=EPS, s=top_guess, t=0.5)
+        s_bottom, _, _ = bottom_surf.projectCurve(normal, nIter=5000, eps=EPS, s=bottom_guess, t=0.5)
+
+        if s_top == 0.0:
+            warnings.warn(
+                "makeBluntTE did not cut the top surface. Try again with a different top_guess.", stacklevel=2
+            )
+        if s_bottom == 1.0:
+            warnings.warn(
+                "makeBluntTE did not cut the bottom surface. Try again with a different bottom_guess.", stacklevel=2
+            )
 
         # Get all the coordinates that will not be cut off
         coords = [top_surf.getValue(s_top)]
         chord = self.LE - self.TE
         for x in self.getSplinePts():
             # dot product test checks for positive projection onto chord
-            current_direction = x - xCut
+            current_direction = x - xCut_global
             if chord[0] * current_direction[0] + chord[1] * current_direction[1] > 0:
                 coords.append(np.array(x))
 
@@ -811,7 +828,7 @@ class Airfoil:
 
         # Value of blunt TE point on lower surface
         val_l = self.spline.getValue(1)
-        # derivative of blunt TE point of lower surface wrt parameteric parameter
+        # derivative of blunt TE point of lower surface wrt parametric parameter
         ds_l = self.spline.getDerivative(1)
         # slope of blunt TE point of lower surface
         dx_l = ds_l[1] / ds_l[0]

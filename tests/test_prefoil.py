@@ -225,6 +225,15 @@ class TestGeoModification(unittest.TestCase):
         X_reordered = new_foil.spline.X
         assert_allclose(X, X_reordered, atol=1e-12)
 
+    def test_round_to_blunt_TE(self):
+        coords = readCoordFile(os.path.join(baseDir, "airfoils/round_te_blade_section.dat"))
+        foil = Airfoil(coords, nCtl=200)
+        foil.makeBluntTE(xCut=0.99)
+        foil.normalizeAirfoil()
+        X = foil.spline.X
+        assert_allclose(X[0][0], 1.0, rtol=1e-4)
+        assert_allclose(X[-1][0], 1.0, rtol=1e-4)
+
 
 class TestFFD(unittest.TestCase):
     def setUp(self):
