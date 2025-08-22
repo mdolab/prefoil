@@ -122,7 +122,7 @@ def checkCellRatio(X, ratio_tol=1.2):
     exc = np.flatnonzero(cell_ratio > ratio_tol)
 
     if exc.size > 0:
-        print("WARNING: There are ", exc.size, " elements which exceed " "suggested cell ratio: ", exc)
+        print("WARNING: There are ", exc.size, " elements which exceed suggested cell ratio: ", exc)
 
     max_cell_ratio = np.max(cell_ratio, 0)
     avg_cell_ratio = np.average(cell_ratio, 0)

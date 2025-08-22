@@ -114,7 +114,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
 
 def polynomial(start, end, n, m=np.pi, order=5):
     r"""
-    similar to cosine spacing but instead of a unit circle, a function of the form :math:`1 - x^{\mathrm{order}}` is used.
+    Similar to cosine spacing but instead of a unit circle, a function of the form :math:`1 - x^{\mathrm{order}}` is used.
     This does a better job on not overly clustering points at the edges.
 
     .. code-block:: text
