@@ -1,3 +1,4 @@
+from functools import partial
 import numpy as np
 from scipy import optimize
 
@@ -162,9 +163,11 @@ def polynomial(start, end, n, m=np.pi, order=5):
 
     angles = np.linspace(m, 0, n)
 
-    s = np.array([])
+    s = []
     for ang in angles:
-        s = np.append(s, optimize.fsolve(lambda x: poly(x, ang), np.cos(ang))[0])
+        solve_func = partial(poly, angle=ang)
+        s.append(optimize.fsolve(solve_func, np.cos(ang))[0])
+    s = np.array(s)
 
     return (s / 2 + 0.5) * (end - start) + start
 
