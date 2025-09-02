@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+#Ignore ruff and pre-commit config files
+ruff.toml
+.pre-commit-config.yaml
+
 # Distribution / packaging
 .Python
 build/

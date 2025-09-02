@@ -1,3 +1,4 @@
+from functools import partial
 import numpy as np
 from scipy import optimize
 
@@ -114,7 +115,7 @@ def conical(start, end, n, m=np.pi, coeff=1, bad_edge=False):
 
 def polynomial(start, end, n, m=np.pi, order=5):
     r"""
-    similar to cosine spacing but instead of a unit circle, a function of the form :math:`1 - x^{\mathrm{order}}` is used.
+    Similar to cosine spacing but instead of a unit circle, a function of the form :math:`1 - x^{\mathrm{order}}` is used.
     This does a better job on not overly clustering points at the edges.
 
     .. code-block:: text
@@ -162,9 +163,11 @@ def polynomial(start, end, n, m=np.pi, order=5):
 
     angles = np.linspace(m, 0, n)
 
-    s = np.array([])
+    s = []
     for ang in angles:
-        s = np.append(s, optimize.fsolve(lambda x: poly(x, ang), np.cos(ang))[0])
+        solve_func = partial(poly, angle=ang)
+        s.append(optimize.fsolve(solve_func, np.cos(ang))[0])
+    s = np.array(s)
 
     return (s / 2 + 0.5) * (end - start) + start
 

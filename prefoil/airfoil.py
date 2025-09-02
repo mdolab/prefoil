@@ -211,7 +211,7 @@ class Airfoil:
 
     def getSplinePts(self):
         """
-        alias for returning the points that make the airfoil spline
+        Alias for returning the points that make the airfoil spline
 
         Returns
         -------
@@ -222,7 +222,7 @@ class Airfoil:
 
     def findPt(self, position, axis=0, s_0=0):
         """
-        finds that point at the intersection of the plane defined by the axis and the postion
+        Finds that point at the intersection of the plane defined by the axis and the postion
         and the airfoil curve
 
         Parameters
@@ -257,7 +257,7 @@ class Airfoil:
 
     def getTEThickness(self):
         """
-        gets the trailing edge thickness for the airfoil
+        Gets the trailing edge thickness for the airfoil
 
         Returns
         -------
@@ -632,7 +632,7 @@ class Airfoil:
 
     def rotate(self, angle, origin=ZEROS_2):
         """
-        rotates the airfoil about the specified origin
+        Rotates the airfoil about the specified origin
 
         Parameters
         ----------
@@ -648,7 +648,7 @@ class Airfoil:
 
     def derotate(self, origin=ZEROS_2):
         """
-        derotates the airfoil about the origin by the twist
+        Derotates the airfoil about the origin by the twist
 
         Parameters
         ----------
@@ -806,7 +806,7 @@ class Airfoil:
 
     def sharpenTE(self, xCut=0.98):
         """
-        this method creates a sharp trailing edge **from a blunt one** by projecting straight lines from the upper and lower surfacs of a blunt trailing edge.
+        This method creates a sharp trailing edge **from a blunt one** by projecting straight lines from the upper and lower surfacs of a blunt trailing edge.
 
         Parameters
         ----------
@@ -850,7 +850,7 @@ class Airfoil:
 
     def roundTE(self, xCut=0.98, k=4, nPts=20, dist=0.4):
         """
-        this method creates a smooth round trailing edge **from a blunt one** using a spline. If the trailing edge is not already blunt xCut specifies the location of the cut
+        This method creates a smooth round trailing edge **from a blunt one** using a spline. If the trailing edge is not already blunt xCut specifies the location of the cut
 
         Parameters
         ----------

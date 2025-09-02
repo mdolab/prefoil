@@ -16,4 +16,3 @@ Geometry Helpers
 
 .. automodule:: prefoil.utils.geom_ops
 	:members:
-
