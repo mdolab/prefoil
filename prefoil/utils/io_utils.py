@@ -146,5 +146,7 @@ def _writeFFD(FFDbox, filename):
             for k in range(2):
                 for j in range(2):
                     for i in range(nffd):
-                        f.write("%.15f " % (FFDbox[i, j, k, ell]))
+                        f.write("%.15f" % (FFDbox[i, j, k, ell]))
+                        if i < nffd - 1:
+                            f.write(" ")
                     f.write("\n")
